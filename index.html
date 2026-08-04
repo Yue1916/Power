@@ -248,8 +248,9 @@
   <section id="view-progress" class="view">
     <div class="card">
       <h2>📈 进步曲线</h2>
+      <div class="chips" id="progModeChips"></div>
       <div class="prog-pick">
-        <label>选择动作</label>
+        <label id="progPickLabel">选择动作</label>
         <select id="progExercise"></select>
       </div>
       <div class="chips" id="rangeChips"></div>
@@ -277,29 +278,41 @@
     </div>
     <div class="card">
       <h2>➕ 添加计划动作</h2>
+
+      <label>训练部位（可多选）</label>
+      <div class="chips" id="planPartChips"></div>
+
       <label>选择动作</label>
       <select id="planExercise"></select>
+
       <label>或输入新动作</label>
       <div class="row">
         <input type="text" id="planExNew" placeholder="新动作名（选填）">
         <select id="planPart" style="flex:0 0 110px"></select>
       </div>
+
       <div id="planStrength">
-        <label>目标（重量 kg × 次数 × 组数，重量留空=自重）</label>
+        <label>快速填充（相同的组一次搞定）</label>
         <div class="quickfill">
           <input type="number" inputmode="decimal" id="planW" placeholder="重量">
           <span>×</span>
           <input type="number" inputmode="numeric" id="planR" placeholder="次数">
           <span>×</span>
           <input type="number" inputmode="numeric" id="planSets" placeholder="组数">
+          <button class="qf-btn" id="planQfBtn" type="button">生成</button>
         </div>
+        <label>各组目标（可逐组填不同重量，重量留空=自重）</label>
+        <div class="sets-wrap" id="planSetsWrap"></div>
+        <button class="btn ghost" id="planAddSet" type="button" style="margin-top:4px">＋ 再加一组（复制上一组）</button>
       </div>
+
       <div id="planCardio" style="display:none">
         <div class="row">
           <div><label>时长（分钟）</label><input type="number" inputmode="numeric" id="planMin" placeholder="如 30"></div>
           <div><label>距离（km，选填）</label><input type="number" inputmode="decimal" id="planKm" placeholder="如 5"></div>
         </div>
       </div>
+
       <button class="btn" id="planAdd" type="button">加入计划</button>
     </div>
   </section>
@@ -788,12 +801,22 @@ function editHistory(id){
 
 /* ================= 进步页：原生 canvas 画图 ================= */
 let progRange='all';
+let progMode='exercise';
 function allExercises(){return [...new Set(DB.logs.map(l=>l.exercise))]}
+function partsWithLogs(){return Object.keys(DEFAULT_PARTS).filter(p=>DB.logs.some(l=>l.part===p))}
+function renderProgMode(){
+  const wrap=$('progModeChips'); wrap.innerHTML='';
+  [['exercise','按动作'],['part','按部位']].forEach(([k,label])=>{
+    const c=document.createElement('div'); c.className='chip'+(progMode===k?' active':''); c.textContent=label;
+    c.onclick=()=>{progMode=k; renderProgMode(); renderProgSelect(); drawChart()}; wrap.appendChild(c);
+  });
+}
 function renderProgSelect(){
   const sel=$('progExercise'); const cur=sel.value;
-  const exs=allExercises();
-  sel.innerHTML=exs.length?exs.map(e=>`<option>${e}</option>`).join(''):'<option value="">暂无数据</option>';
-  if(exs.includes(cur))sel.value=cur;
+  const opts=progMode==='part'?partsWithLogs():allExercises();
+  $('progPickLabel').textContent=progMode==='part'?'选择部位':'选择动作';
+  sel.innerHTML=opts.length?opts.map(e=>`<option>${e}</option>`).join(''):'<option value="">暂无数据</option>';
+  if(opts.includes(cur))sel.value=cur;
   sel.onchange=drawChart;
 }
 function renderRangeChips(){
@@ -809,6 +832,7 @@ function rangeCutoff(){
   return dstr(new Date(Date.now()-days*86400000));
 }
 function drawChart(){
+  if(progMode==='part') return drawPartChart();
   const ex=$('progExercise').value;
   const cutoff=rangeCutoff();
   const rows=DB.logs.filter(l=>l.exercise===ex && l.date>=cutoff).sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id);
@@ -849,6 +873,40 @@ function renderProgList(rows, cardio){
       <div class="top"><div class="name" style="font-size:14px">${fmtDate(l.date)}</div>
       <div style="color:var(--muted);font-size:12px">${right}</div></div>
       <div class="sets">${sets}</div>`+(l.note?`<div class="note">📝 ${l.note}</div>`:'')+`</div>`;
+  }).join('');
+}
+function drawPartChart(){
+  const part=$('progExercise').value;
+  const cv=$('chart'); const cutoff=rangeCutoff();
+  const logs=DB.logs.filter(l=>l.part===part && l.date>=cutoff);
+  if(!logs.length){clearCanvas(cv);$('prBadge').innerHTML='';$('progHint').textContent='该范围内暂无数据。';$('progList').innerHTML='';return}
+  const byDate={}; logs.forEach(l=>{(byDate[l.date]=byDate[l.date]||[]).push(l)});
+  const dates=Object.keys(byDate).sort((a,b)=>a.localeCompare(b));
+  const labels=dates.map(d=>d.slice(5));
+  const cardioPart=part===CARDIO;
+  let lineData,barData,lineLabel,barLabel,lineUnit,barUnit;
+  if(cardioPart){
+    lineData=dates.map(d=>byDate[d].reduce((s,l)=>s+(l.cardio?l.cardio.min:0),0));
+    barData=dates.map(d=>byDate[d].length);
+    lineLabel='总时长';barLabel='次数';lineUnit='分钟';barUnit='次';
+  }else{
+    lineData=dates.map(d=>Math.round(byDate[d].reduce((s,l)=>s+volumeOf(l),0)));
+    barData=dates.map(d=>byDate[d].reduce((s,l)=>s+(l.sets?l.sets.length:0),0));
+    lineLabel='总容量';barLabel='组数';lineUnit='kg';barUnit='组';
+  }
+  const best=Math.max(...lineData);
+  $('prBadge').innerHTML=`<div class="pr-badge">🏆 ${part} 单次最高${lineLabel} ${best}${lineUnit}</div>`;
+  $('progHint').textContent=`按部位统计：折线=每次训练${part}的${lineLabel}，柱=${barLabel}。看整体训练量趋势 💪`;
+  drawLineBar(cv,labels,lineData,barData,lineLabel,barLabel,lineUnit,barUnit,null);
+  $('progList').innerHTML=dates.slice().reverse().map(d=>{
+    const items=byDate[d];
+    const vol=Math.round(items.reduce((s,l)=>s+volumeOf(l),0));
+    const setsN=items.reduce((s,l)=>s+(l.sets?l.sets.length:0),0);
+    const right=cardioPart?(items.length+'次'):(vol+'kg · '+setsN+'组');
+    const exs=items.map(l=>l.exercise).join('、');
+    return `<div class="log-item"><div class="top"><div class="name" style="font-size:14px">${fmtDate(d)}</div>
+      <div style="color:var(--muted);font-size:12px">${right}</div></div>
+      <div class="prdetail">${exs}</div></div>`;
   }).join('');
 }
 function clearCanvas(cv){
@@ -951,33 +1009,67 @@ $('clearBtn').onclick=()=>{
 };
 
 /* ================= 计划页 ================= */
-function allExercisesForPlan(){
-  const out=[];
-  Object.keys(DEFAULT_PARTS).forEach(p=>DEFAULT_PARTS[p].forEach(e=>{if(!out.includes(e))out.push(e)}));
-  DB.logs.forEach(l=>{if(!out.includes(l.exercise))out.push(l.exercise)});
-  return out;
+let planSelectedParts=new Set();
+function renderPlanPartChips(){
+  const wrap=$('planPartChips'); wrap.innerHTML='';
+  Object.keys(DEFAULT_PARTS).forEach(p=>{
+    const c=document.createElement('div');
+    c.className='chip'+(isCardio(p)?' cardio':'')+(planSelectedParts.has(p)?' active':''); c.textContent=p;
+    c.onclick=()=>{ planSelectedParts.has(p)?planSelectedParts.delete(p):planSelectedParts.add(p);
+      renderPlanPartChips(); renderPlanExercise(); renderPlanNewPart(); updatePlanForm(); };
+    wrap.appendChild(c);
+  });
 }
-function renderPlanPart(){
-  const sel=$('planPart'); const cur=sel.value; sel.innerHTML='';
-  Object.keys(DEFAULT_PARTS).forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o)});
-  if(cur)sel.value=cur;
+function planExercisesOfParts(){
+  const out=[];
+  planSelectedParts.forEach(p=>{
+    (DEFAULT_PARTS[p]||[]).forEach(e=>{if(!out.includes(e))out.push(e)});
+    DB.logs.filter(l=>l.part===p).forEach(l=>{if(!out.includes(l.exercise))out.push(l.exercise)});
+  });
+  return out;
 }
 function renderPlanExercise(){
   const sel=$('planExercise'); const cur=sel.value; sel.innerHTML='';
-  allExercisesForPlan().forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;sel.appendChild(o)});
-  if(cur)sel.value=cur;
+  const exs=planExercisesOfParts();
+  if(!exs.length){sel.innerHTML='<option value="">请先在上方选择部位</option>'}
+  else exs.forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;sel.appendChild(o)});
+  if(exs.includes(cur))sel.value=cur;
+}
+function renderPlanNewPart(){
+  const sel=$('planPart'); const cur=sel.value; sel.innerHTML='';
+  const parts=planSelectedParts.size?[...planSelectedParts]:Object.keys(DEFAULT_PARTS);
+  parts.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o)});
+  if(parts.includes(cur))sel.value=cur;
 }
 function planCurrentAdd(){
   const nw=$('planExNew').value.trim();
   if(nw)return{exercise:nw,part:$('planPart').value,type:isCardio($('planPart').value)?'cardio':'strength'};
   const ex=$('planExercise').value; if(!ex)return null;
-  const part=partOfExercise(ex)||$('planPart').value; return{exercise:ex,part,type:isCardio(part)?'cardio':'strength'};
+  const part=partOfExercise(ex)||$('planPart').value||[...planSelectedParts][0]; return{exercise:ex,part,type:isCardio(part)?'cardio':'strength'};
 }
 function updatePlanForm(){
   const c=planCurrentAdd(); const cardio=c&&c.type==='cardio';
   $('planStrength').style.display=cardio?'none':'block';
   $('planCardio').style.display=cardio?'block':'none';
 }
+function planAddSetRow(w='',r=''){
+  const wrap=$('planSetsWrap');
+  const div=document.createElement('div'); div.className='set-row';
+  div.innerHTML=`<div class="idx">${wrap.children.length+1}</div>
+    <div class="wgroup">
+      <button class="stp minus" type="button">−</button>
+      <input type="number" inputmode="decimal" placeholder="kg/自重" class="w" value="${w}">
+      <button class="stp plus" type="button">＋</button>
+    </div>
+    <input type="number" inputmode="numeric" placeholder="次数" class="r" value="${r}">
+    <button class="del" type="button">✕</button>`;
+  const wi=div.querySelector('.w');
+  div.querySelector('.minus').onclick=()=>{let v=parseFloat(wi.value)||0;v=Math.max(0,v-2.5);wi.value=round1(v)};
+  div.querySelector('.plus').onclick=()=>{let v=parseFloat(wi.value)||0;wi.value=round1(v+2.5)};
+  div.querySelector('.del').onclick=()=>{div.remove(); [...wrap.children].forEach((c,i)=>c.querySelector('.idx').textContent=i+1)};
+  wrap.appendChild(div);
+}
+function planResetSets(){ $('planSetsWrap').innerHTML=''; planAddSetRow(); planAddSetRow(); planAddSetRow(); }
 function renderPlan(){
   const box=$('planList');
   if(!DB.plan.items.length){box.innerHTML='<div class="hint">还没有计划。在下方添加你下次要练的动作。</div>';return}
@@ -1006,6 +1098,21 @@ function delPlanItem(ii){ DB.plan.items.splice(ii,1); save(DB); renderPlan(); }
 $('planExercise').onchange=updatePlanForm;
 $('planExNew').oninput=updatePlanForm;
 $('planPart').onchange=updatePlanForm;
+$('planAddSet').onclick=()=>{
+  const rows=[...$('planSetsWrap').children]; const last=rows[rows.length-1];
+  if(last) planAddSetRow(last.querySelector('.w').value,last.querySelector('.r').value); else planAddSetRow();
+};
+$('planQfBtn').onclick=()=>{
+  const w=parseFloat($('planW').value)||0, r=parseInt($('planR').value), n=parseInt($('planSets').value);
+  if(isNaN(r)||r<=0){toast('请填写次数');return}
+  if(isNaN(n)||n<=0){toast('请填写组数');return}
+  const rows=[...$('planSetsWrap').children];
+  const allEmpty=rows.every(c=>!c.querySelector('.w').value && !c.querySelector('.r').value);
+  if(allEmpty)$('planSetsWrap').innerHTML='';
+  for(let i=0;i<n;i++)planAddSetRow(w||'',r);
+  $('planW').value='';$('planR').value='';$('planSets').value='';
+  toast(`已生成 ${n} 组`);
+};
 $('planAdd').onclick=()=>{
   const c=planCurrentAdd(); if(!c){toast('请选择或输入动作');return}
   if(c.type==='cardio'){
@@ -1014,12 +1121,12 @@ $('planAdd').onclick=()=>{
     DB.plan.items.push({exercise:c.exercise,part:c.part,type:'cardio',cardio:{min,km:isNaN(km)?null:km,done:false}});
     $('planMin').value='';$('planKm').value='';
   }else{
-    const w=parseFloat($('planW').value)||0, r=parseInt($('planR').value), n=parseInt($('planSets').value);
-    if(isNaN(r)||r<=0){toast('请填写次数');return}
-    if(isNaN(n)||n<=0){toast('请填写组数');return}
-    const sets=[]; for(let i=0;i<n;i++)sets.push({w,r,done:false});
+    const sets=[...$('planSetsWrap').children].map(x=>({
+      w:parseFloat(x.querySelector('.w').value)||0, r:parseInt(x.querySelector('.r').value), done:false
+    })).filter(s=>!isNaN(s.r)&&s.r>0);
+    if(!sets.length){toast('请至少填写一组次数');return}
     DB.plan.items.push({exercise:c.exercise,part:c.part,type:'strength',sets});
-    $('planW').value='';$('planR').value='';$('planSets').value='';
+    planResetSets();
   }
   $('planExNew').value='';
   save(DB); renderPlan(); renderPlanExercise(); toast('已加入计划');
@@ -1053,10 +1160,10 @@ function switchView(name){
   document.querySelectorAll('.tabbar button').forEach(x=>x.classList.toggle('active',x.dataset.view===name));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   $('view-'+name).classList.add('active');
-  if(name==='progress'){renderProgSelect();renderRangeChips();drawChart();renderPRList()}
+  if(name==='progress'){renderProgMode();renderProgSelect();renderRangeChips();drawChart();renderPRList()}
   if(name==='history')renderHistory();
   if(name==='settings')renderBackupInfo();
-  if(name==='plan'){renderPlanPart();renderPlanExercise();updatePlanForm();renderPlan()}
+  if(name==='plan'){renderPlanPartChips();renderPlanNewPart();renderPlanExercise();updatePlanForm();renderPlan()}
   window.scrollTo(0,0);
 }
 document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>switchView(b.dataset.view); });
@@ -1075,7 +1182,7 @@ renderParts(); renderNewPart(); renderExerciseSelect();
 const restored=restoreDraft();
 if(!restored){ resetSets(); prefillFromLast(false); }
 renderSession(); renderTimerPresets(); renderHistory(); renderBackupInfo();
-renderPlanPart(); renderPlanExercise(); updatePlanForm(); renderPlan();
+renderPlanPartChips(); renderPlanNewPart(); renderPlanExercise(); planResetSets(); updatePlanForm(); renderPlan();
 
 // 草稿自动保存（防丢）
 setInterval(saveDraft,3000);
