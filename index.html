@@ -150,6 +150,9 @@
     cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; touch-action:manipulation; border:1px solid var(--line)}
   .pset.done{color:var(--accent2); border-color:var(--accent2); text-decoration:line-through; opacity:.9}
   .prdetail{font-size:12px; color:var(--muted); margin-top:2px}
+  .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:70; display:flex; align-items:center; justify-content:center; padding:24px}
+  .modal-card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px; width:100%; max-width:340px}
+  .modal-title{font-size:16px; font-weight:600; margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -350,6 +353,29 @@
 </nav>
 
 <div class="timer-pill" id="timerPill" style="display:none"><span id="pillTime">00:00</span> ⏱️</div>
+
+<div class="modal" id="editModal" style="display:none">
+  <div class="modal-card">
+    <div class="modal-title" id="editModalTitle">修改这一组</div>
+    <div id="editStrengthFields">
+      <label>重量 kg（留空=自重）</label>
+      <input type="number" inputmode="decimal" id="editW">
+      <label>次数</label>
+      <input type="number" inputmode="numeric" id="editR">
+    </div>
+    <div id="editCardioFields" style="display:none">
+      <label>时长（分钟）</label>
+      <input type="number" inputmode="numeric" id="editMin">
+      <label>距离 km（选填）</label>
+      <input type="number" inputmode="decimal" id="editKm">
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn ghost" id="editCancel" type="button" style="margin-top:0">取消</button>
+      <button class="btn green" id="editSave" type="button" style="margin-top:0">保存</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <script>
 /* ================= 数据层 ================= */
@@ -1115,22 +1141,38 @@ function togglePlanSet(ii,si){
   if(it.type==='cardio')it.cardio.done=!it.cardio.done; else it.sets[si].done=!it.sets[si].done;
   save(DB); renderPlan();
 }
+let editTarget=null;
 function editPlanSet(ii,si){
   const it=DB.plan.items[ii]; if(!it)return;
+  editTarget={ii,si};
   if(it.type==='cardio'){
-    const nm=prompt('时长（分钟）', it.cardio.min); if(nm===null)return;
-    const min=parseFloat(nm); if(isNaN(min)||min<=0){toast('时长无效');return}
-    const nk=prompt('距离 km（留空=无）', it.cardio.km??''); if(nk===null)return;
-    const km=parseFloat(nk); it.cardio.min=min; it.cardio.km=isNaN(km)?null:km;
+    $('editModalTitle').textContent=`修改：${it.exercise}`;
+    $('editStrengthFields').style.display='none'; $('editCardioFields').style.display='block';
+    $('editMin').value=it.cardio.min; $('editKm').value=(it.cardio.km??'');
   }else{
     const s=it.sets[si]; if(!s)return;
-    const nw=prompt('重量 kg（留空=自重）', s.w||''); if(nw===null)return;
-    const nr=prompt('次数', s.r); if(nr===null)return;
-    const r=parseInt(nr); if(isNaN(r)||r<=0){toast('次数无效');return}
-    s.w=parseFloat(nw)||0; s.r=r;
+    $('editModalTitle').textContent=`修改：${it.exercise} 第 ${si+1} 组`;
+    $('editStrengthFields').style.display='block'; $('editCardioFields').style.display='none';
+    $('editW').value=(s.w||''); $('editR').value=s.r;
   }
-  save(DB); renderPlan(); toast('已修改 ✅');
+  $('editModal').style.display='flex';
 }
+function closeEditModal(){ $('editModal').style.display='none'; editTarget=null; }
+$('editCancel').onclick=closeEditModal;
+$('editModal').addEventListener('click',e=>{ if(e.target===$('editModal'))closeEditModal(); });
+$('editSave').onclick=()=>{
+  if(!editTarget){closeEditModal();return}
+  const it=DB.plan.items[editTarget.ii]; if(!it){closeEditModal();return}
+  if(it.type==='cardio'){
+    const min=parseFloat($('editMin').value); if(isNaN(min)||min<=0){toast('时长无效');return}
+    const km=parseFloat($('editKm').value); it.cardio.min=min; it.cardio.km=isNaN(km)?null:km;
+  }else{
+    const s=it.sets[editTarget.si]; if(!s){closeEditModal();return}
+    const r=parseInt($('editR').value); if(isNaN(r)||r<=0){toast('次数无效');return}
+    s.w=parseFloat($('editW').value)||0; s.r=r;
+  }
+  save(DB); renderPlan(); closeEditModal(); toast('已修改 ✅');
+};
 function delPlanItem(ii){ DB.plan.items.splice(ii,1); save(DB); renderPlan(); }
 $('planExercise').onchange=updatePlanForm;
 $('planExNew').oninput=updatePlanForm;
