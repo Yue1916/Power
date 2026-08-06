@@ -147,7 +147,7 @@
     border-radius:12px; padding:10px 12px; font-size:13px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:10px}
   .banner .link{color:var(--gold); font-weight:600; white-space:nowrap}
   .pset{font-size:14px; background:var(--card); padding:8px 12px; border-radius:9px; color:var(--muted);
-    cursor:pointer; user-select:none; border:1px solid var(--line)}
+    cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; touch-action:manipulation; border:1px solid var(--line)}
   .pset.done{color:var(--accent2); border-color:var(--accent2); text-decoration:line-through; opacity:.9}
   .prdetail{font-size:12px; color:var(--muted); margin-top:2px}
 </style>
@@ -269,7 +269,7 @@
   <section id="view-plan" class="view">
     <div class="card">
       <h2>🎯 下次训练计划</h2>
-      <div class="hint">先排好下次要练的动作和目标重量，训练时每完成一组就点一下打勾 ✓，练完可一键写入记录。</div>
+      <div class="hint">训练时每完成一组就<b>轻点打勾 ✓</b>；如果临时改了重量或次数，<b>长按那一组</b>即可修改。练完可一键写入记录。</div>
       <div id="planList" style="margin-top:12px"></div>
       <div class="row" style="margin-top:6px">
         <button class="btn green" id="planToRecord" type="button" style="margin-top:0">✅ 打勾的写入今日记录</button>
@@ -1077,10 +1077,10 @@ function renderPlan(){
     let done,total,setsHtml;
     if(it.type==='cardio'){
       total=1; done=it.cardio.done?1:0;
-      setsHtml=`<span class="pset${it.cardio.done?' done':''}" onclick="togglePlanSet(${ii},0)">${it.cardio.done?'✓':'☐'} ${it.cardio.min}分钟${it.cardio.km?' · '+it.cardio.km+'km':''}</span>`;
+      setsHtml=`<span class="pset${it.cardio.done?' done':''}" data-ii="${ii}" data-si="0">${it.cardio.done?'✓':'☐'} ${it.cardio.min}分钟${it.cardio.km?' · '+it.cardio.km+'km':''}</span>`;
     }else{
       total=it.sets.length; done=it.sets.filter(s=>s.done).length;
-      setsHtml=it.sets.map((s,si)=>`<span class="pset${s.done?' done':''}" onclick="togglePlanSet(${ii},${si})">${s.done?'✓':'☐'} ${s.w||'自重'}${s.w?'kg':''}×${s.r}</span>`).join('');
+      setsHtml=it.sets.map((s,si)=>`<span class="pset${s.done?' done':''}" data-ii="${ii}" data-si="${si}">${s.done?'✓':'☐'} ${s.w||'自重'}${s.w?'kg':''}×${s.r}</span>`).join('');
     }
     return `<div class="log-item"><div class="top">
       <div><span class="name">${it.exercise}</span><span class="part">${it.part}</span></div>
@@ -1088,11 +1088,48 @@ function renderPlan(){
       <span class="link danger" onclick="delPlanItem(${ii})">删除</span></div></div>
       <div class="sets" style="gap:8px">${setsHtml}</div></div>`;
   }).join('');
+  attachPlanSetHandlers();
+}
+function attachPlanSetHandlers(){
+  $('planList').querySelectorAll('.pset').forEach(el=>{
+    const ii=+el.dataset.ii, si=+el.dataset.si;
+    let timer=null, longFired=false, moved=false, sx=0, sy=0;
+    el.addEventListener('pointerdown',e=>{
+      longFired=false; moved=false; sx=e.clientX; sy=e.clientY;
+      timer=setTimeout(()=>{ longFired=true; editPlanSet(ii,si); },500);
+    });
+    el.addEventListener('pointermove',e=>{
+      if(Math.abs(e.clientX-sx)>10||Math.abs(e.clientY-sy)>10){ moved=true; if(timer){clearTimeout(timer);timer=null;} }
+    });
+    el.addEventListener('pointerup',()=>{
+      if(timer){clearTimeout(timer);timer=null;}
+      if(longFired||moved){ longFired=false; return; }
+      togglePlanSet(ii,si);
+    });
+    el.addEventListener('pointercancel',()=>{ if(timer){clearTimeout(timer);timer=null;} });
+    el.addEventListener('contextmenu',e=>e.preventDefault());
+  });
 }
 function togglePlanSet(ii,si){
   const it=DB.plan.items[ii]; if(!it)return;
   if(it.type==='cardio')it.cardio.done=!it.cardio.done; else it.sets[si].done=!it.sets[si].done;
   save(DB); renderPlan();
+}
+function editPlanSet(ii,si){
+  const it=DB.plan.items[ii]; if(!it)return;
+  if(it.type==='cardio'){
+    const nm=prompt('时长（分钟）', it.cardio.min); if(nm===null)return;
+    const min=parseFloat(nm); if(isNaN(min)||min<=0){toast('时长无效');return}
+    const nk=prompt('距离 km（留空=无）', it.cardio.km??''); if(nk===null)return;
+    const km=parseFloat(nk); it.cardio.min=min; it.cardio.km=isNaN(km)?null:km;
+  }else{
+    const s=it.sets[si]; if(!s)return;
+    const nw=prompt('重量 kg（留空=自重）', s.w||''); if(nw===null)return;
+    const nr=prompt('次数', s.r); if(nr===null)return;
+    const r=parseInt(nr); if(isNaN(r)||r<=0){toast('次数无效');return}
+    s.w=parseFloat(nw)||0; s.r=r;
+  }
+  save(DB); renderPlan(); toast('已修改 ✅');
 }
 function delPlanItem(ii){ DB.plan.items.splice(ii,1); save(DB); renderPlan(); }
 $('planExercise').onchange=updatePlanForm;
