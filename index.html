@@ -244,6 +244,10 @@
       <h2>📅 近 7 天各部位组数</h2>
       <div id="weekStats"></div>
     </div>
+    <div class="card">
+      <h2>📝 训练心得汇总</h2>
+      <div id="notesList"></div>
+    </div>
     <div id="historyList"></div>
   </section>
 
@@ -264,6 +268,7 @@
     </div>
     <div class="card">
       <h2>🏆 各动作个人最佳 (PR)</h2>
+      <select id="prFilter" style="margin-bottom:10px"></select>
       <div id="prList"></div>
     </div>
   </section>
@@ -315,6 +320,9 @@
           <div><label>距离（km，选填）</label><input type="number" inputmode="decimal" id="planKm" placeholder="如 5"></div>
         </div>
       </div>
+
+      <label>备注 / 心得（选填）</label>
+      <input type="text" id="planNote" placeholder="如：这个重量偏轻 / 下次加5kg / 动作有点变形">
 
       <button class="btn" id="planAdd" type="button">加入计划</button>
     </div>
@@ -764,8 +772,16 @@ function renderWeekStats(){
       <span class="val">${counts[k]}${k===CARDIO?'':''}</span></div>`;
   }).join('');
 }
+function renderNotes(){
+  const box=$('notesList');
+  const withNotes=DB.logs.filter(l=>l.note).sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  if(!withNotes.length){box.innerHTML='<div class="hint">还没有心得备注。在记录或计划里填写的备注会自动汇总到这里。</div>';return}
+  box.innerHTML=withNotes.map(l=>`<div class="log-item"><div class="top">
+    <div class="name" style="font-size:13px">${fmtDate(l.date)} · ${l.exercise}<span class="part">${l.part}</span></div></div>
+    <div class="note" style="font-style:normal">📝 ${l.note}</div></div>`).join('');
+}
 function renderHistory(){
-  renderWeekStats();
+  renderWeekStats(); renderNotes();
   const list=$('historyList');
   if(!DB.logs.length){list.innerHTML='<div class="empty"><div class="big">📭</div>还没有记录，去「记录」页添加第一条吧！</div>';
     $('stDays').textContent=0;$('stSets').textContent=0;$('stVol').textContent=0;return}
@@ -992,9 +1008,18 @@ function bestSetText(l){
   if(weighted){ const best=l.sets.reduce((a,b)=>e1rm(b.w,b.r)>e1rm(a.w,a.r)?b:a); return `${best.w}kg × ${best.r}`; }
   const best=l.sets.reduce((a,b)=>b.r>a.r?b:a); return `自重 × ${best.r}`;
 }
+function renderPRFilter(){
+  const sel=$('prFilter'); const cur=sel.value;
+  const opts=['全部',...partsWithLogs()];
+  sel.innerHTML=opts.map(o=>`<option>${o}</option>`).join('');
+  sel.value=opts.includes(cur)?cur:'全部';
+  sel.onchange=renderPRList;
+}
 function renderPRList(){
+  const filter=$('prFilter')?$('prFilter').value:'全部';
+  const logs=(!filter||filter==='全部')?DB.logs:DB.logs.filter(l=>l.part===filter);
   const map={};
-  DB.logs.forEach(l=>{const v=scoreOf(l);
+  logs.forEach(l=>{const v=scoreOf(l);
     if(!map[l.exercise]||v>map[l.exercise].v)map[l.exercise]={v,date:l.date,unit:unitOf(l),type:l.type,detail:bestSetText(l)}});
   const keys=Object.keys(map).sort((a,b)=>map[b].v-map[a].v);
   $('prList').innerHTML=keys.length?keys.map(k=>{
@@ -1112,9 +1137,17 @@ function renderPlan(){
       <div><span class="name">${it.exercise}</span><span class="part">${it.part}</span></div>
       <div style="display:flex;gap:10px;align-items:center"><span style="color:var(--muted);font-size:12px">${done}/${total}</span>
       <span class="link danger" onclick="delPlanItem(${ii})">删除</span></div></div>
-      <div class="sets" style="gap:8px">${setsHtml}</div></div>`;
+      <div class="sets" style="gap:8px">${setsHtml}</div>
+      ${it.note?`<div class="note" style="font-style:normal">📝 ${it.note}</div>`:''}
+      <div style="margin-top:6px"><span class="link" onclick="editPlanNote(${ii})">${it.note?'✎ 修改心得':'＋ 添加心得'}</span></div>
+      </div>`;
   }).join('');
   attachPlanSetHandlers();
+}
+function editPlanNote(ii){
+  const it=DB.plan.items[ii]; if(!it)return;
+  const v=prompt('心得 / 备注', it.note||''); if(v===null)return;
+  it.note=v.trim(); save(DB); renderPlan();
 }
 function attachPlanSetHandlers(){
   $('planList').querySelectorAll('.pset').forEach(el=>{
@@ -1194,31 +1227,32 @@ $('planQfBtn').onclick=()=>{
 };
 $('planAdd').onclick=()=>{
   const c=planCurrentAdd(); if(!c){toast('请选择或输入动作');return}
+  const note=$('planNote').value.trim();
   if(c.type==='cardio'){
     const min=parseFloat($('planMin').value); if(isNaN(min)||min<=0){toast('请填写时长');return}
     const km=parseFloat($('planKm').value);
-    DB.plan.items.push({exercise:c.exercise,part:c.part,type:'cardio',cardio:{min,km:isNaN(km)?null:km,done:false}});
+    DB.plan.items.push({exercise:c.exercise,part:c.part,type:'cardio',cardio:{min,km:isNaN(km)?null:km,done:false},note});
     $('planMin').value='';$('planKm').value='';
   }else{
     const sets=[...$('planSetsWrap').children].map(x=>({
       w:parseFloat(x.querySelector('.w').value)||0, r:parseInt(x.querySelector('.r').value), done:false
     })).filter(s=>!isNaN(s.r)&&s.r>0);
     if(!sets.length){toast('请至少填写一组次数');return}
-    DB.plan.items.push({exercise:c.exercise,part:c.part,type:'strength',sets});
+    DB.plan.items.push({exercise:c.exercise,part:c.part,type:'strength',sets,note});
     planResetSets();
   }
-  $('planExNew').value='';
+  $('planExNew').value=''; $('planNote').value='';
   save(DB); renderPlan(); renderPlanExercise(); toast('已加入计划');
 };
 $('planToRecord').onclick=()=>{
   const today=todayStr(); let count=0; const remaining=[];
   DB.plan.items.forEach(it=>{
     if(it.type==='cardio'){
-      if(it.cardio.done){ DB.logs.push({id:Date.now()+count,date:today,part:it.part,exercise:it.exercise,type:'cardio',cardio:{min:it.cardio.min,km:it.cardio.km}}); count++; }
+      if(it.cardio.done){ const log={id:Date.now()+count,date:today,part:it.part,exercise:it.exercise,type:'cardio',cardio:{min:it.cardio.min,km:it.cardio.km}}; if(it.note)log.note=it.note; DB.logs.push(log); count++; }
       else remaining.push(it);
     }else{
       const doneSets=it.sets.filter(s=>s.done).map(s=>({w:s.w,r:s.r}));
-      if(doneSets.length){ DB.logs.push({id:Date.now()+count,date:today,part:it.part,exercise:it.exercise,type:'strength',sets:doneSets}); count++; }
+      if(doneSets.length){ const log={id:Date.now()+count,date:today,part:it.part,exercise:it.exercise,type:'strength',sets:doneSets}; if(it.note)log.note=it.note; DB.logs.push(log); count++; }
       const undone=it.sets.filter(s=>!s.done);
       if(undone.length)remaining.push({...it,sets:undone});
     }
@@ -1239,7 +1273,7 @@ function switchView(name){
   document.querySelectorAll('.tabbar button').forEach(x=>x.classList.toggle('active',x.dataset.view===name));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   $('view-'+name).classList.add('active');
-  if(name==='progress'){renderProgMode();renderProgSelect();renderRangeChips();drawChart();renderPRList()}
+  if(name==='progress'){renderProgMode();renderProgSelect();renderRangeChips();drawChart();renderPRFilter();renderPRList()}
   if(name==='history')renderHistory();
   if(name==='settings')renderBackupInfo();
   if(name==='plan'){renderPlanPartChips();renderPlanNewPart();renderPlanExercise();updatePlanForm();renderPlan()}
@@ -1248,10 +1282,10 @@ function switchView(name){
 document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>switchView(b.dataset.view); });
 
 /* ================= 刷新 ================= */
-function refreshAll(){renderExerciseSelect();renderHistory();renderProgSelect();renderPRList();renderBackupInfo();
+function refreshAll(){renderExerciseSelect();renderHistory();renderProgSelect();renderPRFilter();renderPRList();renderBackupInfo();
   if($('view-progress').classList.contains('active')){renderRangeChips();drawChart();}}
 window.delLog=delLog; window.rmSession=rmSession; window.editSession=editSession; window.editHistory=editHistory;
-window.togglePlanSet=togglePlanSet; window.delPlanItem=delPlanItem;
+window.togglePlanSet=togglePlanSet; window.delPlanItem=delPlanItem; window.editPlanNote=editPlanNote;
 window.addEventListener('resize',()=>{ if($('view-progress').classList.contains('active'))drawChart(); });
 
 /* ================= 初始化 ================= */
