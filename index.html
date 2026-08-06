@@ -139,7 +139,7 @@
   .wk-bar .nm{flex:0 0 44px; color:var(--muted)}
   .wk-bar .track{flex:1; background:var(--card2); border-radius:999px; height:14px; overflow:hidden}
   .wk-bar .fill{height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:999px}
-  .wk-bar .val{flex:0 0 auto; color:var(--text); font-weight:600; width:34px; text-align:right}
+  .wk-bar .val{flex:0 0 auto; color:var(--text); font-weight:600; text-align:right; white-space:nowrap; font-size:12px}
   .timer-pill{position:fixed; left:50%; bottom:96px; transform:translateX(-50%); z-index:55;
     background:var(--accent2); color:#04241d; font-weight:700; padding:10px 20px; border-radius:999px;
     font-size:16px; box-shadow:0 6px 20px rgba(0,0,0,.35); cursor:pointer; font-variant-numeric:tabular-nums}
@@ -236,16 +236,17 @@
   <!-- ============ 历史 ============ -->
   <section id="view-history" class="view">
     <div class="stat-grid">
-      <div class="stat"><div class="num" id="stDays">0</div><div class="lbl">训练天数</div></div>
-      <div class="stat"><div class="num" id="stSets">0</div><div class="lbl">力量组数</div></div>
-      <div class="stat"><div class="num" id="stVol">0</div><div class="lbl">总容量(吨)</div></div>
+      <div class="stat"><div class="num" id="stWeekDays">0</div><div class="lbl">近7天训练</div></div>
+      <div class="stat"><div class="num" id="stWeekParts">0</div><div class="lbl">近7天练到部位</div></div>
+      <div class="stat"><div class="num" id="stTotalDays">0</div><div class="lbl">累计训练天数</div></div>
     </div>
     <div class="card">
-      <h2>📅 近 7 天各部位组数</h2>
+      <h2>📅 近 7 天各部位</h2>
       <div id="weekStats"></div>
     </div>
     <div class="card">
       <h2>📝 训练心得汇总</h2>
+      <select id="notesFilter" style="margin-bottom:10px"></select>
       <div id="notesList"></div>
     </div>
     <div id="historyList"></div>
@@ -298,6 +299,8 @@
         <input type="text" id="planExNew" placeholder="新动作名（选填）">
         <select id="planPart" style="flex:0 0 110px"></select>
       </div>
+
+      <div id="planLastNote" class="hint"></div>
 
       <div id="planStrength">
         <label>快速填充（相同的组一次搞定）</label>
@@ -544,6 +547,8 @@ function showLast(){
       `</div>`+(prev.note?`<div class="note">📝 ${prev.note}</div>`:'')+
       `<div class="hint">上次估算1RM ${best}${unitOf(prev)}。${suggestText(prev)}</div></div>`;
   }
+  const ln=latestNoteOf(c.exercise);
+  if(ln) info.innerHTML+=`<div class="hint" style="margin-top:8px">📝 最近心得（${ln.date.slice(5)}）：${ln.note}</div>`;
 }
 function buildItem(){
   const c=currentAdd();
@@ -757,42 +762,59 @@ function prevLogOf(ex,beforeId){
 function renderWeekStats(){
   const box=$('weekStats');
   const since=dstr(new Date(Date.now()-6*86400000));
-  const counts={};
-  DB.logs.filter(l=>l.date>=since).forEach(l=>{
-    if(l.type==='cardio') counts[l.part]=(counts[l.part]||0)+1;
-    else counts[l.part]=(counts[l.part]||0)+l.sets.length;
+  const recent=DB.logs.filter(l=>l.date>=since);
+  const weekDays=new Set(recent.map(l=>l.date)).size;
+  const info={}; // 部位 -> {dates:Set, sets:count}
+  recent.forEach(l=>{
+    info[l.part]=info[l.part]||{dates:new Set(),sets:0};
+    info[l.part].dates.add(l.date);
+    info[l.part].sets += (l.type==='cardio'?0:l.sets.length);
   });
-  const keys=Object.keys(DEFAULT_PARTS).filter(p=>counts[p]);
-  if(!keys.length){box.innerHTML='<div class="hint">近 7 天还没有记录。</div>';return}
-  const max=Math.max(...keys.map(k=>counts[k]));
+  $('stWeekDays').textContent=weekDays+'天';
+  $('stWeekParts').textContent=Object.keys(info).length;
+  $('stTotalDays').textContent=new Set(DB.logs.map(l=>l.date)).size;
+  const keys=Object.keys(DEFAULT_PARTS).filter(p=>info[p]);
+  if(!keys.length){box.innerHTML='<div class="hint">近 7 天还没有记录。开练后这里会显示各部位练了几次、多少组。</div>';return}
+  const maxSets=Math.max(1,...keys.map(k=>info[k].sets));
   box.innerHTML=keys.map(k=>{
-    const suffix=k===CARDIO?' 次':' 组';
+    const times=info[k].dates.size, sets=info[k].sets;
+    const label=k===CARDIO?`${times} 次`:`${times} 次 · ${sets} 组`;
+    const w=k===CARDIO?100:Math.round(sets/maxSets*100);
     return `<div class="wk-bar"><span class="nm">${k}</span>
-      <span class="track"><span class="fill" style="width:${Math.round(counts[k]/max*100)}%"></span></span>
-      <span class="val">${counts[k]}${k===CARDIO?'':''}</span></div>`;
+      <span class="track"><span class="fill" style="width:${w}%"></span></span>
+      <span class="val">${label}</span></div>`;
   }).join('');
+}
+function latestNoteOf(ex){ return DB.logs.filter(l=>l.exercise===ex&&l.note).sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id)[0]; }
+let historyLimit=12;
+function showMoreHistory(){ historyLimit+=20; renderHistory(); }
+function renderNotesFilter(){
+  const sel=$('notesFilter'); const cur=sel.value;
+  const opts=['全部',...Object.keys(DEFAULT_PARTS).filter(p=>DB.logs.some(l=>l.part===p&&l.note))];
+  sel.innerHTML=opts.map(o=>`<option>${o}</option>`).join('');
+  sel.value=opts.includes(cur)?cur:'全部';
+  sel.onchange=renderNotes;
 }
 function renderNotes(){
   const box=$('notesList');
-  const withNotes=DB.logs.filter(l=>l.note).sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  const filter=$('notesFilter')?$('notesFilter').value:'全部';
+  let withNotes=DB.logs.filter(l=>l.note);
+  if(filter&&filter!=='全部')withNotes=withNotes.filter(l=>l.part===filter);
+  withNotes=withNotes.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
   if(!withNotes.length){box.innerHTML='<div class="hint">还没有心得备注。在记录或计划里填写的备注会自动汇总到这里。</div>';return}
   box.innerHTML=withNotes.map(l=>`<div class="log-item"><div class="top">
     <div class="name" style="font-size:13px">${fmtDate(l.date)} · ${l.exercise}<span class="part">${l.part}</span></div></div>
     <div class="note" style="font-style:normal">📝 ${l.note}</div></div>`).join('');
 }
 function renderHistory(){
-  renderWeekStats(); renderNotes();
+  renderWeekStats(); renderNotesFilter(); renderNotes();
   const list=$('historyList');
-  if(!DB.logs.length){list.innerHTML='<div class="empty"><div class="big">📭</div>还没有记录，去「记录」页添加第一条吧！</div>';
-    $('stDays').textContent=0;$('stSets').textContent=0;$('stVol').textContent=0;return}
+  if(!DB.logs.length){list.innerHTML='<div class="empty"><div class="big">📭</div>还没有记录，去「记录」页添加第一条吧！</div>';return}
   const byDate={};
   DB.logs.forEach(l=>{(byDate[l.date]=byDate[l.date]||[]).push(l)});
-  const dates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
-  let totalSets=0,totalVol=0;
-  DB.logs.forEach(l=>{if(l.type!=='cardio')totalSets+=l.sets.length; totalVol+=volumeOf(l)});
-  $('stDays').textContent=dates.length;
-  $('stSets').textContent=totalSets;
-  $('stVol').textContent=(totalVol/1000).toFixed(1);
+  const allDates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
+  const dates=allDates.slice(0,historyLimit);
+  const moreN=allDates.length-dates.length;
 
   list.innerHTML=dates.map(date=>{
     const items=byDate[date];
@@ -823,7 +845,7 @@ function renderHistory(){
           (l.note?`<div class="note">📝 ${l.note}</div>`:'')+
           (prText?'<div class="pr-badge">'+prText+'</div>':'')+`</div>`;
       }).join('')+`</div>`;
-  }).join('');
+  }).join('') + (moreN>0?`<button class="btn ghost" onclick="showMoreHistory()">显示更多（还有 ${moreN} 天）</button>`:'');
 }
 function delLog(id){
   if(!confirm('确定删除这条记录？'))return;
@@ -1061,6 +1083,7 @@ $('clearBtn').onclick=()=>{
 
 /* ================= 计划页 ================= */
 let planSelectedParts=new Set();
+let planTrash=null;
 function renderPlanPartChips(){
   const wrap=$('planPartChips'); wrap.innerHTML='';
   Object.keys(DEFAULT_PARTS).forEach(p=>{
@@ -1102,6 +1125,8 @@ function updatePlanForm(){
   const c=planCurrentAdd(); const cardio=c&&c.type==='cardio';
   $('planStrength').style.display=cardio?'none':'block';
   $('planCardio').style.display=cardio?'block':'none';
+  const ln=c?latestNoteOf(c.exercise):null;
+  $('planLastNote').innerHTML=ln?`📝 最近心得（${ln.date.slice(5)}）：${ln.note}`:'';
 }
 function planAddSetRow(w='',r=''){
   const wrap=$('planSetsWrap');
@@ -1123,8 +1148,9 @@ function planAddSetRow(w='',r=''){
 function planResetSets(){ $('planSetsWrap').innerHTML=''; planAddSetRow(); planAddSetRow(); planAddSetRow(); }
 function renderPlan(){
   const box=$('planList');
-  if(!DB.plan.items.length){box.innerHTML='<div class="hint">还没有计划。在下方添加你下次要练的动作。</div>';return}
-  box.innerHTML=DB.plan.items.map((it,ii)=>{
+  const head=planTrash?`<div class="banner" style="background:rgba(47,107,255,.12);border-color:var(--accent);color:var(--accent)"><span>已删除「${planTrash.item.exercise}」</span><span class="link" style="color:var(--accent);font-weight:600" onclick="restorePlanItem()">↩︎ 恢复</span></div>`:'';
+  if(!DB.plan.items.length){box.innerHTML=head+'<div class="hint">还没有计划。在下方添加你下次要练的动作。</div>';return}
+  box.innerHTML=head+DB.plan.items.map((it,ii)=>{
     let done,total,setsHtml;
     if(it.type==='cardio'){
       total=1; done=it.cardio.done?1:0;
@@ -1206,7 +1232,12 @@ $('editSave').onclick=()=>{
   }
   save(DB); renderPlan(); closeEditModal(); toast('已修改 ✅');
 };
-function delPlanItem(ii){ DB.plan.items.splice(ii,1); save(DB); renderPlan(); }
+function delPlanItem(ii){ planTrash={item:DB.plan.items[ii],index:ii}; DB.plan.items.splice(ii,1); save(DB); renderPlan(); }
+function restorePlanItem(){
+  if(!planTrash)return;
+  const idx=Math.min(planTrash.index,DB.plan.items.length);
+  DB.plan.items.splice(idx,0,planTrash.item); planTrash=null; save(DB); renderPlan(); toast('已恢复');
+}
 $('planExercise').onchange=updatePlanForm;
 $('planExNew').oninput=updatePlanForm;
 $('planPart').onchange=updatePlanForm;
@@ -1286,6 +1317,7 @@ function refreshAll(){renderExerciseSelect();renderHistory();renderProgSelect();
   if($('view-progress').classList.contains('active')){renderRangeChips();drawChart();}}
 window.delLog=delLog; window.rmSession=rmSession; window.editSession=editSession; window.editHistory=editHistory;
 window.togglePlanSet=togglePlanSet; window.delPlanItem=delPlanItem; window.editPlanNote=editPlanNote;
+window.restorePlanItem=restorePlanItem; window.showMoreHistory=showMoreHistory;
 window.addEventListener('resize',()=>{ if($('view-progress').classList.contains('active'))drawChart(); });
 
 /* ================= 初始化 ================= */
