@@ -128,6 +128,10 @@
   .sess-act .ed{background:transparent; border:none; color:var(--accent); font-size:18px; cursor:pointer; padding:4px 6px}
   .badge-part{font-size:10px; background:var(--card); color:var(--muted); padding:1px 7px; border-radius:999px; margin-left:6px}
   .badge-edit{font-size:10px; background:rgba(47,107,255,.18); color:var(--accent); padding:1px 7px; border-radius:999px; margin-left:6px}
+  .drag-handle{flex:0 0 auto; cursor:grab; touch-action:none; color:var(--muted); font-size:20px; line-height:1;
+    padding:4px 8px 4px 0; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none}
+  .drag-handle:active{cursor:grabbing}
+  .sess-item.dragging,.log-item.dragging{opacity:.6; border-color:var(--accent); box-shadow:0 6px 18px rgba(0,0,0,.4)}
   .quickfill{display:flex; align-items:center; gap:6px; margin-top:6px}
   .quickfill input{padding:10px; text-align:center; min-width:0}
   .quickfill span{color:var(--muted); flex:0 0 auto}
@@ -300,6 +304,7 @@
         <select id="planPart" style="flex:0 0 110px"></select>
       </div>
 
+      <div id="planBestRec"></div>
       <div id="planLastNote" class="hint"></div>
 
       <div id="planStrength">
@@ -431,6 +436,47 @@ function unitOf(l){
   return l.sets.some(s=>s.w>0) ? 'kg' : '次';
 }
 function volumeOf(l){ return l.type==='cardio'?0:l.sets.reduce((s,x)=>s+x.w*x.r,0) }
+// 某动作的历史最好记录（按进步分数：负重->估算1RM，自重->最大次数，有氧->时长）
+function bestRecordOf(ex){
+  const rows=DB.logs.filter(l=>l.exercise===ex);
+  if(!rows.length) return null;
+  return rows.reduce((a,b)=> scoreOf(b)>scoreOf(a)?b:a );
+}
+function bestRecHtml(ex){
+  const b=bestRecordOf(ex);
+  if(!b) return '';
+  const extra = b.type==='cardio' ? '' : ` · 估算1RM ${round1(scoreOf(b))}${unitOf(b)}`;
+  return `<div class="pr-badge">🏆 历史最佳 ${bestSetText(b)}${extra} · ${b.date.slice(5)}</div>`;
+}
+// 通用：给列表启用触屏可用的拖动排序。每个可排序项需带 data-sort-item 和 data-sort-index，内部含 .drag-handle
+function enableDragSort(listEl, onReorder){
+  listEl.querySelectorAll('.drag-handle').forEach(handle=>{
+    handle.addEventListener('pointerdown', e=>{
+      e.preventDefault();
+      const dragEl=handle.closest('[data-sort-item]');
+      if(!dragEl) return;
+      dragEl.classList.add('dragging');
+      try{ handle.setPointerCapture(e.pointerId); }catch(_){}
+      const move=ev=>{
+        const after=[...listEl.querySelectorAll('[data-sort-item]:not(.dragging)')]
+          .find(other=>{ const r=other.getBoundingClientRect(); return ev.clientY < r.top + r.height/2; });
+        listEl.insertBefore(dragEl, after||null);
+      };
+      const up=()=>{
+        try{ handle.releasePointerCapture(e.pointerId); }catch(_){}
+        handle.removeEventListener('pointermove',move);
+        handle.removeEventListener('pointerup',up);
+        handle.removeEventListener('pointercancel',up);
+        dragEl.classList.remove('dragging');
+        const order=[...listEl.querySelectorAll('[data-sort-item]')].map(el=>+el.dataset.sortIndex);
+        if(order.some((v,i)=>v!==i)) onReorder(order);
+      };
+      handle.addEventListener('pointermove',move);
+      handle.addEventListener('pointerup',up);
+      handle.addEventListener('pointercancel',up);
+    });
+  });
+}
 
 /* ================= 记录页 ================= */
 let selectedParts=new Set(['胸']);
@@ -549,6 +595,8 @@ function showLast(){
   }
   const ln=latestNoteOf(c.exercise);
   if(ln) info.innerHTML+=`<div class="hint" style="margin-top:8px">📝 最近心得（${ln.date.slice(5)}）：${ln.note}</div>`;
+  const best=bestRecHtml(c.exercise);
+  if(best) info.innerHTML = best + info.innerHTML;
 }
 function buildItem(){
   const c=currentAdd();
@@ -574,7 +622,9 @@ function renderSession(){
     const detail=it.type==='cardio'
       ? `${it.cardio.min}分钟`+(it.cardio.km?` · ${it.cardio.km}km`:'')
       : it.sets.map(s=>`${s.w||'自重'}${s.w?'':''}×${s.r}`).join('  ');
-    return `<div class="sess-item"><div class="info">
+    return `<div class="sess-item" data-sort-item data-sort-index="${i}">
+      <span class="drag-handle" title="拖动排序">≡</span>
+      <div class="info">
       <div class="nm">${it.exercise}<span class="badge-part">${it.part}</span>${it._editId?'<span class="badge-edit">改</span>':''}</div>
       <div class="dt">${detail}${it.note?' · 📝'+it.note:''}</div></div>
       <div class="sess-act">
@@ -582,6 +632,7 @@ function renderSession(){
         <button class="rm" onclick="rmSession(${i})" title="删除">✕</button>
       </div></div>`;
   }).join('');
+  enableDragSort(box, order=>{ session=order.map(i=>session[i]); renderSession(); saveDraft(); });
 }
 function rmSession(i){session.splice(i,1);renderSession();saveDraft()}
 function loadIntoForm(it){
@@ -1127,6 +1178,7 @@ function updatePlanForm(){
   $('planCardio').style.display=cardio?'block':'none';
   const ln=c?latestNoteOf(c.exercise):null;
   $('planLastNote').innerHTML=ln?`📝 最近心得（${ln.date.slice(5)}）：${ln.note}`:'';
+  $('planBestRec').innerHTML=c?bestRecHtml(c.exercise):'';
 }
 function planAddSetRow(w='',r=''){
   const wrap=$('planSetsWrap');
@@ -1159,8 +1211,9 @@ function renderPlan(){
       total=it.sets.length; done=it.sets.filter(s=>s.done).length;
       setsHtml=it.sets.map((s,si)=>`<span class="pset${s.done?' done':''}" data-ii="${ii}" data-si="${si}">${s.done?'✓':'☐'} ${s.w||'自重'}${s.w?'kg':''}×${s.r}</span>`).join('');
     }
-    return `<div class="log-item"><div class="top">
-      <div><span class="name">${it.exercise}</span><span class="part">${it.part}</span></div>
+    return `<div class="log-item" data-sort-item data-sort-index="${ii}"><div class="top">
+      <div style="display:flex;align-items:center;gap:8px"><span class="drag-handle" title="拖动排序">≡</span>
+      <div><span class="name">${it.exercise}</span><span class="part">${it.part}</span></div></div>
       <div style="display:flex;gap:10px;align-items:center"><span style="color:var(--muted);font-size:12px">${done}/${total}</span>
       <span class="link danger" onclick="delPlanItem(${ii})">删除</span></div></div>
       <div class="sets" style="gap:8px">${setsHtml}</div>
@@ -1169,6 +1222,7 @@ function renderPlan(){
       </div>`;
   }).join('');
   attachPlanSetHandlers();
+  enableDragSort(box, order=>{ DB.plan.items=order.map(i=>DB.plan.items[i]); save(DB); renderPlan(); });
 }
 function editPlanNote(ii){
   const it=DB.plan.items[ii]; if(!it)return;
