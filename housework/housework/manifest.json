@@ -1,0 +1,13 @@
+{
+  "name": "家务打卡",
+  "short_name": "家务打卡",
+  "description": "两人家务分工打卡，实时同步，月底自动算钱",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f1220",
+  "theme_color": "#00b894",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
