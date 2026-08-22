@@ -155,6 +155,9 @@
   .litem:last-child{border-bottom:none}
   .litem .li-nm{font-size:15px} .litem .li-fq{font-size:12px; color:var(--muted); margin-top:2px}
   .litem .li-pr{flex:0 0 auto; color:var(--gold); font-weight:700}
+  .dayhead{display:flex; justify-content:space-between; align-items:baseline; margin:14px 2px 8px; font-size:13px; font-weight:600; color:var(--text)}
+  .dayhead:first-child{margin-top:2px}
+  .dayhead .dtot{color:var(--gold); font-weight:700}
 </style>
 </head>
 <body>
@@ -188,6 +191,7 @@
         <div class="rest" style="text-align:right">结余<br><b id="sumRest" class="pos">¥2000</b></div>
       </div>
     </div>
+    <div class="hint" style="margin:-6px 2px 12px">💡 这里的金额只按本机记录算；月底与对方「合并」后，统计页才是家庭总账。</div>
 
     <div class="groupchips" id="groupChips"></div>
     <div id="choreList"></div>
@@ -216,6 +220,16 @@
     </div>
     <div class="hint" id="whoBreak" style="margin:-6px 2px 12px; text-align:center"></div>
     <div class="card">
+      <h2>🤝 对方本月已获（手动）</h2>
+      <div class="hint" style="margin-top:0">不互传备份时，在这里手动填对方这个月挣的家务钱，用于「合计 / 结余 / 共同基金」。填 0 或留空表示不计。</div>
+      <div class="row" style="margin-top:8px; align-items:center; gap:8px">
+        <span class="mini" style="flex:0 0 auto" id="partnerEarnLbl">对方</span>
+        <input type="number" inputmode="decimal" id="partnerEarn" placeholder="0" style="flex:1">
+        <span class="mini" style="flex:0 0 auto">元</span>
+      </div>
+      <div class="mini" id="partnerEarnNote" style="margin-top:6px"></div>
+    </div>
+    <div class="card">
       <h2>🍩 本月完成情况</h2>
       <canvas id="doneChart" style="display:block; margin:4px auto 0"></canvas>
       <div class="donleg">
@@ -235,6 +249,11 @@
     <div class="card">
       <h2>🕒 打卡明细（时间 · 记录）</h2>
       <div id="recordList"></div>
+    </div>
+    <div class="card">
+      <h2>📈 近几个月 &amp; 共同基金</h2>
+      <div id="trendList"></div>
+      <div class="hint" id="fundHint" style="margin-top:8px"></div>
     </div>
   </section>
 
@@ -289,9 +308,12 @@
 
     <div class="card">
       <h2>💾 数据管理</h2>
+      <div class="hint" id="backupInfo" style="margin-top:0"></div>
       <button class="btn ghost" id="exportBtn" type="button">⬇️ 导出备份 (JSON)</button>
+      <button class="btn ghost" id="csvBtn" type="button">📊 导出 CSV（Excel 对账）</button>
       <button class="btn ghost" id="importBtn" type="button">⬆️ 导入备份（覆盖本机）</button>
       <input type="file" id="importFile" accept="application/json" style="display:none">
+      <button class="btn ghost" id="restoreExportBtn" type="button">↩️ 恢复到上次导出的备份</button>
       <button class="btn ghost" id="mergeBtn" type="button" style="color:var(--accent2)">🔀 合并对方的备份（补全两人记录）</button>
       <input type="file" id="mergeFile" accept="application/json" style="display:none">
       <button class="btn ghost" id="resetMonthBtn" type="button" style="color:var(--gold)">🔄 清空本月打卡记录</button>
@@ -370,6 +392,7 @@ function curMonth(){const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 function monthOf(ts){const d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function fmt$(n){n=Math.round(n*10)/10;return '¥'+(Number.isInteger(n)?n:n.toFixed(1))}
 function timeStr(ts){const d=new Date(ts);return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
+function hmStr(ts){const d=new Date(ts);return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
 // 给非当前月补记时，落在该月15号中午，确保归入正确月份
 function tsForMonth(m){if(!m||m===curMonth())return Date.now();const [y,mo]=m.split('-').map(Number);return new Date(y,mo-1,15,12,0,0).getTime()}
 
@@ -377,7 +400,6 @@ function tsForMonth(m){if(!m||m===curMonth())return Date.now();const [y,mo]=m.sp
 const LKEY='housework_v1', MEKEY='hk_me';
 let DB={config:{...DEFAULT_CFG},chores:{},completions:{}};
 let ME=localStorage.getItem(MEKEY)||'A';
-const synced=false, roomRef=null; // 已改为纯本地模式
 let statMonth=curMonth();
 let checkinMonth=curMonth();
 let searchTerm='';
@@ -397,42 +419,39 @@ function choreArr(){return Object.entries(DB.chores).map(([id,c])=>({id,...c})).
 function compArr(){return Object.entries(DB.completions||{}).map(([id,c])=>({id,...c}))}
 function compInMonth(m){return compArr().filter(c=>monthOf(c.ts)===m)}
 function amtOf(c){return c.amt!=null?c.amt:(DB.chores[c.choreId]?DB.chores[c.choreId].price:0)}
-function earnBy(who,m){return compInMonth(m).filter(c=>c.who===who).reduce((s,c)=>s+amtOf(c),0)}
 function spentIn(m){return compInMonth(m).reduce((s,c)=>s+amtOf(c),0)}
+function earnedOf(cid,m){return compInMonth(m).filter(c=>c.choreId===cid).reduce((s,c)=>s+amtOf(c),0)}
+// 某月「我 / 对方」金额拆分：对方金额优先用合并到的真实记录，否则用手动填写值
+function monthEarnBreak(m){
+  const cs=compInMonth(m);
+  const mine=cs.filter(c=>c.who===ME).reduce((s,c)=>s+amtOf(c),0);
+  const mergedOther=cs.filter(c=>c.who!==ME).reduce((s,c)=>s+amtOf(c),0);
+  const manual=(DB.partnerEarn&&DB.partnerEarn[m])||0;
+  const other=mergedOther>0?mergedOther:manual;
+  return {mine, other, mergedOther, total:mine+other};
+}
 
-/* ---- 数据写入（本地/同步统一入口） ---- */
+/* ---- 数据写入（纯本地） ---- */
+let _lastAdd={id:null,ts:0};
 function addCompletion(choreId,who,note,month){
   const ch=DB.chores[choreId]; if(!ch)return;
+  const now=Date.now();
+  if(_lastAdd.id===choreId && now-_lastAdd.ts<1200){ toast('刚记过啦，别重复点～'); return; } // 防误触
+  _lastAdd={id:choreId,ts:now};
   const rec={choreId,who,ts:tsForMonth(month),amt:ch.price};
   if(note&&note.trim()) rec.note=note.trim();
-  if(synced){roomRef.child('completions').push(rec);}
-  else{const id=uid(); DB.completions[id]=rec; persistLocal(); renderAll();}
+  DB.completions[uid()]=rec; persistLocal(); renderAll();
   const back=(month&&month!==curMonth())?`（补记到 ${month}）`:'';
   toast(`${who==='A'?DB.config.nameA:DB.config.nameB} +${fmt$(ch.price)}${back}`);
 }
-function delCompletion(id){
-  if(synced){roomRef.child('completions/'+id).remove();}
-  else{delete DB.completions[id]; persistLocal(); renderAll();}
-}
-function saveChore(id,obj){
-  if(synced){roomRef.child('chores/'+id).set(obj);}
-  else{DB.chores[id]=obj; persistLocal(); renderAll();}
-}
-function delChore(id){
-  if(synced){roomRef.child('chores/'+id).remove();}
-  else{delete DB.chores[id]; persistLocal(); renderAll();}
-}
-function saveConfig(cfg){
-  DB.config=cfg;
-  if(synced){roomRef.child('config').set(cfg);}
-  else{persistLocal(); renderAll();}
-}
-// 改动历史（本机记录，随后由 save/del 持久化）
+function delCompletion(id){ delete DB.completions[id]; persistLocal(); renderAll(); }
+function saveChore(id,obj){ DB.chores[id]=obj; persistLocal(); renderAll(); }
+function delChore(id){ delete DB.chores[id]; persistLocal(); renderAll(); }
+function saveConfig(cfg){ DB.config=cfg; persistLocal(); renderAll(); }
 function logHistory(action,name,detail){
   if(!DB.history) DB.history=[];
   DB.history.unshift({ts:Date.now(),action,name,detail:detail||''});
   if(DB.history.length>100) DB.history=DB.history.slice(0,100);
-  if(synced) roomRef.child('history').set(DB.history);
 }
 
 /* ================= 渲染 ================= */
@@ -446,8 +465,9 @@ function renderList(){
   const wrap=$('listAll'); wrap.innerHTML='';
   GROUPS.forEach(([g,label])=>{
     const arr=choreArr().filter(c=>(c.group||'other')===g); if(!arr.length)return;
+    const sub=arr.reduce((s,c)=>s+c.price*(c.target||0),0);
     const card=document.createElement('div'); card.className='card';
-    card.innerHTML=`<h2>${label}</h2>`+arr.map(c=>
+    card.innerHTML=`<h2>${label}<span style="margin-left:auto;font-size:12px;color:var(--muted);font-weight:400">预计 ${fmt$(sub)}/月</span></h2>`+arr.map(c=>
       `<div class="litem"><div><div class="li-nm">${esc(c.name)}</div><div class="li-fq">${esc(c.freq||'')}${c.scope?' · '+esc(c.scope):''}</div></div><div class="li-pr">${fmt$(c.price)}</div></div>`
     ).join('');
     wrap.appendChild(card);
@@ -489,7 +509,7 @@ function renderCheckin(){
     if(groupFilter==='all'){const h=document.createElement('div'); h.className='cat-title'; h.textContent=label; list.appendChild(h);}
     arr.forEach(c=>{
       shown++;
-      const n=cnt(c.id), got=n*c.price;
+      const n=cnt(c.id), got=earnedOf(c.id,m);
       const el=document.createElement('div'); el.className='chore';
       el.innerHTML=`<div class="top"><div><div class="nm">${esc(c.name)}</div><div class="scope">${esc(c.scope||'')}</div>
         <span class="freq">${esc(c.freq||'')}</span></div><div class="price">${fmt$(c.price)}</div></div>
@@ -523,17 +543,21 @@ function renderStats(){
   $('statMonth').value=statMonth;
   const m=statMonth, budget=DB.config.budget||0;
   const comps=compInMonth(m);
-  const earn=comps.reduce((s,c)=>s+amtOf(c),0);
-  $('stEarn').textContent=fmt$(earn);
+  const bk=monthEarnBreak(m);
+  const hasOther=bk.other>0;
+  const shown=hasOther?bk.total:bk.mine;
+  $('stEarn').textContent=fmt$(shown);
+  $('stEarnLbl').textContent=hasOther?'本月合计已获':'本月我已获';
   $('stCount').textContent=comps.length;
   $('stBudget').textContent=fmt$(budget);
-  $('stRest').textContent=fmt$(budget-earn);
-  // 合并了双方记录时，展示各自小计
-  const aSum=comps.filter(c=>c.who==='A').reduce((s,c)=>s+amtOf(c),0);
-  const bSum=comps.filter(c=>c.who==='B').reduce((s,c)=>s+amtOf(c),0);
-  const both=aSum>0&&bSum>0;
-  $('stEarnLbl').textContent=both?'本月合计已获':'本月我已获';
-  $('whoBreak').textContent=both?`${DB.config.nameA} ${fmt$(aSum)} · ${DB.config.nameB} ${fmt$(bSum)}`:'';
+  $('stRest').textContent=fmt$(budget-shown);
+  // 分人小计
+  const meName=ME==='A'?DB.config.nameA:DB.config.nameB, otName=ME==='A'?DB.config.nameB:DB.config.nameA;
+  $('whoBreak').textContent = hasOther ? `${meName} ${fmt$(bk.mine)} · ${otName} ${fmt$(bk.other)}${bk.mergedOther>0?'（合并记录）':'（手动填写）'}` : '';
+  // 手动输入框
+  $('partnerEarnLbl').textContent = otName;
+  $('partnerEarn').value = (DB.partnerEarn&&DB.partnerEarn[m])||'';
+  $('partnerEarnNote').textContent = bk.mergedOther>0 ? '本月已从「合并的实际记录」取用对方金额，手动值此月忽略。' : '';
 
   // 完成情况圆环：本月至少打卡过 1 次的家务算「已完成」
   const arr=choreArr();
@@ -563,24 +587,59 @@ function renderStats(){
     const n=comps.filter(x=>x.choreId===c.id).length;
     if(!n)return;
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td class="nm">${esc(c.name)}</td><td>${n}</td><td>${fmt$(n*c.price)}</td>`;
+    tr.innerHTML=`<td class="nm">${esc(c.name)}</td><td>${n}</td><td>${fmt$(earnedOf(c.id,m))}</td>`;
     tb.appendChild(tr);
   });
   if(!tb.children.length)tb.innerHTML='<tr><td colspan="3" class="mini" style="padding:16px">本月暂无明细</td></tr>';
 
-  // 打卡明细：时间 + 记录内容 + 取消打卡
+  // 打卡明细：按天分组 + 当日合计 + 取消打卡
   const recs=comps.slice().sort((a,b)=>b.ts-a.ts);
   const rl=$('recordList');
-  rl.innerHTML = recs.length ? recs.map(r=>{
-    const ch=DB.chores[r.choreId]; const nm=ch?ch.name:'（已删除的家务）';
-    const who=r.who==='A'?DB.config.nameA:DB.config.nameB;
-    return `<div class="rec"><div class="rinfo"><div class="r1">${esc(nm)} · <span class="who-${(r.who||'a').toLowerCase()}">${esc(who)}</span> · ${fmt$(amtOf(r))}</div>
-      <div class="r2">🕒 ${timeStr(r.ts)}${r.note?' · 📝 <span class="rnote">'+esc(r.note)+'</span>':''}</div></div>
-      <button class="rdel" data-delrec="${r.id}">取消打卡</button></div>`;
-  }).join('') : '<div class="mini" style="padding:8px 0">本月暂无打卡记录</div>';
+  if(!recs.length){
+    rl.innerHTML='<div class="mini" style="padding:8px 0">本月暂无打卡记录</div>';
+  }else{
+    const WK=['周日','周一','周二','周三','周四','周五','周六'];
+    const byDay={}, order=[];
+    recs.forEach(r=>{
+      const d=new Date(r.ts), key=`${d.getMonth()+1}/${d.getDate()}`;
+      if(!byDay[key]){byDay[key]={label:`${key} ${WK[d.getDay()]}`,items:[],total:0}; order.push(key);}
+      byDay[key].items.push(r); byDay[key].total+=amtOf(r);
+    });
+    rl.innerHTML = order.map(key=>{
+      const g=byDay[key];
+      const head=`<div class="dayhead"><span>${g.label}</span><span class="dtot">当日合计 ${fmt$(g.total)}</span></div>`;
+      const rows=g.items.map(r=>{
+        const ch=DB.chores[r.choreId]; const nm=ch?ch.name:'（已删除的家务）';
+        const who=r.who==='A'?DB.config.nameA:DB.config.nameB;
+        return `<div class="rec"><div class="rinfo"><div class="r1">${esc(nm)} · <span class="who-${(r.who||'a').toLowerCase()}">${esc(who)}</span> · ${fmt$(amtOf(r))}</div>
+          <div class="r2">🕒 ${hmStr(r.ts)}${r.note?' · 📝 <span class="rnote">'+esc(r.note)+'</span>':''}</div></div>
+          <button class="rdel" data-delrec="${r.id}">取消打卡</button></div>`;
+      }).join('');
+      return head+rows;
+    }).join('');
+  }
   rl.querySelectorAll('[data-delrec]').forEach(b=>b.onclick=()=>{
-    if(confirm('取消这次打卡记录？对应的金额也会扣回。')) delCompletion(b.dataset.delrec);
+    if(confirm('确定取消这次打卡吗？对应的金额也会一并扣回，此操作不可撤销。')) delCompletion(b.dataset.delrec);
   });
+
+  renderTrend();
+}
+
+function renderTrend(){
+  const budget=DB.config.budget||0;
+  const monthsSet=new Set(compArr().map(c=>monthOf(c.ts)));
+  Object.keys(DB.partnerEarn||{}).forEach(k=>{ if((DB.partnerEarn[k]||0)>0) monthsSet.add(k); });
+  const months=[...monthsSet].sort().reverse();
+  const el=$('trendList'), fh=$('fundHint');
+  if(!months.length){ el.innerHTML='<div class="mini">还没有记录</div>'; fh.textContent=''; return; }
+  el.innerHTML=months.slice(0,6).map(mm=>{
+    const b=monthEarnBreak(mm), sp=b.total, rest=budget-sp;
+    return `<div class="litem"><div class="li-nm">${mm}</div><div style="text-align:right">
+      <div>已发 ${fmt$(sp)}</div>
+      <div class="mini" style="color:${rest>=0?'var(--accent2)':'var(--danger)'}">结余 ${fmt$(rest)}</div></div></div>`;
+  }).join('');
+  const cumul=months.reduce((s,mm)=>s+(budget-monthEarnBreak(mm).total),0);
+  fh.textContent=`累计结余（可进共同基金）约 ${fmt$(cumul)} —— 按当前预算 ${fmt$(budget)}/月、共 ${months.length} 个月有记录估算。`;
 }
 
 function drawDonut(cv,done,total){
@@ -658,6 +717,13 @@ function renderSettings(){
   $('cfgNameA').value=DB.config.nameA; $('cfgNameB').value=DB.config.nameB;
   $('cfgBudget').value=DB.config.budget;
   $('myRole').textContent = (ME==='A'?DB.config.nameA:DB.config.nameB)+(ME==='A'?'（老婆）':'（老公）');
+  const lb=localStorage.getItem('hk_lastbackup'); const bi=$('backupInfo');
+  if(bi){
+    if(!lb){ bi.textContent='⚠️ 还没备份过，建议先导出一次备份存好。'; bi.style.color='var(--danger)'; }
+    else{ const days=Math.floor((Date.now()-Number(lb))/86400000);
+      bi.textContent='上次备份：'+(days<=0?'今天':days+' 天前')+(days>=20?'（太久了，尽快备份并和对方交换）':'');
+      bi.style.color = days>=20?'var(--danger)':'var(--muted)'; }
+  }
 }
 
 function showRolePick(){
@@ -686,6 +752,21 @@ function doExport(){
   const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=backupName()+'.json'; a.click();
+  localStorage.setItem('hk_lastbackup', String(Date.now()));
+  try{ localStorage.setItem('hk_lastexport', JSON.stringify(DB)); }catch(e){}
+  renderSettings();
+}
+function exportCSV(){
+  const rows=[['月份','日期','时间','家务','大类','记录人','金额','备注']];
+  compArr().sort((a,b)=>a.ts-b.ts).forEach(c=>{
+    const ch=DB.chores[c.choreId], d=new Date(c.ts);
+    rows.push([monthOf(c.ts), `${d.getMonth()+1}/${d.getDate()}`, hmStr(c.ts),
+      ch?ch.name:'(已删除)', ch?groupLabel(ch.group).replace(/^\S+\s/,''):'',
+      c.who==='A'?DB.config.nameA:DB.config.nameB, amtOf(c), c.note||'']);
+  });
+  const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=backupName()+'.csv'; a.click();
 }
 function halfPeriodKey(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+(d.getDate()<=15?'H1':'H2')}
 function maybeBackupReminder(){ if(localStorage.getItem('hk_bkperiod')!==halfPeriodKey()) $('backupBanner').style.display='block'; }
@@ -703,6 +784,12 @@ $('roleABtn').onclick=()=>setRole('A');
 $('roleBBtn').onclick=()=>setRole('B');
 $('rePickBtn').onclick=()=>showRolePick();
 $('statMonth').onchange=e=>{statMonth=e.target.value||curMonth();renderStats()};
+$('partnerEarn').onchange=e=>{
+  const v=parseFloat(e.target.value)||0;
+  if(!DB.partnerEarn) DB.partnerEarn={};
+  if(v>0) DB.partnerEarn[statMonth]=v; else delete DB.partnerEarn[statMonth];
+  persistLocal(); renderStats();
+};
 $('ckMonth').onchange=e=>{checkinMonth=e.target.value||curMonth();renderCheckin()};
 $('searchBox').oninput=e=>{searchTerm=e.target.value;renderCheckin()};
 $('sheetClose').onclick=()=>$('sheet').classList.remove('show');
@@ -726,6 +813,12 @@ $('naSave').onclick=()=>{
   toast('已新增：'+name);
 };
 $('exportBtn').onclick=doExport;
+$('csvBtn').onclick=exportCSV;
+$('restoreExportBtn').onclick=()=>{
+  const s=localStorage.getItem('hk_lastexport'); if(!s){toast('本机没有上次导出的副本');return}
+  if(!confirm('用「上次导出的备份」覆盖当前数据？'))return;
+  try{const d=JSON.parse(s); DB={config:{...DEFAULT_CFG,...(d.config||{})},chores:d.chores||{},completions:d.completions||{},history:d.history||[],partnerEarn:d.partnerEarn||{}}; persistLocal(); renderAll(); toast('已恢复到上次导出');}catch(e){toast('副本损坏，无法恢复')}
+};
 $('bkNow').onclick=()=>{doExport(); dismissReminder(); toast('已导出，记得发给对方');};
 $('bkLater').onclick=()=>dismissReminder();
 $('importBtn').onclick=()=>$('importFile').click();
@@ -739,35 +832,29 @@ $('mergeFile').onchange=e=>{
     if(d.history&&d.history.length){ const seen=new Set((DB.history||[]).map(x=>x.ts+x.action+x.name));
       d.history.forEach(x=>{ if(!seen.has(x.ts+x.action+x.name)) (DB.history=DB.history||[]).push(x); });
       DB.history.sort((a,b)=>b.ts-a.ts); DB.history=DB.history.slice(0,200); }
-    if(synced){roomRef.child('chores').set(DB.chores);roomRef.child('completions').set(DB.completions);}
-    else persistLocal();
+    persistLocal();
     renderAll(); toast(`已合并 ${added} 条打卡记录`);
   }catch(err){toast('文件无法识别')}}; r.readAsText(f);
 };
 $('importFile').onchange=e=>{
   const f=e.target.files[0]; if(!f)return; const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result); if(!d.chores)throw 0;
-    DB={config:{...DEFAULT_CFG,...(d.config||{})},chores:d.chores,completions:d.completions||{}};
-    if(synced){roomRef.child('config').set(DB.config);roomRef.child('chores').set(DB.chores);roomRef.child('completions').set(DB.completions);}
-    else persistLocal(); renderAll(); toast('导入成功');
+    DB={config:{...DEFAULT_CFG,...(d.config||{})},chores:d.chores,completions:d.completions||{},history:d.history||[],partnerEarn:d.partnerEarn||{}};
+    persistLocal(); renderAll(); toast('导入成功');
   }catch(err){toast('文件无法识别')}}; r.readAsText(f);
 };
 $('resetMonthBtn').onclick=()=>{
   if(!confirm('清空本月（'+curMonth()+'）所有打卡记录？家务清单保留。'))return;
-  const m=curMonth();
-  compInMonth(m).forEach(c=>{if(synced)roomRef.child('completions/'+c.id).remove();else delete DB.completions[c.id]});
-  if(!synced){persistLocal();renderAll()} toast('本月已清空');
+  compInMonth(curMonth()).forEach(c=>{delete DB.completions[c.id]});
+  persistLocal(); renderAll(); toast('本月已清空');
 };
 $('restoreDefBtn').onclick=()=>{
   if(!confirm('恢复默认家务清单？会覆盖当前清单（打卡记录保留）。'))return;
-  seedChores();
-  if(synced)roomRef.child('chores').set(DB.chores); else{persistLocal();renderAll()}
-  toast('已恢复默认清单');
+  seedChores(); persistLocal(); renderAll(); toast('已恢复默认清单');
 };
 $('clearBtn').onclick=()=>{
   if(!confirm('清空全部数据（清单+打卡）？此操作不可撤销。'))return;
-  if(synced){roomRef.child('completions').remove();seedChores();roomRef.child('chores').set(DB.chores);}
-  else{DB={config:{...DEFAULT_CFG},chores:{},completions:{}};seedChores();persistLocal();renderAll()}
+  DB={config:{...DEFAULT_CFG},chores:{},completions:{}}; seedChores(); persistLocal(); renderAll();
   toast('已清空');
 };
 
@@ -796,6 +883,8 @@ renderAll();
 if(!localStorage.getItem(MEKEY)) showRolePick();
 // 每半月备份提醒
 maybeBackupReminder();
+// 注册 Service Worker（离线可用）
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 </script>
 </body>
 </html>
