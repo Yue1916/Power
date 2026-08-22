@@ -160,13 +160,20 @@
 <body>
 
 <header>
-  <h1>🧹 家务打卡 <span id="syncPill" class="pill off">本地</span></h1>
-  <div class="sub" id="headSub">谁做谁记账 · 月底自动算钱</div>
+  <h1>🧹 家务打卡</h1>
+  <div class="sub" id="headSub">谁做谁记账 · 本地记录，定期备份交换</div>
 </header>
 
 <main>
   <!-- ============ 打卡 ============ -->
   <section id="view-checkin" class="view active">
+    <div class="card" id="backupBanner" style="display:none; border-color:var(--gold); background:rgba(255,207,92,.08)">
+      <div style="font-size:14px">🗓️ 到备份时间啦！导出这半个月的记录，和对方交换合并，两台手机就都能凑齐两人的记录。</div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn sm" id="bkNow" type="button" style="background:var(--gold);color:#3a2e00">⬇️ 立即导出备份</button>
+        <button class="btn sm ghost" id="bkLater" type="button">稍后</button>
+      </div>
+    </div>
     <div class="rolebar">记录身份：<b id="roleName">月月</b><span class="link" id="rolebarChange">切换</span></div>
 
     <div class="ckbar">
@@ -202,11 +209,12 @@
       <input type="month" id="statMonth">
     </div>
     <div class="stat-grid">
-      <div class="stat"><div class="num g" id="stEarn">¥0</div><div class="lbl">本月我已获</div></div>
+      <div class="stat"><div class="num g" id="stEarn">¥0</div><div class="lbl" id="stEarnLbl">本月我已获</div></div>
       <div class="stat"><div class="num" id="stCount">0</div><div class="lbl">打卡次数</div></div>
       <div class="stat"><div class="num" id="stBudget">¥2000</div><div class="lbl">预算</div></div>
       <div class="stat"><div class="num g" id="stRest">¥0</div><div class="lbl">本月结余</div></div>
     </div>
+    <div class="hint" id="whoBreak" style="margin:-6px 2px 12px; text-align:center"></div>
     <div class="card">
       <h2>🍩 本月完成情况</h2>
       <canvas id="doneChart" style="display:block; margin:4px auto 0"></canvas>
@@ -232,15 +240,36 @@
 
   <!-- ============ 计划 ============ -->
   <section id="view-plan" class="view">
+    <div class="card">
+      <h2>➕ 新增家务</h2>
+      <label>名称</label>
+      <input id="naName" placeholder="家务名称">
+      <div class="row">
+        <div><label>单价(元)</label><input type="number" inputmode="decimal" id="naPrice" placeholder="10"></div>
+        <div><label>目标月次数</label><input type="number" inputmode="decimal" id="naTarget" placeholder="1"></div>
+        <div><label>大类</label><select id="naGroup"></select></div>
+      </div>
+      <label>范围 / 内容（选填）</label>
+      <input id="naScope" placeholder="如：马桶、台盆、地面">
+      <label>频次说明（选填）</label>
+      <input id="naFreq" placeholder="如：每周1次">
+      <button class="btn" id="naSave" type="button">💾 保存新增</button>
+    </div>
+
     <div class="card sumcard">
       <div class="sumtop">
         <div><div class="big" id="planExp">¥0</div><div class="rest">按目标频次的预计月支出</div></div>
         <div class="rest" style="text-align:right">预计结余<br><b id="planRest" class="pos">¥0</b></div>
       </div>
-      <div class="hint">下面可改单价、目标月次数、范围、大类。改动保存在本机。</div>
+      <div class="hint">下面每项可改单价、目标月次数、范围、大类，改完点该输入框外即生效，保存在本机。</div>
     </div>
     <div id="planList"></div>
-    <button class="btn ghost" id="addChoreBtn" type="button">＋ 新增一项家务</button>
+
+    <div class="card">
+      <h2>🕒 改动历史</h2>
+      <div class="hint" style="margin-top:0">记录家务的新增 / 删除 / 修改（含金额、频次等），最近在前。</div>
+      <div id="historyList" style="margin-top:10px"></div>
+    </div>
   </section>
 
   <!-- ============ 设置 ============ -->
@@ -259,39 +288,12 @@
     </div>
 
     <div class="card">
-      <h2>🔗 双人同步 <span id="syncPill2" class="pill off">未连接</span></h2>
-      <div class="hint">两台手机填<b>同一个配对码</b>和<b>同一份 Firebase 配置</b>，即可实时同步。留空则只在本机使用。</div>
-      <label>配对码（你俩自定，如 <code>ourhome2026</code>）</label>
-      <input id="cfgRoom" placeholder="两台手机必须一致">
-      <label>Firebase 配置（粘贴 firebaseConfig 的 { ... } 内容）</label>
-      <textarea id="cfgFb" placeholder='{
-  "apiKey": "...",
-  "databaseURL": "https://xxx.firebaseio.com",
-  "projectId": "..."
-}'></textarea>
-      <div class="row">
-        <button class="btn green" id="connectBtn" type="button">连接同步</button>
-        <button class="btn ghost" id="disconnectBtn" type="button" style="flex:0 0 96px">断开</button>
-      </div>
-      <div class="hint" id="syncMsg"></div>
-      <details>
-        <summary>怎么拿到 Firebase 配置？（保姆级步骤）</summary>
-        <ol>
-          <li>电脑打开 <code>console.firebase.google.com</code>，用 Google 账号登录，新建一个项目（名字随意）。</li>
-          <li>左侧「构建 Build」→「Realtime Database 实时数据库」→ 创建数据库，位置随意，规则先选「测试模式」。</li>
-          <li>项目设置（齿轮）→「常规」→ 下滑到「你的应用」→ 点 <code>&lt;/&gt;</code> 注册一个网页应用。</li>
-          <li>它会给出一段 <code>firebaseConfig = { ... }</code>，把大括号里的内容整段复制，粘到上面的输入框。</li>
-          <li>两台手机填一样的配对码，点「连接同步」即可。</li>
-        </ol>
-        <div class="hint">提示：测试模式规则 30 天后过期，到期在数据库「规则」里把日期改远一点即可（这类小工具无敏感数据）。</div>
-      </details>
-    </div>
-
-    <div class="card">
       <h2>💾 数据管理</h2>
       <button class="btn ghost" id="exportBtn" type="button">⬇️ 导出备份 (JSON)</button>
-      <button class="btn ghost" id="importBtn" type="button">⬆️ 导入备份</button>
+      <button class="btn ghost" id="importBtn" type="button">⬆️ 导入备份（覆盖本机）</button>
       <input type="file" id="importFile" accept="application/json" style="display:none">
+      <button class="btn ghost" id="mergeBtn" type="button" style="color:var(--accent2)">🔀 合并对方的备份（补全两人记录）</button>
+      <input type="file" id="mergeFile" accept="application/json" style="display:none">
       <button class="btn ghost" id="resetMonthBtn" type="button" style="color:var(--gold)">🔄 清空本月打卡记录</button>
       <button class="btn ghost" id="restoreDefBtn" type="button">↩️ 恢复默认家务清单</button>
       <button class="btn ghost" id="clearBtn" type="button" style="color:var(--danger)">🗑️ 清空全部数据</button>
@@ -335,7 +337,8 @@ const DEFAULT_CHORES=[
   {name:'冰箱清理',scope:'清空、擦洗、丢过期、归类',freq:'每月1次',price:20,target:1,group:'kitchen'},
   {name:'遛狗',scope:'单次15分钟以上，含捡便（需单人，两人一起的不算）',freq:'每天2次',price:5,target:60,group:'dog'},
   {name:'喂食喂水',scope:'早晚投喂、换水，擦嘴、洗狗碗算一整天',freq:'每天',price:5,target:30,group:'dog'},
-  {name:'狗狗洗澡',scope:'洗澡 + 吹干 + 梳毛',freq:'每2周1次',price:50,target:2,group:'dog'},
+  {name:'狗狗洗澡+梳毛造型',scope:'洗澡 + 梳毛 + 造型修剪',freq:'每2周1次',price:30,target:2,group:'dog'},
+  {name:'狗狗吹毛+设备整理',scope:'吹干毛发、清理浴室、收拾吹水机等设备',freq:'每2周1次',price:20,target:2,group:'dog'},
   {name:'狗窝拆洗',scope:'狗窝、垫子拆洗晾晒',freq:'每月1次',price:15,target:1,group:'dog'},
   {name:'狗狗玩具清洗',scope:'玩具清洗消毒',freq:'每月1-2次',price:10,target:2,group:'dog'},
   {name:'狗狗剃脚毛',scope:'剃脚底、脚趾间毛发',freq:'每2周1次',price:20,target:2,group:'dog'},
@@ -371,11 +374,10 @@ function timeStr(ts){const d=new Date(ts);return `${d.getMonth()+1}/${d.getDate(
 function tsForMonth(m){if(!m||m===curMonth())return Date.now();const [y,mo]=m.split('-').map(Number);return new Date(y,mo-1,15,12,0,0).getTime()}
 
 /* ================= 状态 ================= */
-const LKEY='housework_v1', MEKEY='hk_me', SYNCKEY='hk_sync';
+const LKEY='housework_v1', MEKEY='hk_me';
 let DB={config:{...DEFAULT_CFG},chores:{},completions:{}};
 let ME=localStorage.getItem(MEKEY)||'A';
-let SYNC=JSON.parse(localStorage.getItem(SYNCKEY)||'null'); // {room, fb}
-let synced=false, roomRef=null;
+const synced=false, roomRef=null; // 已改为纯本地模式
 let statMonth=curMonth();
 let checkinMonth=curMonth();
 let searchTerm='';
@@ -425,50 +427,12 @@ function saveConfig(cfg){
   if(synced){roomRef.child('config').set(cfg);}
   else{persistLocal(); renderAll();}
 }
-
-/* ================= 同步（Firebase） ================= */
-function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('加载失败'));document.head.appendChild(s)})}
-async function initSync(){
-  if(!SYNC||!SYNC.room||!SYNC.fb){synced=false;updateSyncUI();return}
-  setSyncMsg('连接中…');
-  try{
-    if(!window.firebase){
-      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
-      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');
-    }
-    if(!firebase.apps.length) firebase.initializeApp(SYNC.fb);
-    const db=firebase.database();
-    roomRef=db.ref('rooms/'+SYNC.room);
-    roomRef.on('value',snap=>{
-      const v=snap.val()||{};
-      DB.config={...DEFAULT_CFG,...(v.config||{})};
-      DB.chores=v.chores||{};
-      DB.completions=v.completions||{};
-      if(!v.chores||!Object.keys(v.chores).length){seedRemote();return}
-      persistLocal(); synced=true; updateSyncUI(); renderAll();
-    },err=>{setSyncMsg('连接失败：'+err.message);synced=false;updateSyncUI()});
-    synced=true;
-  }catch(e){setSyncMsg('无法加载同步组件（检查网络/配置）：'+e.message);synced=false;updateSyncUI()}
-}
-function seedRemote(){
-  // 房间为空 -> 用当前本地数据（或默认清单）初始化
-  if(!Object.keys(DB.chores).length) seedChores();
-  const cfg=DB.config||{...DEFAULT_CFG};
-  roomRef.child('config').set(cfg);
-  roomRef.child('chores').set(DB.chores);
-  setSyncMsg('已初始化云端数据。');
-}
-function disconnectSync(){
-  if(roomRef){try{roomRef.off()}catch(e){}}
-  roomRef=null; synced=false; SYNC=null; localStorage.removeItem(SYNCKEY);
-  updateSyncUI(); setSyncMsg('已断开，改为本地模式。'); renderAll();
-}
-function setSyncMsg(m){$('syncMsg').textContent=m||''}
-function updateSyncUI(){
-  const on=synced;
-  $('syncPill').className='pill '+(on?'on':'off'); $('syncPill').textContent=on?'同步中':'本地';
-  $('syncPill2').className='pill '+(on?'on':'off'); $('syncPill2').textContent=on?'已连接':'未连接';
-  $('headSub').textContent=on?('已连接 · 配对码 '+(SYNC?SYNC.room:'')):'谁做谁记账 · 月底自动算钱';
+// 改动历史（本机记录，随后由 save/del 持久化）
+function logHistory(action,name,detail){
+  if(!DB.history) DB.history=[];
+  DB.history.unshift({ts:Date.now(),action,name,detail:detail||''});
+  if(DB.history.length>100) DB.history=DB.history.slice(0,100);
+  if(synced) roomRef.child('history').set(DB.history);
 }
 
 /* ================= 渲染 ================= */
@@ -564,6 +528,12 @@ function renderStats(){
   $('stCount').textContent=comps.length;
   $('stBudget').textContent=fmt$(budget);
   $('stRest').textContent=fmt$(budget-earn);
+  // 合并了双方记录时，展示各自小计
+  const aSum=comps.filter(c=>c.who==='A').reduce((s,c)=>s+amtOf(c),0);
+  const bSum=comps.filter(c=>c.who==='B').reduce((s,c)=>s+amtOf(c),0);
+  const both=aSum>0&&bSum>0;
+  $('stEarnLbl').textContent=both?'本月合计已获':'本月我已获';
+  $('whoBreak').textContent=both?`${DB.config.nameA} ${fmt$(aSum)} · ${DB.config.nameB} ${fmt$(bSum)}`:'';
 
   // 完成情况圆环：本月至少打卡过 1 次的家务算「已完成」
   const arr=choreArr();
@@ -603,7 +573,8 @@ function renderStats(){
   const rl=$('recordList');
   rl.innerHTML = recs.length ? recs.map(r=>{
     const ch=DB.chores[r.choreId]; const nm=ch?ch.name:'（已删除的家务）';
-    return `<div class="rec"><div class="rinfo"><div class="r1">${esc(nm)} · ${fmt$(amtOf(r))}</div>
+    const who=r.who==='A'?DB.config.nameA:DB.config.nameB;
+    return `<div class="rec"><div class="rinfo"><div class="r1">${esc(nm)} · <span class="who-${(r.who||'a').toLowerCase()}">${esc(who)}</span> · ${fmt$(amtOf(r))}</div>
       <div class="r2">🕒 ${timeStr(r.ts)}${r.note?' · 📝 <span class="rnote">'+esc(r.note)+'</span>':''}</div></div>
       <button class="rdel" data-delrec="${r.id}">取消打卡</button></div>`;
   }).join('') : '<div class="mini" style="padding:8px 0">本月暂无打卡记录</div>';
@@ -645,25 +616,48 @@ function renderPlan(){
         <div><label>目标月次数</label><input type="number" inputmode="decimal" data-f="target" value="${c.target}"></div>
         <div><label>大类</label><select data-f="group">${opts}</select></div></div>
         <label>范围 / 内容</label><input data-f="scope" value="${esc(c.scope||'')}">
-        <label>频次说明</label><input data-f="freq" value="${esc(c.freq||'')}">`;
+        <label>频次说明</label><input data-f="freq" value="${esc(c.freq||'')}">
+        <button class="btn sm" data-save type="button" style="margin-top:10px">💾 保存修改</button>`;
       const commit=()=>{
         const gv=f=>el.querySelector(`[data-f="${f}"]`).value;
-        saveChore(c.id,{name:gv('name').trim()||c.name,scope:gv('scope'),freq:gv('freq'),
-          price:parseFloat(gv('price'))||0,target:parseFloat(gv('target'))||0,group:gv('group'),order:c.order});
+        const old=DB.chores[c.id]||{};
+        const nw={name:gv('name').trim()||c.name,scope:gv('scope'),freq:gv('freq'),
+          price:parseFloat(gv('price'))||0,target:parseFloat(gv('target'))||0,group:gv('group'),order:c.order};
+        const chg=[];
+        if(nw.name!==old.name) chg.push(`名称 ${old.name}→${nw.name}`);
+        if(nw.price!==old.price) chg.push(`单价 ${fmt$(old.price)}→${fmt$(nw.price)}`);
+        if(nw.target!==old.target) chg.push(`目标 ${old.target}→${nw.target}次`);
+        if((old.group||'other')!==nw.group) chg.push(`大类→${groupLabel(nw.group).replace(/^\S+\s/,'')}`);
+        if((old.scope||'')!==nw.scope) chg.push('范围');
+        if((old.freq||'')!==nw.freq) chg.push('频次');
+        if(chg.length) logHistory('修改',nw.name,chg.join('，'));
+        saveChore(c.id,nw);
       };
-      el.querySelectorAll('[data-f]').forEach(inp=>inp.addEventListener('change',commit));
-      el.querySelector('[data-del]').onclick=()=>{if(confirm('删除「'+c.name+'」？'))delChore(c.id)};
+      el.querySelector('[data-save]').onclick=()=>{commit(); toast('已保存修改');};
+      el.querySelector('[data-del]').onclick=()=>{if(confirm('删除「'+c.name+'」？')){logHistory('删除',c.name,`单价${fmt$(c.price)}`);delChore(c.id)}};
       list.appendChild(el);
     });
   });
+  const ng=$('naGroup');
+  if(ng && !ng._filled){ ng.innerHTML=GROUPS.map(([gk,gl])=>`<option value="${gk}">${gl.replace(/^\S+\s/,'')}</option>`).join(''); ng._filled=true; }
+  renderHistory();
+}
+
+function renderHistory(){
+  const el=$('historyList'); if(!el)return;
+  const h=DB.history||[];
+  if(!h.length){el.innerHTML='<div class="mini">暂无改动记录</div>';return}
+  el.innerHTML=h.slice(0,50).map(x=>{
+    const color = x.action==='删除'?'var(--danger)':(x.action==='新增'?'var(--accent2)':'var(--gold)');
+    return `<div class="rec"><div class="rinfo"><div class="r1"><b style="color:${color}">${esc(x.action)}</b> ${esc(x.name)}</div>
+      <div class="r2">🕒 ${timeStr(x.ts)}${x.detail?' · '+esc(x.detail):''}</div></div></div>`;
+  }).join('');
 }
 
 function renderSettings(){
   $('cfgNameA').value=DB.config.nameA; $('cfgNameB').value=DB.config.nameB;
   $('cfgBudget').value=DB.config.budget;
   $('myRole').textContent = (ME==='A'?DB.config.nameA:DB.config.nameB)+(ME==='A'?'（老婆）':'（老公）');
-  if(SYNC){$('cfgRoom').value=SYNC.room||''; $('cfgFb').value=SYNC.fb?JSON.stringify(SYNC.fb,null,2):''}
-  updateSyncUI();
 }
 
 function showRolePick(){
@@ -679,6 +673,23 @@ function setRole(r){
 }
 
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+/* ================= 备份 / 提醒 ================= */
+function backupName(){
+  const d=new Date(), y=d.getFullYear(), m=d.getMonth()+1, day=d.getDate();
+  const last=new Date(y,m,0).getDate();
+  const range = day<=15 ? `${m}.1-${m}.15` : `${m}.16-${m}.${last}`;
+  const who=ME==='A'?DB.config.nameA:DB.config.nameB;
+  return `${who} ${range}`;
+}
+function doExport(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=backupName()+'.json'; a.click();
+}
+function halfPeriodKey(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+(d.getDate()<=15?'H1':'H2')}
+function maybeBackupReminder(){ if(localStorage.getItem('hk_bkperiod')!==halfPeriodKey()) $('backupBanner').style.display='block'; }
+function dismissReminder(){ localStorage.setItem('hk_bkperiod',halfPeriodKey()); $('backupBanner').style.display='none'; }
 
 /* ================= 事件绑定 ================= */
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{
@@ -702,28 +713,37 @@ $('saveCfgBtn').onclick=()=>{
     budget:parseFloat($('cfgBudget').value)||0};
   saveConfig(cfg); renderAll(); toast('已保存');
 };
-$('addChoreBtn').onclick=()=>{
+$('naSave').onclick=()=>{
+  const name=$('naName').value.trim();
+  if(!name){toast('请先填写名称');return}
   const orders=choreArr().map(c=>c.order??0); const id=uid();
-  saveChore(id,{name:'新家务',scope:'',freq:'每月1次',price:10,target:1,group:'other',order:(orders.length?Math.max(...orders):0)+1});
-  toast('已新增，可在下方编辑');
+  const obj={name,scope:$('naScope').value.trim(),freq:$('naFreq').value.trim()||'每月1次',
+    price:parseFloat($('naPrice').value)||0,target:parseFloat($('naTarget').value)||0,
+    group:$('naGroup').value||'other',order:(orders.length?Math.max(...orders):0)+1};
+  logHistory('新增',name,`单价${fmt$(obj.price)} · 目标${obj.target}次 · ${groupLabel(obj.group).replace(/^\S+\s/,'')}`);
+  saveChore(id,obj);
+  $('naName').value='';$('naScope').value='';$('naFreq').value='';$('naPrice').value='';$('naTarget').value='';
+  toast('已新增：'+name);
 };
-$('connectBtn').onclick=async()=>{
-  const room=$('cfgRoom').value.trim();
-  let fb; try{fb=JSON.parse($('cfgFb').value)}catch(e){setSyncMsg('Firebase 配置不是有效 JSON，请检查');return}
-  if(!room){setSyncMsg('请填写配对码');return}
-  if(!fb.databaseURL){setSyncMsg('配置里缺少 databaseURL（实时数据库地址）');return}
-  SYNC={room,fb}; localStorage.setItem(SYNCKEY,JSON.stringify(SYNC));
-  await initSync();
-  if(synced)toast('同步已连接');
-};
-$('disconnectBtn').onclick=()=>{if(confirm('断开同步并改为本地模式？'))disconnectSync()};
-
-$('exportBtn').onclick=()=>{
-  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='家务打卡备份_'+curMonth()+'.json'; a.click();
-};
+$('exportBtn').onclick=doExport;
+$('bkNow').onclick=()=>{doExport(); dismissReminder(); toast('已导出，记得发给对方');};
+$('bkLater').onclick=()=>dismissReminder();
 $('importBtn').onclick=()=>$('importFile').click();
+$('mergeBtn').onclick=()=>$('mergeFile').click();
+$('mergeFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return; const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result); if(!d||(!d.completions&&!d.chores))throw 0;
+    let added=0;
+    Object.entries(d.chores||{}).forEach(([id,ch])=>{ if(!DB.chores[id]) DB.chores[id]=ch; });
+    Object.entries(d.completions||{}).forEach(([id,c])=>{ if(!DB.completions[id]){ DB.completions[id]=c; added++; } });
+    if(d.history&&d.history.length){ const seen=new Set((DB.history||[]).map(x=>x.ts+x.action+x.name));
+      d.history.forEach(x=>{ if(!seen.has(x.ts+x.action+x.name)) (DB.history=DB.history||[]).push(x); });
+      DB.history.sort((a,b)=>b.ts-a.ts); DB.history=DB.history.slice(0,200); }
+    if(synced){roomRef.child('chores').set(DB.chores);roomRef.child('completions').set(DB.completions);}
+    else persistLocal();
+    renderAll(); toast(`已合并 ${added} 条打卡记录`);
+  }catch(err){toast('文件无法识别')}}; r.readAsText(f);
+};
 $('importFile').onchange=e=>{
   const f=e.target.files[0]; if(!f)return; const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result); if(!d.chores)throw 0;
@@ -759,11 +779,23 @@ if(DB.config.nameA==='我'){DB.config.nameA='月月';_mig=true}
 if(DB.config.nameB==='老公'){DB.config.nameB='坤坤';_mig=true}
 // 迁移：给缺少「大类」的家务按名字归类，未知归其他
 Object.values(DB.chores).forEach(c=>{ if(!c.group){ c.group=NAME2GROUP[c.name]||'other'; _mig=true; } });
+// 迁移：把旧的「狗狗洗澡」(50) 拆成 洗澡+梳毛造型(30) 与 吹毛+设备整理(20)
+(function(){
+  const found=Object.entries(DB.chores).find(([id,c])=>c.name==='狗狗洗澡');
+  if(!found) return;
+  const [id,c]=found;
+  DB.chores[id]={...c,name:'狗狗洗澡+梳毛造型',price:30,group:'dog',scope:'洗澡 + 梳毛 + 造型修剪'};
+  const maxOrder=Math.max(0,...Object.values(DB.chores).map(x=>x.order??0));
+  if(!DB.chores['cDogBlow']) DB.chores['cDogBlow']={name:'狗狗吹毛+设备整理',scope:'吹干毛发、清理浴室、收拾吹水机等设备',
+    freq:c.freq||'每2周1次',price:20,target:c.target||2,group:'dog',order:maxOrder+1};
+  _mig=true;
+})();
 if(_mig) persistLocal();
 renderAll();
 // 首次使用（本机未选过角色）弹出角色选择
 if(!localStorage.getItem(MEKEY)) showRolePick();
-if(SYNC&&SYNC.room&&SYNC.fb) initSync();
+// 每半月备份提醒
+maybeBackupReminder();
 </script>
 </body>
 </html>
