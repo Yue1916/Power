@@ -142,6 +142,9 @@
   .rec .rdel{flex:0 0 auto; background:rgba(255,84,112,.14); color:var(--danger); border:1px solid rgba(255,84,112,.4);
     border-radius:9px; padding:7px 10px; font-size:13px; cursor:pointer}
   .rec .rdel:active{transform:scale(.96)}
+  .rec .redit{flex:0 0 auto; background:rgba(0,211,167,.14); color:var(--accent2); border:1px solid rgba(0,211,167,.4);
+    border-radius:9px; padding:7px 10px; font-size:13px; cursor:pointer; margin-right:6px}
+  .rec .redit:active{transform:scale(.96)}
   .rolemodal{align-items:center; padding:24px}
   .rolecard{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:22px; width:100%; max-width:340px}
   .rolebar{font-size:14px; color:var(--muted); margin-bottom:12px}
@@ -354,7 +357,7 @@
 /* ================= 默认家务清单（最终版方案） ================= */
 const DEFAULT_CHORES=[
   {name:'做饭（正餐）',scope:'备菜、烹饪、盛装，一顿正餐',freq:'平均22顿/月',price:10,target:22,group:'kitchen'},
-  {name:'洗碗',scope:'桌面清理、碗筷、锅具 + 灶台水槽擦净',freq:'每天',price:10,target:30,group:'kitchen'},
+  {name:'洗碗',scope:'桌面清理、碗筷、锅具 + 灶台水槽擦净',freq:'按次（每次5元）',price:5,target:60,group:'kitchen'},
   {name:'厨房深度清洁',scope:'油烟机、灶台、台面去油',freq:'每周1次',price:20,target:4,group:'kitchen'},
   {name:'冰箱清理',scope:'清空、擦洗、丢过期、归类',freq:'每月1次',price:20,target:1,group:'kitchen'},
   {name:'遛狗',scope:'单次15分钟以上，含捡便（需单人，两人一起的不算）',freq:'每天2次',price:5,target:60,group:'dog'},
@@ -445,6 +448,14 @@ function addCompletion(choreId,who,note,month){
   toast(`${who==='A'?DB.config.nameA:DB.config.nameB} +${fmt$(ch.price)}${back}`);
 }
 function delCompletion(id){ delete DB.completions[id]; persistLocal(); renderAll(); }
+function editAmount(id){
+  const c=DB.completions[id]; if(!c)return;
+  const v=prompt('修改这次打卡的金额（元）：', amtOf(c));
+  if(v===null) return;
+  const n=parseFloat(v);
+  if(isNaN(n)||n<0){ toast('请输入有效金额'); return; }
+  c.amt=n; persistLocal(); renderAll(); toast('已改为 '+fmt$(n));
+}
 function saveChore(id,obj){ DB.chores[id]=obj; persistLocal(); renderAll(); }
 function delChore(id){ delete DB.chores[id]; persistLocal(); renderAll(); }
 function saveConfig(cfg){ DB.config=cfg; persistLocal(); renderAll(); }
@@ -534,7 +545,8 @@ function openLogSheet(choreId){
   $('sheetTitle').textContent=(ch?ch.name:'')+` · ${m} 记录`;
   const body=$('sheetBody');
   if(!rows.length){body.innerHTML='<div class="hint">该月还没有记录。</div>';}
-  else body.innerHTML=rows.map(r=>`<div class="clog"><span>${r.who==='A'?DB.config.nameA:DB.config.nameB} · ${fmt$(amtOf(r))} · ${timeStr(r.ts)}${r.note?'<br><span class="mini">📝 '+esc(r.note)+'</span>':''}</span><button class="del" data-del="${r.id}">✕</button></div>`).join('');
+  else body.innerHTML=rows.map(r=>`<div class="clog"><span>${r.who==='A'?DB.config.nameA:DB.config.nameB} · ${fmt$(amtOf(r))} · ${timeStr(r.ts)}${r.note?'<br><span class="mini">📝 '+esc(r.note)+'</span>':''}</span><span style="flex:0 0 auto"><button class="del" data-edit="${r.id}" style="color:var(--accent2)">✎</button><button class="del" data-del="${r.id}">✕</button></span></div>`).join('');
+  body.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{editAmount(b.dataset.edit); openLogSheet(choreId);});
   body.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{delCompletion(b.dataset.del); openLogSheet(choreId);});
   $('sheet').classList.add('show');
 }
@@ -613,11 +625,12 @@ function renderStats(){
         const who=r.who==='A'?DB.config.nameA:DB.config.nameB;
         return `<div class="rec"><div class="rinfo"><div class="r1">${esc(nm)} · <span class="who-${(r.who||'a').toLowerCase()}">${esc(who)}</span> · ${fmt$(amtOf(r))}</div>
           <div class="r2">🕒 ${hmStr(r.ts)}${r.note?' · 📝 <span class="rnote">'+esc(r.note)+'</span>':''}</div></div>
-          <button class="rdel" data-delrec="${r.id}">取消打卡</button></div>`;
+          <button class="redit" data-editrec="${r.id}">改额</button><button class="rdel" data-delrec="${r.id}">取消打卡</button></div>`;
       }).join('');
       return head+rows;
     }).join('');
   }
+  rl.querySelectorAll('[data-editrec]').forEach(b=>b.onclick=()=>editAmount(b.dataset.editrec));
   rl.querySelectorAll('[data-delrec]').forEach(b=>b.onclick=()=>{
     if(confirm('确定取消这次打卡吗？对应的金额也会一并扣回，此操作不可撤销。')) delCompletion(b.dataset.delrec);
   });
@@ -866,6 +879,11 @@ if(DB.config.nameA==='我'){DB.config.nameA='月月';_mig=true}
 if(DB.config.nameB==='老公'){DB.config.nameB='坤坤';_mig=true}
 // 迁移：给缺少「大类」的家务按名字归类，未知归其他
 Object.values(DB.chores).forEach(c=>{ if(!c.group){ c.group=NAME2GROUP[c.name]||'other'; _mig=true; } });
+// 迁移：洗碗 从按天(10) 改为按次(5元)
+(function(){
+  const found=Object.values(DB.chores).find(c=>c.name==='洗碗' && c.price===10);
+  if(found){ found.price=5; found.target=60; found.freq='按次（每次5元）'; _mig=true; }
+})();
 // 迁移：把旧的「狗狗洗澡」(50) 拆成 洗澡+梳毛造型(30) 与 吹毛+设备整理(20)
 (function(){
   const found=Object.entries(DB.chores).find(([id,c])=>c.name==='狗狗洗澡');
