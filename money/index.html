@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="共同财产">
+<meta name="theme-color" content="#2f6bff">
+<title>家庭共同财产</title>
+<style>
+  :root{
+    --bg:#0f1220; --card:#191d2e; --card2:#232840; --line:#2c3350;
+    --text:#eef1ff; --muted:#9aa3c7; --accent:#2f6bff; --accent2:#00d3a7;
+    --danger:#ff5470; --gold:#ffcf5c; --usd:#4fd1c5; --jpy:#c58cff; --radius:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--text); padding-bottom:76px; line-height:1.5;
+  }
+  header{
+    position:sticky; top:0; z-index:20; background:rgba(15,18,32,.92);
+    backdrop-filter:blur(10px); padding:14px 16px 12px; border-bottom:1px solid var(--line);
+  }
+  header h1{margin:0; font-size:18px; display:flex; align-items:center; gap:8px}
+  main{max-width:720px; margin:0 auto; padding:16px}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:16px}
+  .card h2{margin:0 0 12px; font-size:16px; display:flex; align-items:center; gap:8px}
+  label{display:block; font-size:13px; color:var(--muted); margin:12px 0 5px}
+  input,select{
+    width:100%; padding:12px; border-radius:12px; border:1px solid var(--line);
+    background:var(--card2); color:var(--text); font-size:16px; outline:none;
+  }
+  input:focus,select:focus{border-color:var(--accent)}
+  input[type=date]{-webkit-appearance:none; appearance:none; min-height:46px; display:block}
+  .row{display:flex; gap:10px}
+  .row>*{flex:1}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px}
+  .chip{
+    padding:9px 15px; border-radius:999px; background:var(--card2); border:1px solid var(--line);
+    font-size:14px; cursor:pointer; user-select:none; transition:.15s;
+  }
+  .chip.active{background:var(--accent); border-color:var(--accent); color:#fff}
+  .chip.out.active{background:var(--danger); border-color:var(--danger)}
+  .chip.in.active{background:var(--accent2); border-color:var(--accent2); color:#04241d}
+  .btn{
+    width:100%; padding:14px; border:none; border-radius:14px; font-size:16px; font-weight:600;
+    cursor:pointer; margin-top:16px; background:var(--accent); color:#fff; transition:.15s;
+  }
+  .btn:active{transform:scale(.98)}
+  .btn.green{background:var(--accent2); color:#04241d}
+  .btn.ghost{background:var(--card2); color:var(--text); border:1px solid var(--line)}
+  /* 余额总览 */
+  .balance-main{font-size:13px; color:var(--muted)}
+  .balance-main .amt{font-size:30px; font-weight:800; letter-spacing:.5px; margin-top:2px;
+    font-variant-numeric:tabular-nums; color:var(--text)}
+  .fx-grid{display:flex; gap:10px; margin-top:14px}
+  .fx{flex:1; background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:10px 12px}
+  .fx .lbl{font-size:11px; color:var(--muted)}
+  .fx .v{font-size:18px; font-weight:700; margin-top:2px; font-variant-numeric:tabular-nums}
+  .fx.usd .v{color:var(--usd)} .fx.jpy .v{color:var(--jpy)}
+  .fx .sub{font-size:10px; color:var(--muted); margin-top:3px}
+  .tabbar{
+    position:fixed; bottom:0; left:0; right:0; z-index:30; display:flex;
+    background:rgba(25,29,46,.96); backdrop-filter:blur(10px); border-top:1px solid var(--line);
+  }
+  .tabbar button{
+    flex:1; background:none; border:none; color:var(--muted); padding:9px 0 max(9px,env(safe-area-inset-bottom));
+    font-size:11px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px;
+  }
+  .tabbar button.active{color:var(--accent)}
+  .tabbar .ico{font-size:20px}
+  .view{display:none} .view.active{display:block}
+  /* 明细 */
+  .month-group{margin-bottom:18px}
+  .month-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; padding:0 2px}
+  .month-head .m{font-size:15px; font-weight:700}
+  .month-head .s{font-size:12px; color:var(--muted)}
+  .rec{background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:11px 13px; margin-bottom:8px; cursor:pointer}
+  .rec .top{display:flex; justify-content:space-between; align-items:center; gap:8px}
+  .rec .left{min-width:0}
+  .rec .cat{font-weight:600; font-size:15px}
+  .rec .meta{font-size:11px; color:var(--muted); margin-top:2px}
+  .rec .tag{font-size:10px; padding:1px 7px; border-radius:999px; margin-left:6px; background:var(--card); color:var(--muted)}
+  .rec .tag.usd{color:var(--usd)} .rec .tag.jpy{color:var(--jpy)}
+  .rec .amt{font-size:16px; font-weight:700; white-space:nowrap; font-variant-numeric:tabular-nums}
+  .rec .amt.in{color:var(--accent2)} .rec .amt.out{color:var(--danger)}
+  .rec .bal{font-size:11px; color:var(--muted); text-align:right; margin-top:2px; font-variant-numeric:tabular-nums}
+  .empty{text-align:center; color:var(--muted); padding:40px 20px; font-size:14px}
+  .empty .big{font-size:40px; margin-bottom:10px}
+  .filters{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap}
+  .filters select{flex:1; min-width:90px; padding:9px}
+  /* 统计 */
+  .stat-grid{display:flex; gap:10px; margin-bottom:8px}
+  .stat{flex:1; background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center}
+  .stat .num{font-size:19px; font-weight:700; font-variant-numeric:tabular-nums}
+  .stat .num.in{color:var(--accent2)} .stat .num.out{color:var(--danger)}
+  .stat .lbl{font-size:11px; color:var(--muted); margin-top:2px}
+  canvas{width:100%; height:220px; display:block; margin-top:6px}
+  .mbar{display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:13px}
+  .mbar .nm{flex:0 0 62px; color:var(--muted); font-size:12px}
+  .mbar .track{flex:1; background:var(--card2); border-radius:999px; height:16px; overflow:hidden; position:relative}
+  .mbar .fill{height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:999px}
+  .mbar .val{flex:0 0 auto; text-align:right; white-space:nowrap; font-size:12px; font-variant-numeric:tabular-nums}
+  .hint{font-size:12px; color:var(--muted); margin-top:6px; line-height:1.7}
+  .toast{
+    position:fixed; left:50%; bottom:92px; transform:translateX(-50%) translateY(20px);
+    background:var(--accent2); color:#04241d; padding:12px 22px; border-radius:999px; font-weight:600;
+    opacity:0; pointer-events:none; transition:.25s; z-index:60; font-size:14px;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:70; display:none; align-items:center; justify-content:center; padding:20px}
+  .modal.show{display:flex}
+  .modal-card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px; width:100%; max-width:360px; max-height:90vh; overflow:auto}
+  .modal-title{font-size:16px; font-weight:600; margin-bottom:6px}
+  .seg{display:flex; gap:8px}
+  .nw-break{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px}
+  .nw-item{flex:1 1 44%; background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:9px 11px; min-width:0}
+  .nw-item .lbl{font-size:11px; color:var(--muted)}
+  .nw-item .v{font-size:17px; font-weight:700; margin-top:2px; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .nw-item.usd .v{color:var(--usd)} .nw-item.jpy .v{color:var(--jpy)}
+  .nw-item .sub{font-size:10px; color:var(--muted); margin-top:2px}
+  .banner{background:rgba(47,107,255,.12); border:1px solid var(--accent); color:var(--accent);
+    border-radius:12px; padding:10px 12px; font-size:13px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:10px}
+  .banner .link{color:var(--accent); font-weight:600; cursor:pointer; white-space:nowrap}
+  .quickrow{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:4px}
+  .quickbtn{display:inline-flex; align-items:center; gap:6px; background:var(--card2); border:1px solid var(--line);
+    color:var(--text); border-radius:999px; padding:8px 14px; font-size:13px; cursor:pointer}
+  .quickbtn:active{transform:scale(.97)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💰 家庭共同财产 <span style="font-size:11px;color:var(--muted);font-weight:400" id="verTag"></span></h1>
+</header>
+
+<main>
+  <!-- ============ 记账 ============ -->
+  <section id="view-add" class="view active">
+    <div class="card" id="balanceCard">
+      <div class="balance-main">总资产净值（约）
+        <div class="amt" id="nwTotal">¥0</div>
+      </div>
+      <div class="nw-break">
+        <div class="nw-item"><div class="lbl">活期</div><div class="v" id="balCNY">¥0</div></div>
+        <div class="nw-item"><div class="lbl">三年定期</div><div class="v" id="balFixed">¥0</div><div class="sub" id="fixedSub"></div></div>
+        <div class="nw-item usd"><div class="lbl">美元</div><div class="v" id="balUSD">$0</div><div class="sub" id="balUSDsub"></div></div>
+        <div class="nw-item jpy"><div class="lbl">日元</div><div class="v" id="balJPY">¥0</div><div class="sub" id="balJPYsub"></div></div>
+      </div>
+      <div class="hint" id="nwHint" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <h2>➕ 记一笔</h2>
+
+      <div class="quickrow">
+        <span class="quickbtn" id="quickSalary">💵 本月工资存入</span>
+        <span class="quickbtn" id="quickExchange">💱 记一笔兑换</span>
+      </div>
+
+      <label>日期</label>
+      <input type="date" id="fDate">
+
+      <label>收支方向</label>
+      <div class="chips" id="dirChips"></div>
+
+      <label>币种</label>
+      <div class="chips" id="curChips"></div>
+
+      <div id="acctWrap">
+        <label>账户</label>
+        <div class="chips" id="acctChips"></div>
+      </div>
+
+      <label>归属</label>
+      <div class="chips" id="memChips"></div>
+
+      <label>金额</label>
+      <input type="number" inputmode="decimal" id="fAmt" placeholder="正数即可，方向由上方决定">
+      <div class="hint" id="amtPreview"></div>
+
+      <label>分类（选填）</label>
+      <select id="fCat"></select>
+
+      <label>备注（选填）</label>
+      <input type="text" id="fNote" placeholder="如：8月工资 / 物业费 / 股票卖出">
+
+      <button class="btn green" id="addBtn" type="button">✅ 保存</button>
+    </div>
+  </section>
+
+  <!-- ============ 明细 ============ -->
+  <section id="view-history" class="view">
+    <div class="filters">
+      <select id="fltCur"></select>
+      <select id="fltMem"></select>
+      <select id="fltYear"></select>
+    </div>
+    <input type="text" id="fltSearch" placeholder="🔍 搜索备注 / 分类 / 金额" style="margin-bottom:12px">
+    <div class="hint" style="margin:-6px 2px 12px">💡 点按任意一笔即可修改金额/日期或删除。</div>
+    <div id="historyList"></div>
+  </section>
+
+  <!-- ============ 统计 ============ -->
+  <section id="view-stats" class="view">
+    <div class="card">
+      <h2>📅 汇总</h2>
+      <div class="stat-grid">
+        <div class="stat"><div class="num in" id="stYearIn">0</div><div class="lbl">今年存入(¥)</div></div>
+        <div class="stat"><div class="num out" id="stYearOut">0</div><div class="lbl">今年支出(¥)</div></div>
+        <div class="stat"><div class="num" id="stYearNet">0</div><div class="lbl">今年净增(¥)</div></div>
+      </div>
+      <div class="hint" id="statHint"></div>
+    </div>
+    <div class="card">
+      <h2>📈 人民币结余趋势</h2>
+      <canvas id="chart"></canvas>
+      <div class="hint">每月月末活期结余走势。</div>
+    </div>
+    <div class="card">
+      <h2>💵 今年每月存入 / 支出</h2>
+      <div id="monthlyList"></div>
+    </div>
+    <div class="card">
+      <h2>📆 历年汇总</h2>
+      <div id="yearlyList"></div>
+    </div>
+    <div class="card">
+      <h2>💱 外币结余</h2>
+      <div id="fxList"></div>
+    </div>
+  </section>
+
+  <!-- ============ 设置 ============ -->
+  <section id="view-settings" class="view">
+    <div class="card">
+      <h2>⚙️ 数据管理</h2>
+      <div id="backupInfo" class="hint" style="font-size:13px"></div>
+      <button class="btn ghost" id="exportBtn" type="button">⬇️ 导出备份 (JSON)</button>
+      <button class="btn ghost" id="importBtn" type="button">⬆️ 导入备份</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+      <button class="btn ghost" id="seedBtn" type="button">↩︎ 重新载入历史示例数据</button>
+      <button class="btn ghost" id="clearBtn" type="button" style="color:var(--danger)">🗑️ 清空所有记录</button>
+    </div>
+    <div class="card">
+      <h2>💱 折算汇率</h2>
+      <div class="hint" style="margin-top:0">用于把美元、日元折算进「总资产净值」。汇率随时可改。</div>
+      <div class="row" style="margin-top:8px">
+        <div><label>1 美元 = ? 人民币</label><input type="number" inputmode="decimal" id="rateUSD"></div>
+        <div><label>1 日元 = ? 人民币</label><input type="number" inputmode="decimal" id="rateJPY"></div>
+      </div>
+      <button class="btn ghost" id="rateSave" type="button">保存汇率</button>
+    </div>
+    <div class="card">
+      <h2>ℹ️ 说明</h2>
+      <p class="hint" style="font-size:13px">
+      · 记账方向选「存入」为正、「支出」为负；兑换/转定期等按实际增减各记一笔<br>
+      · 人民币结余按你历史「合计」链条还原，当前应为 ¥487,761<br>
+      · 美元/日元早期数据零散，只按最近余额做了期初，可在明细里修改<br>
+      · 归属可选 共同 / 月月 / 坤坤，外币按归属分别统计<br>
+      · 数据仅存本设备，请定期导出备份
+      </p>
+    </div>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button data-view="add" class="active"><span class="ico">➕</span>记账</button>
+  <button data-view="history"><span class="ico">📚</span>明细</button>
+  <button data-view="stats"><span class="ico">📊</span>统计</button>
+  <button data-view="settings"><span class="ico">⚙️</span>设置</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- 编辑弹窗 -->
+<div class="modal" id="editModal">
+  <div class="modal-card">
+    <div class="modal-title">修改记录</div>
+    <label>日期</label>
+    <input type="date" id="eDate">
+    <label>收支方向</label>
+    <div class="chips" id="eDirChips"></div>
+    <label>币种</label>
+    <div class="chips" id="eCurChips"></div>
+    <div id="eAcctWrap">
+      <label>账户</label>
+      <div class="chips" id="eAcctChips"></div>
+    </div>
+    <label>归属</label>
+    <div class="chips" id="eMemChips"></div>
+    <label>金额</label>
+    <input type="number" inputmode="decimal" id="eAmt">
+    <label>分类</label>
+    <select id="eCat"></select>
+    <label>备注</label>
+    <input type="text" id="eNote">
+    <div class="row" style="margin-top:16px">
+      <button class="btn ghost" id="eDel" type="button" style="margin-top:0; color:var(--danger); flex:0 0 90px">删除</button>
+      <button class="btn ghost" id="eCancel" type="button" style="margin-top:0">取消</button>
+      <button class="btn green" id="eSave" type="button" style="margin-top:0">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 兑换弹窗 -->
+<div class="modal" id="exModal">
+  <div class="modal-card">
+    <div class="modal-title">💱 货币兑换</div>
+    <label>日期</label>
+    <input type="date" id="exDate">
+    <label>归属</label>
+    <div class="chips" id="exMemChips"></div>
+    <label>卖出（减少）</label>
+    <div class="row"><select id="exFromCur" style="flex:0 0 96px"></select><input type="number" inputmode="decimal" id="exFromAmt" placeholder="卖出金额"></div>
+    <label>买入（增加）</label>
+    <div class="row"><select id="exToCur" style="flex:0 0 96px"></select><input type="number" inputmode="decimal" id="exToAmt" placeholder="买入金额"></div>
+    <label>备注（选填）</label>
+    <input type="text" id="exNote" placeholder="如：美元兑人民币">
+    <div class="hint">会自动生成两笔：卖出币种减少、买入币种增加。</div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost" id="exCancel" type="button" style="margin-top:0">取消</button>
+      <button class="btn green" id="exSave" type="button" style="margin-top:0">保存两笔</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= 数据层 ================= */
+const APP_VERSION='v2.0';
+const KEY='family_finance_v1';
+const CURS=[['CNY','人民币'],['USD','美元'],['JPY','日元']];
+const CUR_SYM={CNY:'¥',USD:'$',JPY:'¥'};
+const MEMBERS=['共同','月月','坤坤'];
+const CNY_ACCTS=['活期','三年定期'];
+const DEFAULT_RATES={USD:7.1, JPY:0.048};
+const CATS=['自动','工资/存款','股票','公积金','兑换','转定期','卖房','物业费','房租','红包/人情','旅游','大额支出','日常支出','其他收入','校正'];
+
+/* ---- 历史种子数据 ---- */
+// 早期面额（无“合计”，按面值录入）
+const SEED_CNY_FACE=[
+  ['2020-11-04','存款',100000],
+  ['2020-11-04','存款',14000],
+  ['2020-11-04','现金',2400],
+  ['2020-11-04','打牌花销',-200],
+  ['2020-11-30','基金存款',3000],
+  ['2021-01-17','旅游',-3000],
+  ['2021-02-26','存款',4000],
+  ['2021-04-01','存款',3596],
+];
+// [日期, 备注, 该时点“合计”] —— 金额由合计差自动推导，保证结余链精确
+const SEED_CNY_TOTAL=[
+  ['2021-04-30','历史结余校正',121440],
+  ['2021-04-30','存款',123000],
+  ['2021-05-31','存款',127500],
+  ['2021-06-30','存款',133500],
+  ['2021-07-25','存款',190240],
+  ['2021-07-30','存款',193240],
+  ['2021-08-31','存款',196240],
+  ['2021-09-30','存款',205240],
+  ['2021-10-29','存款',212740],
+  ['2021-10-29','额外支出',208740],
+  ['2021-12-02','存款',213802],
+  ['2021-12-31','存款',225356],
+  ['2022-01-28','存款',236234],
+  ['2022-02-28','存款',251234],
+  ['2022-03-31','存款',262734],
+  ['2022-04-29','存款',277734],
+  ['2022-06-01','支出',266734],
+  ['2022-06-30','存款',279627],
+  ['2022-07-30','存款',293700],
+  ['2022-08-27','存款(车位费相关)',295340],
+  ['2022-08-31','存款',308207],
+  ['2022-09-16','美元兑人民币',338207],
+  ['2022-09-21','支出',336207],
+  ['2022-09-29','存款',350787],
+  ['2022-10-31','存款',364787],
+  ['2022-11-30','存款',378665],
+  ['2022-12-30','存款',391049],
+  ['2022-12-30','美元兑人民币',398180],
+  ['2023-01-31','存款',402599],
+  ['2023-02-28','存款',419903],
+  ['2023-02-28','商贷提前还款',43003],
+  ['2023-03-31','存款',56835],
+  ['2023-04-28','存款',72597],
+  ['2023-05-31','存款',84132],
+  ['2023-06-10','物业费',81857],
+  ['2023-06-20','6.18支出',73857],
+  ['2023-06-20','股票出售',128238],
+  ['2023-06-03','存款',141427],
+  ['2023-07-31','存款',155007],
+  ['2023-08-21','买车首付',115747],
+  ['2023-08-29','车险',108809],
+  ['2023-08-31','存款',116830],
+  ['2023-09-27','存款',128969],
+  ['2023-11-01','存款',139021],
+  ['2023-11-11','支出',134021],
+  ['2023-11-30','存款',145854],
+  ['2023-12-28','存款',154183],
+  ['2024-01-07','旅游',144378],
+  ['2024-02-01','存款',154967],
+  ['2024-03-04','支出',149631],
+  ['2024-03-30','存款',158590],
+  ['2024-04-29','存款',171111],
+  ['2024-05-31','存款',180180],
+  ['2024-06-30','存款',189123],
+  ['2024-07-02','物业费',186749],
+  ['2024-07-02','股票收入',217482],
+  ['2024-08-01','存款',225463],
+  ['2024-08-30','存款',228463],
+  ['2024-10-02','存款',239343],
+  ['2024-11-02','支出',213286],
+  ['2024-11-30','存款',216991],
+  ['2024-12-07','存款',274831],
+  ['2024-12-11','存款',315230],
+  ['2024-12-13','支出(义坤生日礼物)',312230],
+  ['2024-12-24','股票收入',365246],
+  ['2024-12-30','存款',374251],
+  ['2025-01-10','股票收入',392548],
+  ['2025-01-16','建行收入',407548],
+  ['2025-01-16','转微众银行定期',207548],
+  ['2025-01-26','存款',214029],
+  ['2025-02-28','存款',226137],
+  ['2025-03-31','存款',231904],
+  ['2025-04-28','卖房结余',1929355],
+  ['2025-04-28','转三年定期',429355],
+  ['2025-04-28','结余对齐(原活期转入定期/其他)',197451],
+  ['2025-04-28','存款',215064],
+  ['2025-04-30','物业费',213118],
+  ['2025-05-09','公积金提取',288686],
+  ['2025-05-30','存款',306362],
+  ['2025-06-30','存款',323209],
+  ['2025-07-31','存款',340120],
+  ['2025-08-26','美元兑换入账',350172],
+  ['2025-08-30','存款',358772],
+  ['2025-08-30','支出(月月生日+七夕)',352772],
+  ['2025-09-29','存款',367890],
+  ['2025-10-31','支出',342189],
+  ['2025-11-28','存款',360865],
+  ['2025-12-02','公积金提取',375265],
+  ['2025-12-30','存款',390472],
+  ['2026-01-30','存款',405648],
+  ['2026-02-28','存款',423602],
+  ['2026-02-28','过年红包支出',418002],
+  ['2026-03-15','哈尔滨支出',412742],
+  ['2026-03-31','存款',430191],
+  ['2026-04-23','房租',407991],
+  ['2026-04-30','收入',430591],
+  ['2026-05-29','收入',454249],
+  ['2026-06-29','收入',473530],
+  ['2026-07-31','收入',489761],
+  ['2026-08-20','支出(housework)',487761],
+];
+// 外币期初 / 变动 [日期, 币种, 归属, 金额, 备注]
+const SEED_FX=[
+  ['2026-05-29','USD','月月',9270,'期初(录入时累计余额)'],
+  ['2026-08-25','USD','月月',8232,'美元新增'],
+  ['2026-05-29','USD','坤坤',7017,'期初(录入时累计余额)'],
+  ['2026-01-30','JPY','坤坤',7203441,'期初(录入时余额)'],
+];
+
+function catOf(note, amount){
+  if(/校正|对齐/.test(note)) return '校正';
+  if(/兑换|美元兑|美金兑/.test(note)) return '兑换';
+  if(/定期/.test(note)) return '转定期';
+  if(/股票/.test(note)) return '股票';
+  if(/公积金/.test(note)) return '公积金';
+  if(/卖房/.test(note)) return '卖房';
+  if(/房租/.test(note)) return '房租';
+  if(/物业/.test(note)) return '物业费';
+  if(/红包|礼物|生日|人情/.test(note)) return '红包/人情';
+  if(/旅游|哈尔滨/.test(note)) return '旅游';
+  if(/期初/.test(note)) return '其他收入';
+  if(amount<0) return '日常支出';
+  return '工资/存款';
+}
+let idc=0;
+function buildSeed(){
+  const recs=[]; let seq=0, run=0;
+  const push=(date,cur,member,amount,note,acct)=>{ recs.push({id:++idc, seq:seq++, date, cur, member, amount, cat:catOf(note,amount), note, acct: acct||(cur==='CNY'?'活期':'')}); };
+  SEED_CNY_FACE.forEach(([d,note,a])=>{ run+=a; push(d,'CNY','共同',a,note); });
+  SEED_CNY_TOTAL.forEach(([d,note,t])=>{ const a=t-run; run=t; push(d,'CNY','共同',a,note); });
+  // 三年定期资产（卖房转入，2028到期）
+  push('2025-04-28','CNY','共同',1500000,'卖房转入三年定期(2028到期)','三年定期');
+  SEED_FX.forEach(([d,cur,m,a,note])=>{ push(d,cur,m,a,note); });
+  return recs;
+}
+
+function load(){ try{const d=JSON.parse(localStorage.getItem(KEY)); if(d&&d.records)return d}catch(e){} return null }
+function save(){ try{localStorage.setItem(KEY, JSON.stringify(DB))}catch(e){ toast('保存失败(存储空间可能已满)') } }
+let DB=load();
+if(!DB){ DB={records:buildSeed(), lastBackup:null, rates:{...DEFAULT_RATES}}; save(); }
+// 恢复 id / seq 计数器
+idc=DB.records.reduce((m,r)=>Math.max(m,r.id||0),0);
+let seqc=DB.records.reduce((m,r)=>Math.max(m,r.seq||0),0);
+migrate();
+// 老数据升级：补账户字段、汇率、三年定期资产
+function migrate(){
+  let changed=false;
+  DB.records.forEach(r=>{ if(r.cur==='CNY' && !r.acct){ r.acct='活期'; changed=true; } });
+  if(!DB.rates){ DB.rates={...DEFAULT_RATES}; changed=true; }
+  if(!DB.records.some(r=>r.acct==='三年定期')){
+    DB.records.push({id:++idc, seq:++seqc, date:'2025-04-28', cur:'CNY', member:'共同', amount:1500000, cat:'转定期', note:'卖房转入三年定期(2028到期)', acct:'三年定期'});
+    changed=true;
+  }
+  if(changed) save();
+}
+
+/* ================= 通用 ================= */
+const $=id=>document.getElementById(id);
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+function todayStr(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+function fmt(n){ const neg=n<0; n=Math.round(Math.abs(n)*100)/100; return (neg?'-':'')+n.toLocaleString('en-US',{maximumFractionDigits:2}); }
+function money(n,cur){ return CUR_SYM[cur]+fmt(n); }
+function sortedRecs(){ return DB.records.slice().sort((a,b)=> a.date.localeCompare(b.date) || a.seq-b.seq); }
+function balanceOf(cur, member){
+  return DB.records.filter(r=>r.cur===cur && (!member||r.member===member)).reduce((s,r)=>s+r.amount,0);
+}
+function balanceAcct(acct){ return DB.records.filter(r=>r.cur==='CNY' && (r.acct||'活期')===acct).reduce((s,r)=>s+r.amount,0); }
+function liquidRecs(){ return DB.records.filter(r=>r.cur==='CNY' && (r.acct||'活期')==='活期'); }
+function rates(){ return DB.rates||DEFAULT_RATES; }
+function netWorthCNY(){ const r=rates(); return balanceOf('CNY') + balanceOf('USD')*(+r.USD||0) + balanceOf('JPY')*(+r.JPY||0); }
+
+/* ================= 记账页 ================= */
+let addDir='in', addCur='CNY', addMem='共同', addAcct='活期';
+function renderChips(wrap, items, current, onPick, clsFn){
+  wrap.innerHTML='';
+  items.forEach(([val,label])=>{
+    const c=document.createElement('div');
+    c.className='chip'+(clsFn?clsFn(val):'')+(val===current?' active':'');
+    c.textContent=label; c.onclick=()=>onPick(val);
+    wrap.appendChild(c);
+  });
+}
+function renderAddChips(){
+  renderChips($('dirChips'), [['in','存入 ＋'],['out','支出 −']], addDir, v=>{addDir=v; renderAddChips(); updatePreview()}, v=>v==='in'?' in':' out');
+  renderChips($('curChips'), CURS, addCur, v=>{addCur=v; if(v!=='CNY')addAcct='活期'; renderAddChips(); updatePreview()});
+  renderChips($('acctChips'), CNY_ACCTS.map(a=>[a,a]), addAcct, v=>{addAcct=v; renderAddChips(); updatePreview()});
+  renderChips($('memChips'), MEMBERS.map(m=>[m,m]), addMem, v=>{addMem=v; renderAddChips()});
+  $('acctWrap').style.display = addCur==='CNY' ? 'block' : 'none';
+}
+function updatePreview(){
+  const v=parseFloat($('fAmt').value); const el=$('amtPreview');
+  if(isNaN(v)||v<=0){ el.textContent=''; return; }
+  const amt=(addDir==='in'?1:-1)*Math.abs(v);
+  if(addCur==='CNY') el.textContent=`记这笔后「${addAcct}」结余 → ${money(balanceAcct(addAcct)+amt,'CNY')}`;
+  else el.textContent=`记这笔后 ${addCur} 结余 → ${money(balanceOf(addCur)+amt,addCur)}`;
+}
+function fillCatSelect(sel,val){
+  sel.innerHTML=CATS.map(c=>`<option${c===val?' selected':''}>${c}</option>`).join('');
+}
+function renderBalances(){
+  $('balCNY').textContent=money(balanceAcct('活期'),'CNY');
+  const fixed=balanceAcct('三年定期');
+  $('balFixed').textContent=money(fixed,'CNY');
+  $('fixedSub').textContent=fixed?'2028到期':'';
+  const usd=balanceOf('USD'), jpy=balanceOf('JPY');
+  $('balUSD').textContent=money(usd,'USD');
+  $('balJPY').textContent=money(jpy,'JPY');
+  $('balUSDsub').textContent=`月 $${fmt(balanceOf('USD','月月'))} · 坤 $${fmt(balanceOf('USD','坤坤'))}`;
+  $('balJPYsub').textContent=jpy?'坤坤持有':'';
+  $('nwTotal').textContent=money(netWorthCNY(),'CNY');
+  const r=rates();
+  $('nwHint').textContent=`≈按 1美元=${r.USD} / 1日元=${r.JPY} 折算（活期+三年定期+外币）。汇率可在设置页修改。`;
+}
+$('fAmt').oninput=updatePreview;
+$('addBtn').onclick=()=>{
+  const v=parseFloat($('fAmt').value);
+  if(isNaN(v)||v<=0){toast('请填写金额');return}
+  const date=$('fDate').value||todayStr();
+  const amount=(addDir==='in'?1:-1)*Math.abs(v);
+  const note=$('fNote').value.trim();
+  let cat=$('fCat').value; if(cat==='自动') cat=catOf(note,amount);
+  DB.records.push({id:++idc, seq:++seqc, date, cur:addCur, member:addMem, amount, cat, note, acct: addCur==='CNY'?addAcct:''});
+  save(); refreshAll();
+  $('fAmt').value=''; $('fNote').value=''; $('fCat').value='自动'; updatePreview();
+  toast('已保存 ✅');
+};
+$('quickSalary').onclick=()=>{
+  addDir='in'; addCur='CNY'; addAcct='活期'; renderAddChips();
+  $('fDate').value=todayStr(); fillCatSelect($('fCat'),'工资/存款');
+  $('fNote').value=(new Date().getMonth()+1)+'月工资';
+  $('fAmt').focus(); updatePreview();
+  toast('填好金额即可保存 💵');
+};
+/* ---- 货币兑换 ---- */
+let exMem='共同';
+function renderExMem(){ renderChips($('exMemChips'), MEMBERS.map(m=>[m,m]), exMem, v=>{exMem=v; renderExMem()}); }
+function setSelectPlain(sel, items, val){ sel.innerHTML=items.map(([v,l])=>`<option value="${v}"${v===val?' selected':''}>${l}</option>`).join(''); }
+$('quickExchange').onclick=()=>{
+  $('exDate').value=todayStr(); exMem='共同'; renderExMem();
+  setSelectPlain($('exFromCur'),CURS,'USD'); setSelectPlain($('exToCur'),CURS,'CNY');
+  $('exFromAmt').value=''; $('exToAmt').value=''; $('exNote').value='';
+  $('exModal').classList.add('show');
+};
+$('exCancel').onclick=()=>$('exModal').classList.remove('show');
+$('exModal').onclick=e=>{ if(e.target===$('exModal'))$('exModal').classList.remove('show'); };
+$('exSave').onclick=()=>{
+  const fc=$('exFromCur').value, tc=$('exToCur').value;
+  const fa=parseFloat($('exFromAmt').value), ta=parseFloat($('exToAmt').value);
+  if(fc===tc){toast('买入/卖出币种不能相同');return}
+  if(isNaN(fa)||fa<=0||isNaN(ta)||ta<=0){toast('请填写两边金额');return}
+  const date=$('exDate').value||todayStr(); const note=$('exNote').value.trim()||`${fc}兑${tc}`;
+  DB.records.push({id:++idc,seq:++seqc,date,cur:fc,member:exMem,amount:-Math.abs(fa),cat:'兑换',note:'兑出·'+note,acct:fc==='CNY'?'活期':''});
+  DB.records.push({id:++idc,seq:++seqc,date,cur:tc,member:exMem,amount:Math.abs(ta),cat:'兑换',note:'兑入·'+note,acct:tc==='CNY'?'活期':''});
+  save(); $('exModal').classList.remove('show'); refreshAll(); toast('已记录兑换两笔 ✅');
+};
+
+/* ================= 明细页 ================= */
+function renderFilters(){
+  const years=[...new Set(DB.records.map(r=>r.date.slice(0,4)))].sort((a,b)=>b.localeCompare(a));
+  setSelect($('fltCur'), [['','全部币种'],...CURS], fltCur);
+  setSelect($('fltMem'), [['','全部归属'],...MEMBERS.map(m=>[m,m])], fltMem);
+  setSelect($('fltYear'), [['','全部年份'],...years.map(y=>[y,y+'年'])], fltYear);
+}
+function setSelect(sel, items, cur){
+  sel.innerHTML=items.map(([v,l])=>`<option value="${v}"${v===cur?' selected':''}>${l}</option>`).join('');
+  sel.onchange=()=>{ fltCur=$('fltCur').value; fltMem=$('fltMem').value; fltYear=$('fltYear').value; renderHistory(); };
+}
+let fltCur='', fltMem='', fltYear='', fltSearch='';
+$('fltSearch').oninput=e=>{ fltSearch=e.target.value.trim(); renderHistory(); };
+function renderHistory(){
+  const list=$('historyList');
+  const head=trash?`<div class="banner"><span>已删除「${trash.cat} ${CUR_SYM[trash.cur]}${fmt(Math.abs(trash.amount))}」</span><span class="link" onclick="restoreTrash()">↩︎ 撤销</span></div>`:'';
+  // 运行余额：人民币按账户分别累计，外币按币种累计
+  const running={};
+  const sorted=sortedRecs();
+  sorted.forEach(r=>{ const k=r.cur==='CNY'?'CNY:'+(r.acct||'活期'):r.cur; running[k]=(running[k]||0)+r.amount; r._bal=running[k]; });
+  let recs=sorted;
+  if(fltCur) recs=recs.filter(r=>r.cur===fltCur);
+  if(fltMem) recs=recs.filter(r=>r.member===fltMem);
+  if(fltYear) recs=recs.filter(r=>r.date.slice(0,4)===fltYear);
+  if(fltSearch){ const q=fltSearch.toLowerCase();
+    recs=recs.filter(r=> (r.note||'').toLowerCase().includes(q) || (r.cat||'').toLowerCase().includes(q) || String(Math.abs(r.amount)).includes(q)); }
+  if(!recs.length){ list.innerHTML=head+'<div class="empty"><div class="big">📭</div>没有符合条件的记录</div>'; return; }
+  const byMonth={};
+  recs.forEach(r=>{ const m=r.date.slice(0,7); (byMonth[m]=byMonth[m]||[]).push(r); });
+  const months=Object.keys(byMonth).sort((a,b)=>b.localeCompare(a));
+  list.innerHTML=head+months.map(m=>{
+    const items=byMonth[m].slice().reverse();
+    const liq=items.filter(r=>r.cur==='CNY'&&(r.acct||'活期')==='活期');
+    const cnyIn=liq.filter(r=>r.amount>0).reduce((s,r)=>s+r.amount,0);
+    const cnyOut=liq.filter(r=>r.amount<0).reduce((s,r)=>s+r.amount,0);
+    const sum=(cnyIn||cnyOut)?`活期 存入¥${fmt(cnyIn)}${cnyOut?' · 支出¥'+fmt(-cnyOut):''}`:'';
+    return `<div class="month-group">
+      <div class="month-head"><span class="m">${m.replace('-','年')}月</span><span class="s">${sum}</span></div>`+
+      items.map(r=>{
+        const io=r.amount>=0?'in':'out';
+        const sign=r.amount>=0?'+':'-';
+        const curTag=r.cur==='CNY'?'':`<span class="tag ${r.cur.toLowerCase()}">${r.cur}</span>`;
+        const acctTag=(r.cur==='CNY'&&(r.acct||'活期')!=='活期')?`<span class="tag">${r.acct}</span>`:'';
+        const memTag=r.member!=='共同'?`<span class="tag">${r.member}</span>`:'';
+        const bal=r.cur==='CNY'?`<div class="bal">${(r.acct||'活期')}余 ¥${fmt(r._bal)}</div>`:'';
+        return `<div class="rec" onclick="openEdit(${r.id})">
+          <div class="top">
+            <div class="left"><div class="cat">${r.cat}${curTag}${acctTag}${memTag}</div>
+              <div class="meta">${r.date}${r.note?' · '+r.note:''}</div></div>
+            <div><div class="amt ${io}">${sign}${CUR_SYM[r.cur]}${fmt(Math.abs(r.amount))}</div>${bal}</div>
+          </div></div>`;
+      }).join('')+`</div>`;
+  }).join('');
+}
+
+/* ================= 编辑弹窗 ================= */
+let editId=null, eDir='in', eCur='CNY', eMem='共同', eAcct='活期', trash=null;
+function renderEditChips(){
+  renderChips($('eDirChips'), [['in','存入 ＋'],['out','支出 −']], eDir, v=>{eDir=v; renderEditChips()}, v=>v==='in'?' in':' out');
+  renderChips($('eCurChips'), CURS, eCur, v=>{eCur=v; if(v!=='CNY')eAcct='活期'; renderEditChips()});
+  renderChips($('eAcctChips'), CNY_ACCTS.map(a=>[a,a]), eAcct, v=>{eAcct=v; renderEditChips()});
+  renderChips($('eMemChips'), MEMBERS.map(m=>[m,m]), eMem, v=>{eMem=v; renderEditChips()});
+  $('eAcctWrap').style.display = eCur==='CNY' ? 'block' : 'none';
+}
+function openEdit(id){
+  const r=DB.records.find(x=>x.id===id); if(!r)return;
+  editId=id; eDir=r.amount>=0?'in':'out'; eCur=r.cur; eMem=r.member; eAcct=r.acct||'活期';
+  $('eDate').value=r.date; $('eAmt').value=Math.abs(r.amount); $('eNote').value=r.note||'';
+  fillCatSelect($('eCat'), CATS.includes(r.cat)?r.cat:'自动');
+  renderEditChips();
+  $('editModal').classList.add('show');
+}
+function closeEdit(){ $('editModal').classList.remove('show'); editId=null; }
+$('eCancel').onclick=closeEdit;
+$('editModal').onclick=e=>{ if(e.target===$('editModal'))closeEdit(); };
+$('eSave').onclick=()=>{
+  const r=DB.records.find(x=>x.id===editId); if(!r){closeEdit();return}
+  const v=parseFloat($('eAmt').value); if(isNaN(v)||v<=0){toast('金额无效');return}
+  r.date=$('eDate').value||r.date;
+  r.amount=(eDir==='in'?1:-1)*Math.abs(v);
+  r.cur=eCur; r.member=eMem; r.acct=(eCur==='CNY'?eAcct:''); r.note=$('eNote').value.trim();
+  let cat=$('eCat').value; r.cat=(cat==='自动')?catOf(r.note,r.amount):cat;
+  save(); closeEdit(); refreshAll(); toast('已修改 ✅');
+};
+$('eDel').onclick=()=>{
+  const r=DB.records.find(x=>x.id===editId); if(!r)return;
+  if(!confirm('确定删除这条记录？'))return;
+  trash=r; DB.records=DB.records.filter(x=>x.id!==editId);
+  save(); closeEdit(); refreshAll(); toast('已删除，可在明细顶部撤销');
+};
+function restoreTrash(){ if(!trash)return; DB.records.push(trash); trash=null; save(); refreshAll(); toast('已恢复'); }
+window.restoreTrash=restoreTrash;
+
+/* ================= 统计页 ================= */
+function renderStats(){
+  const y=todayStr().slice(0,4);
+  const cny=liquidRecs();
+  const yin=cny.filter(r=>r.date.slice(0,4)===y&&r.amount>0).reduce((s,r)=>s+r.amount,0);
+  const yout=cny.filter(r=>r.date.slice(0,4)===y&&r.amount<0).reduce((s,r)=>s+r.amount,0);
+  $('stYearIn').textContent=fmt(yin);
+  $('stYearOut').textContent=fmt(-yout);
+  $('stYearNet').textContent=fmt(yin+yout);
+  const firstDate=DB.records.length?sortedRecs()[0].date:todayStr();
+  $('statHint').textContent=`记录自 ${firstDate} 起，共 ${DB.records.length} 笔。活期结余 ${money(balanceAcct('活期'),'CNY')}，总资产净值约 ${money(netWorthCNY(),'CNY')}。`;
+  renderMonthly();
+  renderYearly();
+  renderFxList();
+  drawChart();
+}
+function monthlyCNY(){
+  const map={}; // month -> {in,out}  仅活期
+  liquidRecs().forEach(r=>{
+    const m=r.date.slice(0,7); map[m]=map[m]||{in:0,out:0};
+    if(r.amount>0)map[m].in+=r.amount; else map[m].out+=r.amount;
+  });
+  return map;
+}
+function renderMonthly(){
+  const y=todayStr().slice(0,4);
+  const map=monthlyCNY();
+  const months=Object.keys(map).filter(m=>m.slice(0,4)===y).sort((a,b)=>b.localeCompare(a));
+  const maxIn=Math.max(1,...months.map(m=>map[m].in));
+  $('monthlyList').innerHTML=months.map(m=>{
+    const {in:i,out:o}=map[m];
+    const w=Math.round(i/maxIn*100);
+    const val=`+${fmt(i)}${o?' / -'+fmt(-o):''}`;
+    return `<div class="mbar"><span class="nm">${m.slice(5)}月</span>
+      <span class="track"><span class="fill" style="width:${w}%"></span></span>
+      <span class="val">${val}</span></div>`;
+  }).join('')||`<div class="hint">${y}年暂无记录</div>`;
+}
+function renderYearly(){
+  const cny=liquidRecs();
+  const map={};
+  cny.forEach(r=>{ const y=r.date.slice(0,4); map[y]=map[y]||{in:0,out:0};
+    if(r.amount>0)map[y].in+=r.amount; else map[y].out+=r.amount; });
+  const sorted=sortedRecs().filter(r=>r.cur==='CNY'&&(r.acct||'活期')==='活期'); let run=0; const yearEnd={};
+  sorted.forEach(r=>{ run+=r.amount; yearEnd[r.date.slice(0,4)]=run; });
+  const years=Object.keys(map).sort((a,b)=>b.localeCompare(a));
+  $('yearlyList').innerHTML=years.map(y=>{
+    const {in:i,out:o}=map[y]; const net=i+o;
+    return `<div class="rec" style="cursor:default">
+      <div class="top">
+        <div class="left"><div class="cat">${y}年</div>
+          <div class="meta">年末活期结余 ¥${fmt(yearEnd[y])}</div></div>
+        <div style="text-align:right">
+          <div style="font-size:13px;font-variant-numeric:tabular-nums"><span style="color:var(--accent2)">+${fmt(i)}</span> · <span style="color:var(--danger)">-${fmt(-o)}</span></div>
+          <div class="bal">净 ${net>=0?'+':'-'}¥${fmt(Math.abs(net))}</div></div>
+      </div></div>`;
+  }).join('')||'<div class="hint">暂无数据</div>';
+}
+function renderFxList(){
+  const rows=[];
+  ['USD','JPY'].forEach(cur=>{
+    const tot=balanceOf(cur);
+    if(tot===0 && !DB.records.some(r=>r.cur===cur)) return;
+    MEMBERS.forEach(m=>{ const b=balanceOf(cur,m); if(b) rows.push([`${cur} · ${m}`, money(b,cur)]); });
+    rows.push([`${cur} 合计`, money(tot,cur), true]);
+  });
+  $('fxList').innerHTML=rows.length?rows.map(([l,v,bold])=>
+    `<div class="mbar"><span class="nm" style="flex:1">${l}</span><span class="val" style="${bold?'font-weight:700':''}">${v}</span></div>`
+  ).join(''):'<div class="hint">暂无外币记录</div>';
+}
+function drawChart(){
+  const cv=$('chart');
+  // 每月月末活期结余
+  const sorted=sortedRecs().filter(r=>r.cur==='CNY'&&(r.acct||'活期')==='活期');
+  const monthBal={}; let run=0;
+  sorted.forEach(r=>{ run+=r.amount; monthBal[r.date.slice(0,7)]=run; });
+  const months=Object.keys(monthBal).sort();
+  const data=months.map(m=>monthBal[m]);
+  const dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight||220;
+  cv.width=W*dpr; cv.height=H*dpr; const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+  if(!data.length) return;
+  const padL=52,padR=14,padT=14,padB=24, cw=W-padL-padR, ch=H-padT-padB, n=data.length;
+  const max=Math.max(...data)*1.1||1, min=Math.min(0,...data);
+  const x=i=> n<=1?padL+cw/2 : padL+cw*i/(n-1);
+  const y=v=> padT+ch - ch*(v-min)/(max-min||1);
+  ctx.strokeStyle='#2c3350'; ctx.fillStyle='#9aa3c7'; ctx.lineWidth=1; ctx.font='10px sans-serif';
+  ctx.textAlign='right'; ctx.textBaseline='middle';
+  for(let g=0;g<=4;g++){ const gy=padT+ch*g/4; const val=max-(max-min)*g/4;
+    ctx.beginPath();ctx.moveTo(padL,gy);ctx.lineTo(padL+cw,gy);ctx.stroke();
+    ctx.fillText(Math.round(val/1000)+'k',padL-6,gy); }
+  ctx.strokeStyle='#2f6bff'; ctx.lineWidth=2.5; ctx.beginPath();
+  data.forEach((v,i)=>{ const px=x(i),py=y(v); i?ctx.lineTo(px,py):ctx.moveTo(px,py); }); ctx.stroke();
+  ctx.fillStyle='#9aa3c7'; ctx.textAlign='center'; ctx.textBaseline='top';
+  const step=Math.ceil(n/6);
+  months.forEach((m,i)=>{ if(i%step===0||i===n-1) ctx.fillText(m.slice(2), x(i), padT+ch+6); });
+}
+
+/* ================= 设置页 ================= */
+function renderBackupInfo(){
+  const el=$('backupInfo');
+  if(!DB.lastBackup){ el.textContent='还没有备份过。数据仅存本设备，建议导出一份以防丢失。'; return; }
+  const days=Math.floor((Date.now()-DB.lastBackup)/86400000);
+  el.textContent=`上次备份：${days===0?'今天':days+' 天前'}。数据仅存本设备，建议定期导出。`;
+}
+$('exportBtn').onclick=()=>{
+  DB.lastBackup=Date.now(); save(); renderBackupInfo();
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='共同财产备份_'+todayStr()+'.json'; a.click(); toast('已导出');
+};
+$('importBtn').onclick=()=>$('importFile').click();
+$('importFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!d.records)throw 0;
+    const merge=confirm('导入方式：\n「确定」＝合并（把文件里的记录追加进来）\n「取消」＝覆盖（用文件替换全部现有记录）');
+    if(merge){
+      let add=0; d.records.forEach(x=>{ DB.records.push({...x, id:++idc, seq:++seqc}); add++; });
+      migrate(); save(); refreshAll(); toast(`已合并 ${add} 条`);
+    }else{
+      DB=d; if(!('lastBackup' in DB))DB.lastBackup=null;
+      idc=DB.records.reduce((m,x)=>Math.max(m,x.id||0),0);
+      seqc=DB.records.reduce((m,x)=>Math.max(m,x.seq||0),0);
+      migrate(); save(); refreshAll(); toast('已覆盖导入');
+    }
+  }catch(err){ toast('文件格式错误') } };
+  r.readAsText(f); e.target.value='';
+};
+$('seedBtn').onclick=()=>{
+  if(!confirm('用内置历史示例数据覆盖当前所有记录？'))return;
+  idc=0; DB={records:buildSeed(), lastBackup:DB.lastBackup||null, rates:DB.rates||{...DEFAULT_RATES}};
+  seqc=DB.records.reduce((m,x)=>Math.max(m,x.seq||0),0);
+  save(); refreshAll(); toast('已载入历史数据');
+};
+$('clearBtn').onclick=()=>{
+  if(!confirm('确定清空全部记录？此操作不可恢复！'))return;
+  DB={records:[], lastBackup:DB.lastBackup||null, rates:DB.rates||{...DEFAULT_RATES}}; save(); refreshAll(); toast('已清空');
+};
+function renderRates(){ const r=rates(); $('rateUSD').value=r.USD; $('rateJPY').value=r.JPY; }
+$('rateSave').onclick=()=>{
+  const u=parseFloat($('rateUSD').value), j=parseFloat($('rateJPY').value);
+  if(isNaN(u)||u<=0||isNaN(j)||j<=0){toast('汇率无效');return}
+  DB.rates={USD:u, JPY:j}; save(); renderBalances(); toast('汇率已保存');
+};
+
+/* ================= 导航 / 刷新 ================= */
+function switchView(name){
+  document.querySelectorAll('.tabbar button').forEach(x=>x.classList.toggle('active',x.dataset.view===name));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  $('view-'+name).classList.add('active');
+  if(name==='history')renderHistory();
+  if(name==='stats')renderStats();
+  if(name==='settings'){ renderBackupInfo(); renderRates(); }
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>switchView(b.dataset.view); });
+function refreshAll(){ renderBalances(); renderFilters(); renderHistory(); if($('view-stats').classList.contains('active'))renderStats(); }
+window.openEdit=openEdit;
+window.addEventListener('resize',()=>{ if($('view-stats').classList.contains('active'))drawChart(); });
+
+/* ================= 初始化 ================= */
+$('verTag').textContent=APP_VERSION;
+$('fDate').value=todayStr();
+renderAddChips(); fillCatSelect($('fCat'),'自动'); fillCatSelect($('eCat'),'自动');
+renderBalances(); renderFilters(); renderHistory(); renderBackupInfo(); renderRates();
+// 备份提醒
+if(DB.records.length){ const stale=!DB.lastBackup || (Date.now()-DB.lastBackup)>14*86400000;
+  if(stale) setTimeout(()=>toast('建议去设置页导出备份 💾'),1500); }
+</script>
+</body>
+</html>
