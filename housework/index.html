@@ -128,7 +128,7 @@
   details ol{padding-left:18px; font-size:13px; color:var(--muted); line-height:1.8}
   code{background:var(--card2); padding:1px 6px; border-radius:6px; font-size:12px}
   .ckbar{display:flex; gap:8px; margin-bottom:10px}
-  .ckbar .ckmonth{flex:0 0 46%}
+  .ckbar .ckmonth{flex:0 0 52%}
   .ckbar .cksearch{flex:1}
   .notein{margin-top:9px; font-size:14px; padding:9px 11px}
   .donleg{display:flex; justify-content:center; gap:20px; margin-top:8px; font-size:13px; color:var(--muted)}
@@ -183,7 +183,7 @@
     <div class="rolebar">记录身份：<b id="roleName">月月</b><span class="link" id="rolebarChange">切换</span></div>
 
     <div class="ckbar">
-      <input type="month" id="ckMonth" class="ckmonth">
+      <input type="date" id="ckDate" class="ckmonth">
       <input id="searchBox" class="cksearch" placeholder="🔍 搜索家务…">
     </div>
     <div class="hint" id="ckHint" style="margin:-4px 2px 12px; display:none"></div>
@@ -396,14 +396,16 @@ function monthOf(ts){const d=new Date(ts);return d.getFullYear()+'-'+String(d.ge
 function fmt$(n){n=Math.round(n*10)/10;return '¥'+(Number.isInteger(n)?n:n.toFixed(1))}
 function timeStr(ts){const d=new Date(ts);return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
 function hmStr(ts){const d=new Date(ts);return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
-// 给非当前月补记时，落在该月15号中午，确保归入正确月份
-function tsForMonth(m){if(!m||m===curMonth())return Date.now();const [y,mo]=m.split('-').map(Number);return new Date(y,mo-1,15,12,0,0).getTime()}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+// 补记到指定日期：当天用真实此刻，其它日期落在那天中午12点
+function tsForDate(ds){if(!ds||ds===todayStr())return Date.now();const [y,m,d]=ds.split('-').map(Number);return new Date(y,m-1,d,12,0,0).getTime()}
 
 /* ================= 状态 ================= */
 const LKEY='housework_v1', MEKEY='hk_me';
 let DB={config:{...DEFAULT_CFG},chores:{},completions:{}};
 let ME=localStorage.getItem(MEKEY)||'A';
 let statMonth=curMonth();
+let checkinDate=todayStr();
 let checkinMonth=curMonth();
 let searchTerm='';
 let groupFilter='all';
@@ -436,15 +438,15 @@ function monthEarnBreak(m){
 
 /* ---- 数据写入（纯本地） ---- */
 let _lastAdd={id:null,ts:0};
-function addCompletion(choreId,who,note,month){
+function addCompletion(choreId,who,note,dateStr){
   const ch=DB.chores[choreId]; if(!ch)return;
   const now=Date.now();
   if(_lastAdd.id===choreId && now-_lastAdd.ts<1200){ toast('刚记过啦，别重复点～'); return; } // 防误触
   _lastAdd={id:choreId,ts:now};
-  const rec={choreId,who,ts:tsForMonth(month),amt:ch.price};
+  const rec={choreId,who,ts:tsForDate(dateStr),amt:ch.price};
   if(note&&note.trim()) rec.note=note.trim();
   DB.completions[uid()]=rec; persistLocal(); renderAll();
-  const back=(month&&month!==curMonth())?`（补记到 ${month}）`:'';
+  const back=(dateStr&&dateStr!==todayStr())?`（补记到 ${dateStr.slice(5).replace('-','/')}）`:'';
   toast(`${who==='A'?DB.config.nameA:DB.config.nameB} +${fmt$(ch.price)}${back}`);
 }
 function delCompletion(id){ delete DB.completions[id]; persistLocal(); renderAll(); }
@@ -486,11 +488,11 @@ function renderList(){
 }
 
 function renderCheckin(){
-  const m=checkinMonth;
-  $('ckMonth').value=m;
+  const ds=checkinDate; $('ckDate').value=ds;
+  const m=ds.slice(0,7); checkinMonth=m;
   $('roleName').textContent = ME==='A'?DB.config.nameA:DB.config.nameB;
   const ckh=$('ckHint');
-  if(m!==curMonth()){ckh.style.display='block'; ckh.textContent=`⚠️ 当前查看/补记的是 ${m}，打卡会记到该月。回到本月请把月份调回。`;}
+  if(ds!==todayStr()){ckh.style.display='block'; ckh.textContent=`⚠️ 正在为 ${ds.slice(5).replace('-','/')} 补记，打卡会记到那一天。回到今天请把日期调回。`;}
   else ckh.style.display='none';
   const spent=spentIn(m), budget=DB.config.budget||0, rest=budget-spent;
   $('sumSpent').textContent=fmt$(spent);
@@ -533,7 +535,7 @@ function renderCheckin(){
   if(!shown){const e=document.createElement('div'); e.className='hint'; e.style.textAlign='center'; e.style.padding='30px 0'; e.textContent=kw?'没有匹配的家务':'这个大类下暂无家务'; list.appendChild(e);}
   list.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
     const nEl=list.querySelector(`[data-note="${b.dataset.add}"]`);
-    addCompletion(b.dataset.add,ME,nEl?nEl.value:'',checkinMonth);
+    addCompletion(b.dataset.add,ME,nEl?nEl.value:'',checkinDate);
   });
   list.querySelectorAll('[data-log]').forEach(b=>b.onclick=()=>openLogSheet(b.dataset.log));
 }
@@ -803,7 +805,7 @@ $('partnerEarn').onchange=e=>{
   if(v>0) DB.partnerEarn[statMonth]=v; else delete DB.partnerEarn[statMonth];
   persistLocal(); renderStats();
 };
-$('ckMonth').onchange=e=>{checkinMonth=e.target.value||curMonth();renderCheckin()};
+$('ckDate').onchange=e=>{checkinDate=e.target.value||todayStr();renderCheckin()};
 $('searchBox').oninput=e=>{searchTerm=e.target.value;renderCheckin()};
 $('sheetClose').onclick=()=>$('sheet').classList.remove('show');
 $('sheet').onclick=e=>{if(e.target===$('sheet'))$('sheet').classList.remove('show')};
