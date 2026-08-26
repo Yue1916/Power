@@ -282,7 +282,7 @@
   <section id="view-plan" class="view">
     <div class="card">
       <h2>🎯 下次训练计划</h2>
-      <div class="hint">训练时每完成一组就<b>轻点打勾 ✓</b>；如果临时改了重量或次数，<b>长按那一组</b>即可修改。练完可一键写入记录。</div>
+      <div class="hint">训练时每完成一组就<b>轻点打勾 ✓</b>；<b>长按某一组</b>可修改重量/次数或删除该组；要加组点动作下方的<b>＋ 加一组</b>。练完可一键写入记录。</div>
       <div id="planList" style="margin-top:12px"></div>
       <div class="row" style="margin-top:6px">
         <button class="btn green" id="planToRecord" type="button" style="margin-top:0">✅ 打勾的写入今日记录</button>
@@ -378,6 +378,7 @@
       <input type="number" inputmode="decimal" id="editW">
       <label>次数</label>
       <input type="number" inputmode="numeric" id="editR">
+      <div style="text-align:center;margin-top:14px"><span class="link danger" id="editDelSet">🗑️ 删除这一组</span></div>
     </div>
     <div id="editCardioFields" style="display:none">
       <label>时长（分钟）</label>
@@ -872,8 +873,9 @@ function renderHistory(){
     const dayVol=items.reduce((s,l)=>s+volumeOf(l),0);
     return `<div class="day-group">
       <div class="day-head"><span class="date">${fmtDate(date)}</span>
-      <span class="vol">${items.length}个动作${dayVol?' · '+Math.round(dayVol)+'kg':''}</span></div>`+
-      items.map(l=>{
+      <span class="vol">${items.length}个动作${dayVol?' · '+Math.round(dayVol)+'kg':''}</span></div>
+      <div class="day-items" data-date="${date}">`+
+      items.map((l,idx)=>{
         const prev=prevLogOf(l.exercise,l.id);
         const cur=scoreOf(l);
         const prevBest=Math.max(0,...DB.logs.filter(x=>x.exercise===l.exercise&&x.id<l.id).map(scoreOf));
@@ -889,14 +891,31 @@ function renderHistory(){
           setsHtml=l.sets.map(s=>`<span class="set${(s.w===bestW&&isPR&&bestW>0)?' pr':''}"><b>${s.w||'自重'}</b>${s.w?'kg':''}×<b>${s.r}</b></span>`).join('');
           if(isPR)prText='🥇 刷新记录 '+round1(prevBest)+'→'+round1(cur)+unitOf(l)+'(估算1RM)';
         }
-        return `<div class="log-item">
-          <div class="top"><div><span class="name">${l.exercise}</span><span class="${partCls}">${l.part}</span>${trend}</div>
+        return `<div class="log-item" data-sort-item data-sort-index="${idx}" data-log-id="${l.id}">
+          <div class="top"><div style="display:flex;align-items:center;gap:8px"><span class="drag-handle" title="拖动排序">≡</span><div><span class="name">${l.exercise}</span><span class="${partCls}">${l.part}</span>${trend}</div></div>
           <div class="log-actions"><span class="link" onclick="editHistory(${l.id})">编辑</span><span class="link danger" onclick="delLog(${l.id})">删除</span></div></div>
           <div class="sets">${setsHtml}</div>`+
           (l.note?`<div class="note">📝 ${l.note}</div>`:'')+
           (prText?'<div class="pr-badge">'+prText+'</div>':'')+`</div>`;
-      }).join('')+`</div>`;
+      }).join('')+`</div></div>`;
   }).join('') + (moreN>0?`<button class="btn ghost" onclick="showMoreHistory()">显示更多（还有 ${moreN} 天）</button>`:'');
+  list.querySelectorAll('.day-items').forEach(dayEl=>{
+    enableDragSort(dayEl, ()=>{
+      const ids=[...dayEl.querySelectorAll('[data-sort-item]')].map(el=>+el.dataset.logId);
+      reorderDayLogs(dayEl.dataset.date, ids);
+    });
+  });
+}
+// 重排某一天内动作的显示顺序（保持 id 不变，仅调整 DB.logs 中同一天条目的先后）
+function reorderDayLogs(date, orderedIds){
+  const dayCount=DB.logs.filter(l=>l.date===date).length;
+  if(orderedIds.length!==dayCount) return;
+  const byId={}; DB.logs.forEach(l=>{ if(l.date===date) byId[l.id]=l; });
+  const newDay=orderedIds.map(id=>byId[id]).filter(Boolean);
+  if(newDay.length!==dayCount) return;
+  let k=0;
+  DB.logs=DB.logs.map(l=> l.date===date ? newDay[k++] : l);
+  save(DB); renderHistory();
 }
 function delLog(id){
   if(!confirm('确定删除这条记录？'))return;
@@ -1218,7 +1237,10 @@ function renderPlan(){
       <span class="link danger" onclick="delPlanItem(${ii})">删除</span></div></div>
       <div class="sets" style="gap:8px">${setsHtml}</div>
       ${it.note?`<div class="note" style="font-style:normal">📝 ${it.note}</div>`:''}
-      <div style="margin-top:6px"><span class="link" onclick="editPlanNote(${ii})">${it.note?'✎ 修改心得':'＋ 添加心得'}</span></div>
+      <div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap">
+        ${it.type==='strength'?`<span class="link" onclick="planAddSetToItem(${ii})">＋ 加一组</span>`:''}
+        <span class="link" onclick="editPlanNote(${ii})">${it.note?'✎ 修改心得':'＋ 添加心得'}</span>
+      </div>
       </div>`;
   }).join('');
   attachPlanSetHandlers();
@@ -1228,6 +1250,12 @@ function editPlanNote(ii){
   const it=DB.plan.items[ii]; if(!it)return;
   const v=prompt('心得 / 备注', it.note||''); if(v===null)return;
   it.note=v.trim(); save(DB); renderPlan();
+}
+function planAddSetToItem(ii){
+  const it=DB.plan.items[ii]; if(!it||it.type==='cardio')return;
+  const last=it.sets[it.sets.length-1]||{w:0,r:8};
+  it.sets.push({w:last.w, r:last.r, done:false});
+  save(DB); renderPlan(); toast('已加一组');
 }
 function attachPlanSetHandlers(){
   $('planList').querySelectorAll('.pset').forEach(el=>{
@@ -1285,6 +1313,18 @@ $('editSave').onclick=()=>{
     s.w=parseFloat($('editW').value)||0; s.r=r;
   }
   save(DB); renderPlan(); closeEditModal(); toast('已修改 ✅');
+};
+$('editDelSet').onclick=()=>{
+  if(!editTarget){closeEditModal();return}
+  const it=DB.plan.items[editTarget.ii];
+  if(!it||it.type==='cardio'){closeEditModal();return}
+  if(it.sets.length<=1){
+    if(!confirm('这是最后一组，删除会移除整个动作，确定？'))return;
+    DB.plan.items.splice(editTarget.ii,1);
+  }else{
+    it.sets.splice(editTarget.si,1);
+  }
+  save(DB); renderPlan(); closeEditModal(); toast('已删除该组');
 };
 function delPlanItem(ii){ planTrash={item:DB.plan.items[ii],index:ii}; DB.plan.items.splice(ii,1); save(DB); renderPlan(); }
 function restorePlanItem(){
@@ -1371,7 +1411,7 @@ function refreshAll(){renderExerciseSelect();renderHistory();renderProgSelect();
   if($('view-progress').classList.contains('active')){renderRangeChips();drawChart();}}
 window.delLog=delLog; window.rmSession=rmSession; window.editSession=editSession; window.editHistory=editHistory;
 window.togglePlanSet=togglePlanSet; window.delPlanItem=delPlanItem; window.editPlanNote=editPlanNote;
-window.restorePlanItem=restorePlanItem; window.showMoreHistory=showMoreHistory;
+window.restorePlanItem=restorePlanItem; window.showMoreHistory=showMoreHistory; window.planAddSetToItem=planAddSetToItem;
 window.addEventListener('resize',()=>{ if($('view-progress').classList.contains('active'))drawChart(); });
 
 /* ================= 初始化 ================= */
