@@ -131,7 +131,8 @@
   .drag-handle{flex:0 0 auto; cursor:grab; touch-action:none; color:var(--muted); font-size:20px; line-height:1;
     padding:4px 8px 4px 0; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none}
   .drag-handle:active{cursor:grabbing}
-  .sess-item.dragging,.log-item.dragging{opacity:.6; border-color:var(--accent); box-shadow:0 6px 18px rgba(0,0,0,.4)}
+  .sess-item.dragging,.log-item.dragging{position:relative; z-index:50; opacity:.97; border-color:var(--accent);
+    box-shadow:0 10px 26px rgba(0,0,0,.5); transition:none; cursor:grabbing}
   .quickfill{display:flex; align-items:center; gap:6px; margin-top:6px}
   .quickfill input{padding:10px; text-align:center; min-width:0}
   .quickfill span{color:var(--muted); flex:0 0 auto}
@@ -449,28 +450,60 @@ function bestRecHtml(ex){
   const extra = b.type==='cardio' ? '' : ` · 估算1RM ${round1(scoreOf(b))}${unitOf(b)}`;
   return `<div class="pr-badge">🏆 历史最佳 ${bestSetText(b)}${extra} · ${b.date.slice(5)}</div>`;
 }
-// 通用：给列表启用触屏可用的拖动排序。每个可排序项需带 data-sort-item 和 data-sort-index，内部含 .drag-handle
+// 通用：给列表启用触屏可用的拖动排序。被拖项跟手浮起，其它项用 FLIP 平滑让位。
+// 每个可排序项需带 data-sort-item 和 data-sort-index，内部含 .drag-handle
 function enableDragSort(listEl, onReorder){
+  const sortItems=()=>[...listEl.querySelectorAll('[data-sort-item]')];
   listEl.querySelectorAll('.drag-handle').forEach(handle=>{
     handle.addEventListener('pointerdown', e=>{
+      if(e.button && e.button!==0) return;
       e.preventDefault();
       const dragEl=handle.closest('[data-sort-item]');
       if(!dragEl) return;
+      const grabOffset=e.clientY - dragEl.getBoundingClientRect().top; // 手指在项内的抓取位置
+      let translate=0, lastY=e.clientY, rafPending=false, moved=false;
+
+      const glue=()=>{ // 让被拖项的视觉位置贴住手指
+        const naturalTop=dragEl.getBoundingClientRect().top - translate;
+        translate=(lastY - grabOffset) - naturalTop;
+        dragEl.style.transform=`translateY(${translate}px)`;
+      };
+
       dragEl.classList.add('dragging');
       try{ handle.setPointerCapture(e.pointerId); }catch(_){}
+
       const move=ev=>{
-        const after=[...listEl.querySelectorAll('[data-sort-item]:not(.dragging)')]
-          .find(other=>{ const r=other.getBoundingClientRect(); return ev.clientY < r.top + r.height/2; });
-        listEl.insertBefore(dragEl, after||null);
+        lastY=ev.clientY; moved=true;
+        if(rafPending) return;
+        rafPending=true;
+        requestAnimationFrame(()=>{
+          rafPending=false;
+          glue();
+          const dragCenter=(lastY - grabOffset) + dragEl.offsetHeight/2;
+          const others=sortItems().filter(it=>it!==dragEl);
+          let ref=null;
+          for(const it of others){ const r=it.getBoundingClientRect(); if(dragCenter < r.top + r.height/2){ ref=it; break; } }
+          if(ref!==dragEl.nextElementSibling && ref!==dragEl){
+            const firstTops=new Map(others.map(it=>[it, it.getBoundingClientRect().top]));
+            listEl.insertBefore(dragEl, ref);
+            glue(); // 重排后重新贴住手指，避免跳变
+            others.forEach(it=>{
+              const delta=firstTops.get(it) - it.getBoundingClientRect().top;
+              if(delta){ it.style.transition='none'; it.style.transform=`translateY(${delta}px)`; }
+            });
+            requestAnimationFrame(()=>{ others.forEach(it=>{ it.style.transition='transform .16s ease'; it.style.transform=''; }); });
+          }
+        });
       };
       const up=()=>{
         try{ handle.releasePointerCapture(e.pointerId); }catch(_){}
         handle.removeEventListener('pointermove',move);
         handle.removeEventListener('pointerup',up);
         handle.removeEventListener('pointercancel',up);
+        const order=sortItems().map(el=>+el.dataset.sortIndex);
+        sortItems().forEach(it=>{ it.style.transition=''; it.style.transform=''; });
         dragEl.classList.remove('dragging');
-        const order=[...listEl.querySelectorAll('[data-sort-item]')].map(el=>+el.dataset.sortIndex);
-        if(order.some((v,i)=>v!==i)) onReorder(order);
+        if(moved && order.some((v,i)=>v!==i)) onReorder(order);
       };
       handle.addEventListener('pointermove',move);
       handle.addEventListener('pointerup',up);
@@ -1239,6 +1272,7 @@ function renderPlan(){
       ${it.note?`<div class="note" style="font-style:normal">📝 ${it.note}</div>`:''}
       <div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap">
         ${it.type==='strength'?`<span class="link" onclick="planAddSetToItem(${ii})">＋ 加一组</span>`:''}
+        ${it.type==='strength'&&it.sets.length>1?`<span class="link danger" onclick="planRemoveSetFromItem(${ii})">－ 删一组</span>`:''}
         <span class="link" onclick="editPlanNote(${ii})">${it.note?'✎ 修改心得':'＋ 添加心得'}</span>
       </div>
       </div>`;
@@ -1256,6 +1290,12 @@ function planAddSetToItem(ii){
   const last=it.sets[it.sets.length-1]||{w:0,r:8};
   it.sets.push({w:last.w, r:last.r, done:false});
   save(DB); renderPlan(); toast('已加一组');
+}
+function planRemoveSetFromItem(ii){
+  const it=DB.plan.items[ii]; if(!it||it.type==='cardio')return;
+  if(it.sets.length<=1){ toast('至少保留一组，整条删除请点右上角「删除」'); return; }
+  it.sets.pop();
+  save(DB); renderPlan(); toast('已删一组');
 }
 function attachPlanSetHandlers(){
   $('planList').querySelectorAll('.pset').forEach(el=>{
@@ -1411,7 +1451,8 @@ function refreshAll(){renderExerciseSelect();renderHistory();renderProgSelect();
   if($('view-progress').classList.contains('active')){renderRangeChips();drawChart();}}
 window.delLog=delLog; window.rmSession=rmSession; window.editSession=editSession; window.editHistory=editHistory;
 window.togglePlanSet=togglePlanSet; window.delPlanItem=delPlanItem; window.editPlanNote=editPlanNote;
-window.restorePlanItem=restorePlanItem; window.showMoreHistory=showMoreHistory; window.planAddSetToItem=planAddSetToItem;
+window.restorePlanItem=restorePlanItem; window.showMoreHistory=showMoreHistory;
+window.planAddSetToItem=planAddSetToItem; window.planRemoveSetFromItem=planRemoveSetFromItem;
 window.addEventListener('resize',()=>{ if($('view-progress').classList.contains('active'))drawChart(); });
 
 /* ================= 初始化 ================= */
