@@ -128,7 +128,7 @@
   .sess-act .ed{background:transparent; border:none; color:var(--accent); font-size:18px; cursor:pointer; padding:4px 6px}
   .badge-part{font-size:10px; background:var(--card); color:var(--muted); padding:1px 7px; border-radius:999px; margin-left:6px}
   .badge-edit{font-size:10px; background:rgba(47,107,255,.18); color:var(--accent); padding:1px 7px; border-radius:999px; margin-left:6px}
-  .drag-handle{flex:0 0 auto; cursor:grab; touch-action:none; color:var(--muted); font-size:20px; line-height:1;
+  .drag-handle{flex:0 0 auto; cursor:grab; touch-action:pan-y; color:var(--muted); font-size:20px; line-height:1;
     padding:4px 8px 4px 0; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none}
   .drag-handle:active{cursor:grabbing}
   .sess-item.dragging,.log-item.dragging{position:relative; z-index:50; opacity:.97; border-color:var(--accent);
@@ -462,28 +462,48 @@ function bestRecHtml(ex){
 // 每个可排序项需带 data-sort-item 和 data-sort-index，内部含 .drag-handle
 function enableDragSort(listEl, onReorder){
   const sortItems=()=>[...listEl.querySelectorAll('[data-sort-item]')];
+  const HOLD=250, MOVE_TOL=10; // 触屏需长按 HOLD 毫秒才激活拖拽，先移动则视为滚动
   listEl.querySelectorAll('.drag-handle').forEach(handle=>{
     handle.addEventListener('pointerdown', e=>{
       if(e.button && e.button!==0) return;
-      e.preventDefault();
       const dragEl=handle.closest('[data-sort-item]');
       if(!dragEl) return;
-      const grabOffset=e.clientY - dragEl.getBoundingClientRect().top; // 手指在项内的抓取位置
-      let translate=0, lastY=e.clientY, rafPending=false, moved=false;
+      const startX=e.clientX, startY=e.clientY, pid=e.pointerId;
+      let armed=false, translate=0, lastY=e.clientY, rafPending=false, moved=false, holdTimer=null;
 
-      const glue=()=>{ // 让被拖项的视觉位置贴住手指
-        const naturalTop=dragEl.getBoundingClientRect().top - translate;
-        translate=(lastY - grabOffset) - naturalTop;
-        dragEl.style.transform=`translateY(${translate}px)`;
-      };
+      const glue=()=>{ const naturalTop=dragEl.getBoundingClientRect().top - grabOffset; translate=(lastY - grabOffset) - naturalTop; dragEl.style.transform=`translateY(${translate}px)`; };
+      let grabOffset=0;
+      const blockScroll=ev=>ev.preventDefault();
 
-      dragEl.classList.add('dragging');
-      try{ handle.setPointerCapture(e.pointerId); }catch(_){}
+      function arm(){
+        if(armed) return;
+        armed=true; holdTimer=null;
+        grabOffset=lastY - dragEl.getBoundingClientRect().top; translate=0;
+        dragEl.classList.add('dragging');
+        try{ handle.setPointerCapture(pid); }catch(_){}
+        try{ if(navigator.vibrate) navigator.vibrate(15); }catch(_){}
+        document.addEventListener('touchmove', blockScroll, {passive:false});
+      }
+      function cleanup(){
+        if(holdTimer){ clearTimeout(holdTimer); holdTimer=null; }
+        handle.removeEventListener('pointermove',move);
+        handle.removeEventListener('pointerup',up);
+        handle.removeEventListener('pointercancel',up);
+        document.removeEventListener('touchmove', blockScroll, {passive:false});
+        try{ handle.releasePointerCapture(pid); }catch(_){}
+      }
+
+      if(e.pointerType==='mouse'){ e.preventDefault(); arm(); }
+      else { holdTimer=setTimeout(arm, HOLD); }
 
       const move=ev=>{
-        lastY=ev.clientY; moved=true;
-        if(rafPending) return;
-        rafPending=true;
+        lastY=ev.clientY;
+        if(!armed){
+          if(Math.abs(ev.clientY-startY)>MOVE_TOL || Math.abs(ev.clientX-startX)>MOVE_TOL){ cleanup(); } // 先动=滚动，放手给页面
+          return;
+        }
+        moved=true;
+        if(rafPending) return; rafPending=true;
         requestAnimationFrame(()=>{
           rafPending=false;
           glue();
@@ -494,24 +514,21 @@ function enableDragSort(listEl, onReorder){
           if(ref!==dragEl.nextElementSibling && ref!==dragEl){
             const firstTops=new Map(others.map(it=>[it, it.getBoundingClientRect().top]));
             listEl.insertBefore(dragEl, ref);
-            glue(); // 重排后重新贴住手指，避免跳变
-            others.forEach(it=>{
-              const delta=firstTops.get(it) - it.getBoundingClientRect().top;
-              if(delta){ it.style.transition='none'; it.style.transform=`translateY(${delta}px)`; }
-            });
+            glue();
+            others.forEach(it=>{ const delta=firstTops.get(it) - it.getBoundingClientRect().top; if(delta){ it.style.transition='none'; it.style.transform=`translateY(${delta}px)`; } });
             requestAnimationFrame(()=>{ others.forEach(it=>{ it.style.transition='transform .16s ease'; it.style.transform=''; }); });
           }
         });
       };
       const up=()=>{
-        try{ handle.releasePointerCapture(e.pointerId); }catch(_){}
-        handle.removeEventListener('pointermove',move);
-        handle.removeEventListener('pointerup',up);
-        handle.removeEventListener('pointercancel',up);
-        const order=sortItems().map(el=>+el.dataset.sortIndex);
-        sortItems().forEach(it=>{ it.style.transition=''; it.style.transform=''; });
-        dragEl.classList.remove('dragging');
-        if(moved && order.some((v,i)=>v!==i)) onReorder(order);
+        const wasArmed=armed;
+        if(wasArmed){
+          const order=sortItems().map(el=>+el.dataset.sortIndex);
+          sortItems().forEach(it=>{ it.style.transition=''; it.style.transform=''; });
+          dragEl.classList.remove('dragging');
+          if(moved && order.some((v,i)=>v!==i)) onReorder(order);
+        }
+        cleanup();
       };
       handle.addEventListener('pointermove',move);
       handle.addEventListener('pointerup',up);
@@ -665,7 +682,7 @@ function renderSession(){
       ? `${it.cardio.min}分钟`+(it.cardio.km?` · ${it.cardio.km}km`:'')
       : it.sets.map(s=>`${s.w||'自重'}${s.w?'':''}×${s.r}`).join('  ');
     return `<div class="sess-item" data-sort-item data-sort-index="${i}">
-      <span class="drag-handle" title="拖动排序">≡</span>
+      <span class="drag-handle" title="长按拖动排序">≡</span>
       <div class="info">
       <div class="nm">${it.exercise}<span class="badge-part">${it.part}</span>${it._editId?'<span class="badge-edit">改</span>':''}</div>
       <div class="dt">${detail}${it.note?' · 📝'+it.note:''}</div></div>
@@ -933,7 +950,7 @@ function renderHistory(){
           if(isPR)prText='🥇 刷新记录 '+round1(prevBest)+'→'+round1(cur)+unitOf(l)+'(估算1RM)';
         }
         return `<div class="log-item" data-sort-item data-sort-index="${idx}" data-log-id="${l.id}">
-          <div class="top"><div style="display:flex;align-items:center;gap:8px"><span class="drag-handle" title="拖动排序">≡</span><div><span class="name">${l.exercise}</span><span class="${partCls}">${l.part}</span>${trend}</div></div>
+          <div class="top"><div style="display:flex;align-items:center;gap:8px"><span class="drag-handle" title="长按拖动排序">≡</span><div><span class="name">${l.exercise}</span><span class="${partCls}">${l.part}</span>${trend}</div></div>
           <div class="log-actions"><span class="link" onclick="editHistory(${l.id})">编辑</span><span class="link danger" onclick="delLog(${l.id})">删除</span></div></div>
           <div class="sets">${setsHtml}</div>`+
           (l.note?`<div class="note">📝 ${l.note}</div>`:'')+
@@ -1328,7 +1345,7 @@ function planItemHtml(it,ii){
     setsHtml=it.sets.map((s,si)=>`<span class="pset${s.done?' done':''}" data-ii="${ii}" data-si="${si}">${s.done?'✓':'☐'} ${s.w||'自重'}${s.w?'kg':''}×${s.r}</span>`).join('');
   }
   return `<div class="log-item" data-sort-item data-sort-index="${ii}"><div class="top">
-    <div style="display:flex;align-items:center;gap:8px"><span class="drag-handle" title="拖动排序">≡</span>
+    <div style="display:flex;align-items:center;gap:8px"><span class="drag-handle" title="长按拖动排序">≡</span>
     <div><span class="name">${it.exercise}</span><span class="part">${it.part}</span></div></div>
     <div style="display:flex;gap:10px;align-items:center"><span style="color:var(--muted);font-size:12px">${done}/${total}</span>
     <span class="link danger" onclick="delPlanItem(${ii})">删除</span></div></div>
