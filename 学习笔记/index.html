@@ -1,9 +1,8 @@
 <!DOCTYPE html><html lang='zh'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>AIF-C01 学习手册</title>
 <style>
   *{box-sizing:border-box;}
-  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
   body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
-       margin:0;color:#1f2328;background:#f4f6f8;line-height:1.75;font-size:16px;}
+       margin:0;color:#1f2328;background:#f4f6f8;line-height:1.7;}
   header{position:sticky;top:0;z-index:10;background:#0b5cad;color:#fff;
          padding:14px 24px 0;box-shadow:0 2px 6px rgba(0,0,0,.15);}
   header h1{margin:0 0 10px;font-size:18px;font-weight:600;}
@@ -16,7 +15,7 @@
   .tabs button.tab.fav.active{background:#ffd94a;color:#3a2f00;}
   .tabs .util{border-radius:8px;background:#1a73c7;font-size:13px;padding:7px 12px;}
   .tabs .util.first{margin-left:auto;}
-  main{width:94%;max-width:1200px;margin:0 auto;padding:24px 0 80px;}
+  main{max-width:920px;margin:0 auto;padding:24px 24px 80px;}
   .panel{display:none;}
   .panel.show{display:block;}
   body.expand .panel{display:block;}
@@ -36,8 +35,7 @@
   h2{border-bottom:1px solid #d0d7de;padding-bottom:6px;margin-top:6px;color:#0969da;}
   h3{margin-top:22px;color:#24292f;}
   h4{margin-top:16px;color:#57606a;}
-  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:16px 0;}
-  table{border-collapse:collapse;width:100%;margin:0;font-size:15px;min-width:520px;}
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px;}
   th,td{border:1px solid #d0d7de;padding:8px 12px;text-align:left;vertical-align:top;}
   th{background:#f6f8fa;font-weight:600;}
   tr:nth-child(even){background:#fbfcfd;}
@@ -100,19 +98,22 @@
   .inote-tools{display:block;text-align:right;}
   .inote-del{font-size:12px;color:#cf222e;cursor:pointer;opacity:.7;}
   .inote-del:hover{opacity:1;}
-  /* 大屏（iPad 横屏 / 桌面）：内容更宽、字更大，避免大量留白与缩放 */
-  @media (min-width:1000px){
-    body{font-size:17px;}
-    h1{font-size:25px;} h2{font-size:21px;}
-  }
-  /* 小屏（手机）：减小内边距，充分利用宽度 */
-  @media (max-width:640px){
-    main{width:100%;padding:16px 10px 60px;}
-    .subpanel{padding:16px 14px;}
-    .domain-head{padding:16px 16px 4px;}
-    header{padding:12px 12px 0;}
-    header h1{font-size:16px;}
-  }
+</style>
+
+<style>
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+  body{font-size:18px;line-height:1.85;}
+  main{width:97%;max-width:none;padding:18px 10px 72px;}   /* 铺满、几乎无留白 */
+  header h1{font-size:19px;}
+  h1{font-size:28px;} h2{font-size:23px;} h3{font-size:20px;} h4{font-size:18px;}
+  .subpanel{padding:22px 20px;}
+  .domain-head{padding:20px 22px 6px;}
+  table{font-size:16px;min-width:600px;}
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:16px 0;}
+  .tabs button{font-size:15px;}
+  .subtabs button{font-size:15px;padding:8px 18px;}
+  .ansinput{font-size:16px;width:200px;}
+  li{margin:6px 0;}
 </style>
 </head><body><header><h1>AWS Certified AI Practitioner (AIF-C01) 学习手册</h1><div class='tabs'><button class="tab" onclick="showTab(0)">总览</button><button class="tab" onclick="showTab(1)">领域1</button><button class="tab" onclick="showTab(2)">领域2</button><button class="tab" onclick="showTab(3)">领域3</button><button class="tab" onclick="showTab(4)">领域4</button><button class="tab" onclick="showTab(5)">领域5</button><button class="tab fav" onclick="showTab(6)">⭐ 收藏</button><button class='util first' id='expandBtn' onclick='toggleExpand()'>📖 全部展开</button><button class='util' onclick='exportData()'>💾 导出</button><button class='util' onclick="document.getElementById('impf').click()">📂 导入</button><input type='file' id='impf' accept='.json' onchange='importData(this)' style='display:none'></div></header><main><section class="panel" id="p0"><div class="domain-head"><h1 id="aws-certified-ai-practitioner-aif-c01">AWS Certified AI Practitioner (AIF-C01) 备考总览</h1>
 <blockquote>
