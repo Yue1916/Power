@@ -1,8 +1,9 @@
 <!DOCTYPE html><html lang='zh'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>AIF-C01 学习手册</title>
 <style>
   *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
   body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
-       margin:0;color:#1f2328;background:#f4f6f8;line-height:1.7;}
+       margin:0;color:#1f2328;background:#f4f6f8;line-height:1.75;font-size:16px;}
   header{position:sticky;top:0;z-index:10;background:#0b5cad;color:#fff;
          padding:14px 24px 0;box-shadow:0 2px 6px rgba(0,0,0,.15);}
   header h1{margin:0 0 10px;font-size:18px;font-weight:600;}
@@ -15,7 +16,7 @@
   .tabs button.tab.fav.active{background:#ffd94a;color:#3a2f00;}
   .tabs .util{border-radius:8px;background:#1a73c7;font-size:13px;padding:7px 12px;}
   .tabs .util.first{margin-left:auto;}
-  main{max-width:920px;margin:0 auto;padding:24px 24px 80px;}
+  main{width:94%;max-width:1200px;margin:0 auto;padding:24px 0 80px;}
   .panel{display:none;}
   .panel.show{display:block;}
   body.expand .panel{display:block;}
@@ -35,7 +36,8 @@
   h2{border-bottom:1px solid #d0d7de;padding-bottom:6px;margin-top:6px;color:#0969da;}
   h3{margin-top:22px;color:#24292f;}
   h4{margin-top:16px;color:#57606a;}
-  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px;}
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:16px 0;}
+  table{border-collapse:collapse;width:100%;margin:0;font-size:15px;min-width:520px;}
   th,td{border:1px solid #d0d7de;padding:8px 12px;text-align:left;vertical-align:top;}
   th{background:#f6f8fa;font-weight:600;}
   tr:nth-child(even){background:#fbfcfd;}
@@ -98,6 +100,19 @@
   .inote-tools{display:block;text-align:right;}
   .inote-del{font-size:12px;color:#cf222e;cursor:pointer;opacity:.7;}
   .inote-del:hover{opacity:1;}
+  /* 大屏（iPad 横屏 / 桌面）：内容更宽、字更大，避免大量留白与缩放 */
+  @media (min-width:1000px){
+    body{font-size:17px;}
+    h1{font-size:25px;} h2{font-size:21px;}
+  }
+  /* 小屏（手机）：减小内边距，充分利用宽度 */
+  @media (max-width:640px){
+    main{width:100%;padding:16px 10px 60px;}
+    .subpanel{padding:16px 14px;}
+    .domain-head{padding:16px 16px 4px;}
+    header{padding:12px 12px 0;}
+    header h1{font-size:16px;}
+  }
 </style>
 </head><body><header><h1>AWS Certified AI Practitioner (AIF-C01) 学习手册</h1><div class='tabs'><button class="tab" onclick="showTab(0)">总览</button><button class="tab" onclick="showTab(1)">领域1</button><button class="tab" onclick="showTab(2)">领域2</button><button class="tab" onclick="showTab(3)">领域3</button><button class="tab" onclick="showTab(4)">领域4</button><button class="tab" onclick="showTab(5)">领域5</button><button class="tab fav" onclick="showTab(6)">⭐ 收藏</button><button class='util first' id='expandBtn' onclick='toggleExpand()'>📖 全部展开</button><button class='util' onclick='exportData()'>💾 导出</button><button class='util' onclick="document.getElementById('impf').click()">📂 导入</button><input type='file' id='impf' accept='.json' onchange='importData(this)' style='display:none'></div></header><main><section class="panel" id="p0"><div class="domain-head"><h1 id="aws-certified-ai-practitioner-aif-c01">AWS Certified AI Practitioner (AIF-C01) 备考总览</h1>
 <blockquote>
@@ -118,7 +133,7 @@
 <li>用于访问控制的 AWS IAM</li>
 <li>AWS 服务定价模型</li>
 </ul></div><div class="subpanel" id="p0s2"><h2 id="_1">五大内容领域与权重</h2>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>领域</th>
@@ -159,7 +174,7 @@
 <td><code>05-领域5-安全合规与监管.md</code></td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <blockquote>
 <p>权重提示：领域 2 + 领域 3 合计 <strong>52%</strong>，是复习重点（GenAI 与基础模型应用）。</p>
 </blockquote></div><div class="subpanel" id="p0s3"><h2 id="_1">各任务说明速查</h2>
@@ -195,7 +210,7 @@
 <li><strong>安全性、身份与合规性</strong>：AWS Artifact、AWS Audit Manager、AWS IAM、Amazon Inspector、AWS KMS、Amazon Macie、AWS Secrets Manager</li>
 <li><strong>存储</strong>：Amazon S3、Amazon S3 Glacier</li>
 </ul></div><div class="subpanel" id="p0s5"><h2 id="_1">学习进度跟踪</h2>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>领域</th>
@@ -290,7 +305,7 @@
 <td>待复习</td>
 </tr>
 </tbody>
-</table></div></section><section class="panel" id="p1"><div class="domain-head"><h1 id="1ai-ml-20">内容领域 1：AI 和 ML 基础知识（占计分内容 20%）</h1></div><div class="subtabs"><button onclick="showSub(1,0)">概述</button><button onclick="showSub(1,1)">1.1</button><button onclick="showSub(1,2)">1.2</button><button onclick="showSub(1,3)">1.3</button></div><div class="subpanel" id="p1s0"><h2 id="_1">领域概述（学习地图）</h2>
+</table></div></div></section><section class="panel" id="p1"><div class="domain-head"><h1 id="1ai-ml-20">内容领域 1：AI 和 ML 基础知识（占计分内容 20%）</h1></div><div class="subtabs"><button onclick="showSub(1,0)">概述</button><button onclick="showSub(1,1)">1.1</button><button onclick="showSub(1,2)">1.2</button><button onclick="showSub(1,3)">1.3</button></div><div class="subpanel" id="p1s0"><h2 id="_1">领域概述（学习地图）</h2>
 <p>领域 1 讲 AI 和 ML 的基础知识，分为三个任务陈述，分别在后续课次展开：</p>
 <ul>
 <li><strong>任务 1.1 解释基本 AI 概念和术语</strong>：掌握人工智能及其子组件——机器学习、深度学习的基本概念与术语；能概述 ML 模型的工作与开发原理，包括<strong>推理选项</strong>、训练模型使用的<strong>不同数据类型</strong>、<strong>学习算法的主要类别</strong>。</li>
@@ -342,7 +357,7 @@
 <p>记忆：AI 是最大范畴，ML 是 AI 的子集，深度学习是 ML 的子集（用神经网络）。</p>
 </blockquote>
 <h4 id="2-ai">2. AI 的行业应用示例（用例记忆库）</h4>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>行业 / 场景</th>
@@ -387,7 +402,7 @@
 <td>按客户独特兴趣推送定制的节目/活动，避免无效群发</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h4 id="3">3. 核心能力与对应技术</h4>
 <ul>
 <li><strong>回归分析 (regression)</strong>：处理历史数据（<strong>时间序列数据</strong>）预测未来值。例：预测某天进店顾客数，从而安排销售人员。</li>
@@ -413,7 +428,7 @@
 <li><strong>推理 (inference)</strong>：训练好的模型对<strong>训练期间未见过的新数据</strong>做出准确预测/生成输出的过程。</li>
 </ul>
 <h4 id="2-aws">2. 训练数据的四种类型（重点，配 AWS 服务）</h4>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>数据类型</th>
@@ -448,7 +463,7 @@
 <td>数据量可能很大，存于 <strong>Amazon S3</strong> 训练</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <blockquote>
 <p><strong>Amazon S3 是训练数据的主要来源</strong>：能存任意类型数据、成本更低、容量近乎无限。四类数据训练时最终都汇到 S3。</p>
 <p>时间序列应用示例：ML 发现指标模式后，可在<strong>负载上升前主动横向扩展 (scale out)</strong> 基础设施。</p>
@@ -472,7 +487,7 @@
 <li><strong>可部署模型 = 模型构件 + 推理代码</strong>：推理代码是通过<strong>读取构件</strong>来实现模型的软件；两者打包在一起。</li>
 </ul>
 <h4 id="2">2. 模型托管的两种方式（重点对比）</h4>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>维度</th>
@@ -507,7 +522,7 @@
 <td>用历史销售数据每月预测下月库存、生成报告</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <blockquote>
 <p>核心区别：批处理算完就<strong>关机</strong>；实时推理<strong>常驻</strong>处理请求。</p>
 <p><strong>⚠️ 视频未覆盖，补充自考纲</strong>：官方目标 1.1 要求掌握 <strong>4 种推理类型</strong>，视频只讲了实时和批处理，另两种务必补上（考试会考）：</p>
@@ -517,7 +532,7 @@
 </ul>
 </blockquote>
 <p><strong>四种推理类型一句话对号入座（高频考点）：</strong></p>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>类型</th>
@@ -542,7 +557,7 @@
 <td><strong>海量数据、离线</strong>、可以等很久、最省成本</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h4 id="3_2">3. 三种机器学习方式（核心考点）</h4>
 <p><strong>① 有监督学习 (Supervised Learning)</strong>
 - 用<strong>预先标注 (labeled)</strong> 的数据训练；训练数据<strong>同时指定输入和所需输出</strong>；典型任务如图像分类 (image classification)。
@@ -654,7 +669,7 @@ input        hidden layers      output
         权重 weights (训练中不断调整以减小误差)
 </code></pre>
 <h4 id="2-ml-vs">2. 传统 ML vs 深度学习（对比）</h4>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>维度</th>
@@ -689,7 +704,7 @@ input        hidden layers      output
 <td><strong>明显更高</strong></td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <blockquote>
 <p>共同点：两者都用统计算法；区别：<strong>只有深度学习用神经网络</strong>。选型看<strong>数据类型</strong>（结构化/标注→传统 ML；非结构化→深度学习）。</p>
 </blockquote>
@@ -788,7 +803,7 @@ input        hidden layers      output
 <blockquote>
 <p>小白看服务名会晕。记住每个"一句人话 + 考试看到什么关键词就选它"即可。</p>
 </blockquote>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>服务</th>
@@ -848,7 +863,7 @@ input        hidden layers      output
 <td>免费试用、无需编码搭 AI 应用</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="_4">易考点 / 陷阱</h3>
 <ul>
 <li>AI、ML、深度学习是<strong>逐层包含</strong>关系，别混为一谈；深度学习的关键词是<strong>神经网络</strong>。</li>
@@ -1069,7 +1084,7 @@ D. 池化 (Pooling)</p>
 <li><strong>需要确定性结果</strong>：见下方对比。</li>
 </ul>
 <h4 id="3-vs">3. 确定性 vs 概率性（高频考点）</h4>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th></th>
@@ -1099,7 +1114,7 @@ D. 池化 (Pooling)</p>
 <td>需要从数据中学习规律、做预测</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <blockquote>
 <p>记忆：<strong>要"每次都一样、说得清"→ 规则系统（确定性）；要"从数据学、给概率"→ ML（概率性）。</strong></p>
 </blockquote>
@@ -1207,7 +1222,7 @@ D. 池化 (Pooling)</p>
 <blockquote>
 <p><span id="p1s2L5" class="lesson-anchor"></span><strong>第 5 课：真实应用案例（记"公司 → 服务 → 效果"）</strong></p>
 </blockquote>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>公司</th>
@@ -1247,7 +1262,7 @@ D. 池化 (Pooling)</p>
 <td>预测呼叫量、合理排座席；<strong>未接电话率下降 20%</strong></td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <blockquote>
 <p>案例考法：题目描述一个业务场景，问"最该用哪个服务"。记住上表的"效果关键词 → 服务"映射。</p>
 </blockquote>
@@ -1285,7 +1300,7 @@ D. 池化 (Pooling)</p>
 <blockquote>
 <p>1.2 的核心考法就是"业务需求 → 选对服务"。下表按"需求关键词"记。</p>
 </blockquote>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>服务</th>
@@ -1360,7 +1375,7 @@ D. 池化 (Pooling)</p>
 <td><strong>需要自定义模型、预构建服务不够用</strong></td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="_5">易考点 / 陷阱</h3>
 <ul>
 <li><strong>"何时不该用 AI"是高频考点</strong>，记三种情况：①成本 &gt; 收益；②需要<strong>可解释/透明</strong>（合规）；③需要<strong>确定性结果</strong>（→ 用规则系统）。</li>
@@ -1574,7 +1589,7 @@ D. FM 无法部署到 AWS</p>
 <li><strong>特征选择</strong>：只保留推理所需特征，可<strong>组合特征</strong>进一步减少数量 → 降低训练所需<strong>内存和算力</strong>、降低错误率。</li>
 </ul>
 <h4 id="3_1">3. 数据服务对照</h4>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>服务</th>
@@ -1611,7 +1626,7 @@ D. FM 无法部署到 AWS</p>
 <td>特征 + 元数据的<strong>集中存储</strong>，便于<strong>发现和复用</strong>特征，减少重复处理</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <hr />
 <blockquote>
 <p><span id="p1s3L3" class="lesson-anchor"></span><strong>第 3 课：阶段三「训练、优化、评估」</strong></p>
@@ -1652,7 +1667,7 @@ D. FM 无法部署到 AWS</p>
 <li><strong>托管方案</strong>：用 <strong>Amazon SageMaker 托管</strong>——指向 S3 里的模型构件 + ECR 里的容器映像，选推理选项即可，SageMaker 创建终端节点并装模型代码，终端节点<strong>完全托管、支持弹性伸缩</strong>。</li>
 </ul>
 <h4 id="3-sagemaker_1">3. SageMaker 四种推理选项（高频考点！）</h4>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>选项</th>
@@ -1682,7 +1697,7 @@ D. FM 无法部署到 AWS</p>
 <td><strong>大型数据集离线推理</strong>（可达 GB 级）；无需持久终端节点、可等待</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <hr />
 <blockquote>
 <p><span id="p1s3L5" class="lesson-anchor"></span><strong>第 5 课：阶段五「监控模型」+ MLOps</strong></p>
@@ -1728,7 +1743,7 @@ D. FM 无法部署到 AWS</p>
 <li><strong>假阴性 FN</strong>：是鱼，预测为非鱼（错，漏掉了）</li>
 <li><strong>假阳性 FP</strong>：非鱼，预测为鱼（错，误报了）</li>
 </ul>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th></th>
@@ -1748,7 +1763,7 @@ D. FM 无法部署到 AWS</p>
 <td>TN = 40</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h4 id="3_3">3. 分类指标与公式（务必会算）</h4>
 <ul>
 <li><strong>准确率 (Accuracy)</strong> = (TP+TN) / 总数 = (25+40)/100 = <strong>0.65</strong>。范围 0~1。<strong>数据不平衡时失效</strong>（100 张里 90 张是鱼，全猜"鱼"也有 90% 准确率）。</li>
@@ -1858,7 +1873,7 @@ D. FM 无法部署到 AWS</p>
 <p><strong>业务指标</strong>
 - <strong>ROI（投资回报率）/ 成本分配标签 (Cost Allocation Tags) / AWS Cost Explorer</strong>。</p>
 <h3 id="aws">☁️ AWS 服务速查卡（本任务重点，按管道阶段）</h3>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>阶段</th>
@@ -1958,7 +1973,7 @@ D. FM 无法部署到 AWS</p>
 <td>GenAI 助手 / BI 分析 / AI 开发环境（补考纲）</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="_5">易考点 / 陷阱</h3>
 <ul>
 <li><strong>ML 是生命周期不是直线</strong>：部署后仍要重训练、监控、迭代——凡强调"一次做完"的选项多半错。</li>
@@ -2400,7 +2415,7 @@ D. Serverless Lens</p>
 <p><strong>局限</strong>
 - <strong>幻觉 (Hallucination)</strong>：编造不实信息。</p>
 <h3 id="aws">☁️ AWS 服务速查卡（本任务重点）</h3>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>服务</th>
@@ -2429,7 +2444,7 @@ D. Serverless Lens</p>
 <td>虚拟制作 / 3D 内容创作</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="_5">易考点 / 陷阱</h3>
 <ul>
 <li><strong>GenAI 是深度学习的子集</strong>，核心是<strong>创造新内容</strong>（对比普通 AI 的分类/预测）——概念题常考这个区别。</li>
@@ -2717,7 +2732,7 @@ D. 计算 ROI</p>
 <p><strong>业务指标</strong>
 - <strong>ROI（投资回报率）、转化率 (Conversion Rate)、ARPU（每用户平均收入）、CLTV/CLV（客户生命周期价值）、跨域性能 (Cross-domain Performance)、任务完成率</strong>。</p>
 <h3 id="aws">☁️ AWS 服务速查卡（本任务重点）</h3>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>服务</th>
@@ -2738,7 +2753,7 @@ D. 计算 ROI</p>
 <td>选择/调用多家 FM 构建 GenAI 应用（选模型时的主入口）</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="_5">易考点 / 陷阱</h3>
 <ul>
 <li><strong>"何时用/不用 GenAI"与优势</strong>：GenAI 优势是<strong>降低门槛、降成本、提速</strong>地构建 AI 应用；关键词适应性/响应/简单。</li>
@@ -2927,7 +2942,7 @@ D. 增加模型参数量</p>
 <li>AWS 首要任务是<strong>安全性和客户工作负载的机密性</strong>。</li>
 </ul>
 <h4 id="3-ai">3. 生成式 AI 三层堆栈（重点）</h4>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>层</th>
@@ -2952,7 +2967,7 @@ D. 增加模型参数量</p>
 <td>面向最终用户</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h4 id="4-aws-nitro">4. AWS 专用硬件与 Nitro（性价比 + 安全）</h4>
 <ul>
 <li>用<strong>专用硬件</strong>比传统 CPU/GPU <strong>更好的性价比</strong>（降本）。</li>
@@ -2971,7 +2986,7 @@ D. 增加模型参数量</p>
 <p><span id="p2s3L2" class="lesson-anchor"></span><strong>第 2 课：成本权衡 + 关键 AWS GenAI 服务</strong></p>
 </blockquote>
 <h4 id="1-llm">1. LLM 的两种定价模式（高频考点）</h4>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>模式</th>
@@ -2991,7 +3006,7 @@ D. 增加模型参数量</p>
 <td>每个 Token 是一个离散信息单位（文本的字符/词、图像的像素）；是供应商给 API 调用定价的单位；用 AWS 按 Token 付费<strong>可扩展性更好</strong></td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <blockquote>
 <p>结论：<strong>大多数人不自己训练、也不自己托管</strong>（数据/研究/硬件/存储成本太高）→ 用 Bedrock 按 Token/按需最划算。</p>
 </blockquote>
@@ -3069,7 +3084,7 @@ D. 增加模型参数量</p>
 - <strong>向量数据库 (Vector Database)</strong>：以嵌入形式存储、索引数据，支撑 RAG。
 - <strong>AgentCore / Strands Agents / Amazon Q / Kiro / Amazon Quick</strong>（补考纲）。</p>
 <h3 id="aws">☁️ AWS 服务速查卡（本任务重点）</h3>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>服务</th>
@@ -3114,7 +3129,7 @@ D. 增加模型参数量</p>
 <td>BI 数据分析（内置 GenAI）</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="_5">易考点 / 陷阱</h3>
 <ul>
 <li><strong>用 AWS 建 GenAI 的优势</strong>关键词：可访问性、低门槛、效率、成本效益、<strong>上市速度 (time to market)</strong>、达成业务目标。</li>
@@ -3414,7 +3429,7 @@ D. 与安全审计无关</p>
 - <strong>FM 的挑战</strong>：从零构建<strong>昂贵</strong>、需前端集成（提示工程/微调/管道）、<strong>缺乏真正理解上下文</strong>、答案可能<strong>不可靠/有害/错误</strong>、<strong>偏差</strong>。</p>
 <p><strong>② 推理参数深入（高频，务必理解方向）</strong></p>
 <p>以提示 "I hear the hoof beats of ___"，候选 {horses:0.7, zebras:0.2, unicorns:0.1} 为例：</p>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>参数</th>
@@ -3443,7 +3458,7 @@ D. 与安全审计无关</p>
 <td>池更大。如 Top P=0.7 只看 horses；0.9 看 horses+zebras</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <ul>
 <li><strong>长度控制</strong>：<strong>响应长度 (Response length)</strong>（min/max token）、<strong>惩罚 (Penalties)</strong>（对长度/重复/频率/类型惩罚）、<strong>停止序列 (Stop sequences)</strong>（生成到指定字符序列就停）。</li>
 </ul>
@@ -3492,7 +3507,7 @@ D. 与安全审计无关</p>
 - <strong>AI 代理 (Agent)</strong>：编排任务、调用 API/知识库、执行多步骤现实任务。
 - <strong>Amazon Bedrock 代理 (Bedrock Agents)</strong>。</p>
 <h3 id="aws">☁️ AWS 服务速查卡（本任务重点）</h3>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>服务</th>
@@ -3521,7 +3536,7 @@ D. 与安全审计无关</p>
 <td>其他可存嵌入的数据库</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="_4">易考点 / 陷阱</h3>
 <ul>
 <li><strong>选模型没有"最好"，只有"最适合需求"</strong>：在成本/延迟/模态/复杂度/可解释性间权衡；准确率高一点点但贵很多不一定值。</li>
@@ -3809,7 +3824,7 @@ D. 关闭 RAG</p>
 <p><strong>AWS</strong>
 - <strong>Amazon Bedrock Guardrails / Prompt Management / Amazon Titan</strong>。</p>
 <h3 id="aws">☁️ AWS 服务速查卡（本任务重点）</h3>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>服务</th>
@@ -3830,7 +3845,7 @@ D. 关闭 RAG</p>
 <td>可用提示词工程自定义/控制的预训练模型</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="_6">易考点 / 陷阱</h3>
 <ul>
 <li><strong>提示词组件</strong>：指令 + 上下文 + 输入；<strong>零/单/少样本</strong>看给的示例数（0/1/几个）。</li>
@@ -4044,7 +4059,7 @@ D. 数据增强</p>
 <li><strong>评估</strong>：用<strong>留出验证集 (holdout validation)</strong> 衡量性能得<strong>验证准确率</strong>；微调完用<strong>留出测试集</strong>做最终评估得<strong>测试准确率</strong>。</li>
 </ul>
 <h4 id="2-aws">2. AWS 数据准备工具（按需求选，考点）</h4>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>需求</th>
@@ -4081,7 +4096,7 @@ D. 数据增强</p>
 <td><strong>SageMaker Ground Truth</strong>（管理标注工作流）</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h4 id="3-continued-pre-training">3. 持续预训练 (Continued Pre-training) 的价值</h4>
 <ul>
 <li>GenAI 输出<strong>不确定</strong>，验证更难 → 要选合适的<strong>指标、基准、数据集</strong>评估能力、确保不产生有害输出。</li>
@@ -4131,7 +4146,7 @@ D. 数据增强</p>
 - <strong>SageMaker Canvas / EMR / Glue / Feature Store / Clarify / Ground Truth / JumpStart</strong>。
 - <strong>Amazon Bedrock 持续预训练（Titan Text）</strong>。</p>
 <h3 id="aws">☁️ AWS 服务速查卡（本任务重点）</h3>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>服务</th>
@@ -4172,7 +4187,7 @@ D. 数据增强</p>
 <td><strong>持续预训练</strong> Titan（用未标注数据自定义）</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="_4">易考点 / 陷阱</h3>
 <ul>
 <li><strong>预训练 vs 微调</strong>：预训练=无标注+自监督+学语言基础（最贵）；微调=有标注+有监督+改权重适配任务。</li>
@@ -4437,7 +4452,7 @@ D. 批量推理</p>
 <p><strong>AWS 工具</strong>
 - <strong>SageMaker Clarify（模型评估）、Amazon Bedrock 评估模块（BERTScore）、SageMaker JumpStart（人工比较响应）</strong>。</p>
 <h3 id="aws">☁️ AWS 服务速查卡（本任务重点）</h3>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>服务</th>
@@ -4458,7 +4473,7 @@ D. 批量推理</p>
 <td>人工比较不同模型响应</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="_5">易考点 / 陷阱</h3>
 <ul>
 <li><strong>三大指标对号入座（最高频）</strong>：<strong>ROUGE=摘要</strong>、<strong>BLEU=翻译</strong>、<strong>BERTScore=语义相似度/查幻觉</strong>——别搞混（延续 2.2）。</li>
@@ -4788,7 +4803,7 @@ D. 只看 GPU 利用率</p>
 - <strong>SageMaker Clarify / Model Monitor / Amazon A2I / AWS AI Service Cards / Bedrock Guardrails / Data Wrangler / Glue Data Quality</strong>。
 - <strong>人在回路 (Human-in-the-loop) / NIST AI RMF / Well-Architected ML Lens</strong>。</p>
 <h3 id="aws">☁️ AWS 服务速查卡（本任务重点）</h3>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>服务</th>
@@ -4821,7 +4836,7 @@ D. 只看 GPU 利用率</p>
 <td>数据质量、可视化分布、处理<strong>不平衡</strong></td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="_4">易考点 / 陷阱</h3>
 <ul>
 <li><strong>负责任 AI 维度</strong>要能认全：公平、可解释、稳健、隐私安全、监管、透明、问责、可持续。</li>
@@ -5086,7 +5101,7 @@ D. 迁移学习</p>
 - <strong>Amazon A2I</strong>：人工审查（低置信度/随机抽查）。
 - <strong>RLHF / 奖励模型 (Reward Model) / SageMaker Ground Truth</strong>：收集人类偏好对齐模型。</p>
 <h3 id="aws">☁️ AWS 服务速查卡（本任务重点）</h3>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>服务</th>
@@ -5115,7 +5130,7 @@ D. 迁移学习</p>
 <td>收集 <strong>RLHF 人类偏好</strong>（对响应排序）</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="_4">易考点 / 陷阱</h3>
 <ul>
 <li><strong>可诠释性 vs 可解释性（最高频）</strong>：可诠释=用数学解释<strong>内部</strong>（简单模型如线性回归/决策树）；可解释=把模型当<strong>黑盒</strong>、看输入输出（神经网络也能做，通常够用）。<strong>要硬性透明/合规 → 选可诠释模型</strong>。</li>
@@ -5499,7 +5514,7 @@ D. 它会让模型忘记训练数据</p>
 - <strong>SageMaker Model Registry / Model Cards / ML Lineage Tracking / Feature Store / Model Dashboard</strong>：版本控制与来源追踪。
 - <strong>SageMaker Role Manager</strong>：预配置 ML 角色（数据科学家/MLOps/计算）。</p>
 <h3 id="aws">☁️ AWS 服务速查卡（本任务重点）</h3>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>服务</th>
@@ -5552,7 +5567,7 @@ D. 它会让模型忘记训练数据</p>
 <td>GenAI/智能体的内容与访问安全（补考纲）</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="_5">易考点 / 陷阱</h3>
 <ul>
 <li><strong>责任共担</strong>（最高频）：<strong>AWS 管"云本身"（OF the cloud）、客户管"云内部"（IN the cloud）</strong>；服务越托管（如 SageMaker 无服务器）客户责任越少，越接近底层（如 EC2）客户责任越多。</li>
@@ -5900,7 +5915,7 @@ D. 只要有 WAF 就不用管身份授权</p>
 <p><strong>监管落地</strong>
 - <strong>生成式 AI 安全范围矩阵 (GenAI Security Scoping Matrix)</strong>：范围 1-2（第三方，责任小）→ 3-5（自建，责任大）。</p>
 <h3 id="aws">☁️ AWS 服务速查卡（本任务重点）</h3>
-<table>
+<div class="tw"><table>
 <thead>
 <tr>
 <th>服务</th>
@@ -5953,7 +5968,7 @@ D. 只要有 WAF 就不用管身份授权</p>
 <td>测试/监控偏差（呼应算法问责）</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="_4">易考点 / 陷阱</h3>
 <ul>
 <li><strong>合规工具对号入座（最高频）</strong>：<strong>Artifact</strong>=下载合规报告；<strong>Audit Manager</strong>=生成审计报告/收证据；<strong>Config</strong>=资源配置合规；<strong>Inspector</strong>=应用漏洞；<strong>Trusted Advisor</strong>=最佳实践检查。</li>
