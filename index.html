@@ -273,6 +273,13 @@
       <div id="progList" style="margin-top:14px"></div>
     </div>
     <div class="card">
+      <h2>🧭 部位容量 & 推拉平衡</h2>
+      <div class="chips" id="balRangeChips"></div>
+      <div class="stat-grid" id="ppSummary" style="margin-top:10px"></div>
+      <div id="partBars" style="margin-top:8px"></div>
+      <div class="hint" id="balHint"></div>
+    </div>
+    <div class="card">
       <h2>🏆 各动作个人最佳 (PR)</h2>
       <select id="prFilter" style="margin-bottom:10px"></select>
       <div id="prList"></div>
@@ -284,6 +291,7 @@
     <div class="card">
       <h2>🎯 下次训练计划</h2>
       <div class="hint">训练时每完成一组就<b>轻点打勾 ✓</b>；<b>长按某一组</b>可修改重量/次数或删除该组；要加组点动作下方的<b>＋ 加一组</b>。练完可一键写入记录。</div>
+      <div id="tplBar" style="margin:6px 0 12px"></div>
       <div id="planList" style="margin-top:12px"></div>
       <div class="row" style="margin-top:6px">
         <button class="btn green" id="planToRecord" type="button" style="margin-top:0">✅ 打勾的写入今日记录</button>
@@ -1156,6 +1164,49 @@ function renderPRList(){
   }).join(''):'<div class="empty">暂无数据</div>';
 }
 
+/* ================= 训练平衡：部位容量 & 推拉 ================= */
+let balRange='4w';
+function balCutoff(){ if(balRange==='all')return '0000-00-00'; const days=balRange==='4w'?28:56; return dstr(new Date(Date.now()-days*86400000)); }
+function renderBalRange(){
+  const wrap=$('balRangeChips'); wrap.innerHTML='';
+  [['4w','近4周'],['8w','近8周'],['all','全部']].forEach(([k,label])=>{
+    const c=document.createElement('div'); c.className='chip'+(balRange===k?' active':''); c.textContent=label;
+    c.onclick=()=>{ balRange=k; renderBalRange(); renderBalance(); }; wrap.appendChild(c);
+  });
+}
+function renderBalance(){
+  const cut=balCutoff();
+  const logs=DB.logs.filter(l=>l.date>=cut && l.type!=='cardio');
+  const partSets={};
+  logs.forEach(l=>{ partSets[l.part]=(partSets[l.part]||0)+(l.sets?l.sets.length:0); });
+  const parts=Object.keys(partSets).sort((a,b)=>partSets[b]-partSets[a]);
+  if(!parts.length){
+    $('ppSummary').innerHTML=''; $('partBars').innerHTML='<div class="empty">该时间范围内暂无力量训练记录。</div>'; $('balHint').textContent=''; return;
+  }
+  const maxS=Math.max(1,...parts.map(p=>partSets[p]));
+  const push=(partSets['胸']||0)+(partSets['肩']||0);
+  const pull=(partSets['背']||0);
+  const ratio = push>0 ? (pull/push).toFixed(1) : (pull>0?'∞':'0');
+  $('ppSummary').innerHTML=
+    `<div class="stat"><div class="num">${push}</div><div class="lbl">推 胸+肩(组)</div></div>`+
+    `<div class="stat"><div class="num">${pull}</div><div class="lbl">拉 背(组)</div></div>`+
+    `<div class="stat"><div class="num">${ratio}</div><div class="lbl">拉 : 推</div></div>`;
+  $('partBars').innerHTML=parts.map(p=>{
+    const s=partSets[p], w=Math.round(s/maxS*100);
+    return `<div class="wk-bar"><span class="nm">${p}</span>
+      <span class="track"><span class="fill" style="width:${w}%"></span></span>
+      <span class="val">${s} 组</span></div>`;
+  }).join('');
+  let tip;
+  if(push===0) tip='这段时间几乎没练推(胸/肩),优先补上推的训练。';
+  else if(pull/push>=1.6) tip=`拉比推多不少(${ratio}:1),建议增加胸、肩的训练量，均衡到约 1:1~1.3:1，改善圆肩、让上肢更协调。`;
+  else if(pull/push<=0.7) tip='推明显多于拉，可适当增加背部训练。';
+  else tip=`推拉比较均衡(拉:推≈${ratio}:1)，保持即可。`;
+  const core=partSets['核心']||0;
+  if(core===0) tip+=' 核心这段时间没练到，建议每周固定 2 次。';
+  $('balHint').textContent=tip+'（按训练组数统计，自重动作也计入。）';
+}
+
 /* ================= 设置页 ================= */
 function renderBackupInfo(){
   const el=$('backupInfo');
@@ -1174,14 +1225,14 @@ $('importFile').onchange=e=>{
   const f=e.target.files[0]; if(!f)return;
   const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result); if(!d.logs)throw 0;
-    DB=d; if(!('lastBackup' in DB))DB.lastBackup=null; if(!DB.plan)DB.plan={items:[]};
-    save(DB); refreshAll(); renderPlan(); toast('导入成功');
+    DB=d; if(!('lastBackup' in DB))DB.lastBackup=null; if(!DB.plan)DB.plan={items:[]}; if(!DB.templates)DB.templates=[];
+    save(DB); refreshAll(); renderTemplates(); renderPlan(); toast('导入成功');
   }catch(err){toast('文件格式错误')}};
   r.readAsText(f); e.target.value='';
 };
 $('clearBtn').onclick=()=>{
   if(!confirm('确定清空全部记录？此操作不可恢复！'))return;
-  DB={logs:[],lastBackup:null,plan:{items:[]}}; save(DB); refreshAll(); renderPlan(); toast('已清空');
+  DB={logs:[],lastBackup:null,plan:{items:[]},templates:DB.templates||[]}; save(DB); refreshAll(); renderTemplates(); renderPlan(); toast('已清空（模板保留）');
 };
 
 /* ================= 计划页 ================= */
@@ -1250,32 +1301,59 @@ function planAddSetRow(w='',r=''){
   wrap.appendChild(div);
 }
 function planResetSets(){ $('planSetsWrap').innerHTML=''; planAddSetRow(); planAddSetRow(); planAddSetRow(); }
+function renderTemplates(){
+  const bar=$('tplBar'); if(!bar) return;
+  const tpls=DB.templates||[];
+  bar.innerHTML = tpls.length
+    ? '<div class="hint" style="margin:0 0 6px">📋 载入训练模板（点一天载入到下方，可再改动或直接用）：</div><div class="chips">'+
+      tpls.map((t,i)=>`<div class="chip" onclick="loadTemplate(${i})">${t.name}</div>`).join('')+'</div>'
+    : '';
+}
+function loadTemplate(i){
+  const t=(DB.templates||[])[i]; if(!t) return;
+  if(DB.plan.items.length && !confirm(`用「${t.name}」替换当前计划？（当前计划会被清掉）`)) return;
+  DB.plan.items = t.items.map(it=> it.type==='cardio'
+    ? {exercise:it.exercise, part:it.part, type:'cardio', cardio:{min:it.cardio.min, km:(it.cardio.km!=null?it.cardio.km:null), done:false}, note:it.note||'', day:t.name}
+    : {exercise:it.exercise, part:it.part, type:'strength', sets:(it.sets||[]).map(s=>({w:s.w, r:s.r, done:false})), note:it.note||'', day:t.name});
+  save(DB); renderPlan(); toast(`已载入「${t.name}」，可修改或直接用`);
+}
+window.loadTemplate=loadTemplate;
+function planItemHtml(it,ii){
+  let done,total,setsHtml;
+  if(it.type==='cardio'){
+    total=1; done=it.cardio.done?1:0;
+    setsHtml=`<span class="pset${it.cardio.done?' done':''}" data-ii="${ii}" data-si="0">${it.cardio.done?'✓':'☐'} ${it.cardio.min}分钟${it.cardio.km?' · '+it.cardio.km+'km':''}</span>`;
+  }else{
+    total=it.sets.length; done=it.sets.filter(s=>s.done).length;
+    setsHtml=it.sets.map((s,si)=>`<span class="pset${s.done?' done':''}" data-ii="${ii}" data-si="${si}">${s.done?'✓':'☐'} ${s.w||'自重'}${s.w?'kg':''}×${s.r}</span>`).join('');
+  }
+  return `<div class="log-item" data-sort-item data-sort-index="${ii}"><div class="top">
+    <div style="display:flex;align-items:center;gap:8px"><span class="drag-handle" title="拖动排序">≡</span>
+    <div><span class="name">${it.exercise}</span><span class="part">${it.part}</span></div></div>
+    <div style="display:flex;gap:10px;align-items:center"><span style="color:var(--muted);font-size:12px">${done}/${total}</span>
+    <span class="link danger" onclick="delPlanItem(${ii})">删除</span></div></div>
+    <div class="sets" style="gap:8px">${setsHtml}</div>
+    ${it.note?`<div class="note" style="font-style:normal">📝 ${it.note}</div>`:''}
+    <div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap">
+      ${it.type==='strength'?`<span class="link" onclick="planAddSetToItem(${ii})">＋ 加一组</span>`:''}
+      ${it.type==='strength'&&it.sets.length>1?`<span class="link danger" onclick="planRemoveSetFromItem(${ii})">－ 删一组</span>`:''}
+      <span class="link" onclick="editPlanNote(${ii})">${it.note?'✎ 修改心得':'＋ 添加心得'}</span>
+    </div>
+    </div>`;
+}
 function renderPlan(){
   const box=$('planList');
   const head=planTrash?`<div class="banner" style="background:rgba(47,107,255,.12);border-color:var(--accent);color:var(--accent)"><span>已删除「${planTrash.item.exercise}」</span><span class="link" style="color:var(--accent);font-weight:600" onclick="restorePlanItem()">↩︎ 恢复</span></div>`:'';
   if(!DB.plan.items.length){box.innerHTML=head+'<div class="hint">还没有计划。在下方添加你下次要练的动作。</div>';return}
-  box.innerHTML=head+DB.plan.items.map((it,ii)=>{
-    let done,total,setsHtml;
-    if(it.type==='cardio'){
-      total=1; done=it.cardio.done?1:0;
-      setsHtml=`<span class="pset${it.cardio.done?' done':''}" data-ii="${ii}" data-si="0">${it.cardio.done?'✓':'☐'} ${it.cardio.min}分钟${it.cardio.km?' · '+it.cardio.km+'km':''}</span>`;
-    }else{
-      total=it.sets.length; done=it.sets.filter(s=>s.done).length;
-      setsHtml=it.sets.map((s,si)=>`<span class="pset${s.done?' done':''}" data-ii="${ii}" data-si="${si}">${s.done?'✓':'☐'} ${s.w||'自重'}${s.w?'kg':''}×${s.r}</span>`).join('');
-    }
-    return `<div class="log-item" data-sort-item data-sort-index="${ii}"><div class="top">
-      <div style="display:flex;align-items:center;gap:8px"><span class="drag-handle" title="拖动排序">≡</span>
-      <div><span class="name">${it.exercise}</span><span class="part">${it.part}</span></div></div>
-      <div style="display:flex;gap:10px;align-items:center"><span style="color:var(--muted);font-size:12px">${done}/${total}</span>
-      <span class="link danger" onclick="delPlanItem(${ii})">删除</span></div></div>
-      <div class="sets" style="gap:8px">${setsHtml}</div>
-      ${it.note?`<div class="note" style="font-style:normal">📝 ${it.note}</div>`:''}
-      <div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap">
-        ${it.type==='strength'?`<span class="link" onclick="planAddSetToItem(${ii})">＋ 加一组</span>`:''}
-        ${it.type==='strength'&&it.sets.length>1?`<span class="link danger" onclick="planRemoveSetFromItem(${ii})">－ 删一组</span>`:''}
-        <span class="link" onclick="editPlanNote(${ii})">${it.note?'✎ 修改心得':'＋ 添加心得'}</span>
-      </div>
-      </div>`;
+  // 按天分组，保留每项的全局索引
+  const groups=[], gmap={};
+  DB.plan.items.forEach((it,ii)=>{ const day=it.day||'未分组'; if(!gmap[day]){gmap[day]={day,entries:[]}; groups.push(gmap[day]);} gmap[day].entries.push([it,ii]); });
+  const showHeader = groups.length>1 || (groups.length===1 && groups[0].day!=='未分组');
+  box.innerHTML=head+groups.map(g=>{
+    let gd=0,gt=0;
+    g.entries.forEach(([it])=>{ if(it.type==='cardio'){gt++; if(it.cardio.done)gd++;} else {gt+=it.sets.length; gd+=it.sets.filter(s=>s.done).length;} });
+    const header = showHeader ? `<div class="day-head" style="margin:16px 2px 8px"><span class="date">${g.day}</span><span class="vol">${gd}/${gt} 组完成</span></div>` : '';
+    return header + g.entries.map(([it,ii])=>planItemHtml(it,ii)).join('');
   }).join('');
   attachPlanSetHandlers();
   enableDragSort(box, order=>{ DB.plan.items=order.map(i=>DB.plan.items[i]); save(DB); renderPlan(); });
@@ -1438,17 +1516,17 @@ function switchView(name){
   document.querySelectorAll('.tabbar button').forEach(x=>x.classList.toggle('active',x.dataset.view===name));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   $('view-'+name).classList.add('active');
-  if(name==='progress'){renderProgMode();renderProgSelect();renderRangeChips();drawChart();renderPRFilter();renderPRList()}
+  if(name==='progress'){renderProgMode();renderProgSelect();renderRangeChips();drawChart();renderPRFilter();renderPRList();renderBalRange();renderBalance()}
   if(name==='history')renderHistory();
   if(name==='settings')renderBackupInfo();
-  if(name==='plan'){renderPlanPartChips();renderPlanNewPart();renderPlanExercise();updatePlanForm();renderPlan()}
+  if(name==='plan'){renderPlanPartChips();renderPlanNewPart();renderPlanExercise();updatePlanForm();renderTemplates();renderPlan()}
   window.scrollTo(0,0);
 }
 document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>switchView(b.dataset.view); });
 
 /* ================= 刷新 ================= */
 function refreshAll(){renderExerciseSelect();renderHistory();renderProgSelect();renderPRFilter();renderPRList();renderBackupInfo();
-  if($('view-progress').classList.contains('active')){renderRangeChips();drawChart();}}
+  if($('view-progress').classList.contains('active')){renderRangeChips();drawChart();renderBalRange();renderBalance();}}
 window.delLog=delLog; window.rmSession=rmSession; window.editSession=editSession; window.editHistory=editHistory;
 window.togglePlanSet=togglePlanSet; window.delPlanItem=delPlanItem; window.editPlanNote=editPlanNote;
 window.restorePlanItem=restorePlanItem; window.showMoreHistory=showMoreHistory;
@@ -1457,6 +1535,7 @@ window.addEventListener('resize',()=>{ if($('view-progress').classList.contains(
 
 /* ================= 初始化 ================= */
 if(!DB.plan)DB.plan={items:[]};
+if(!DB.templates)DB.templates=[];
 $('date').value=todayStr();
 renderParts(); renderNewPart(); renderExerciseSelect();
 const restored=restoreDraft();
