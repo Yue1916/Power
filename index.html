@@ -471,8 +471,8 @@ function enableDragSort(listEl, onReorder){
       const startX=e.clientX, startY=e.clientY, pid=e.pointerId;
       let armed=false, translate=0, lastY=e.clientY, rafPending=false, moved=false, holdTimer=null;
 
-      const glue=()=>{ const naturalTop=dragEl.getBoundingClientRect().top - grabOffset; translate=(lastY - grabOffset) - naturalTop; dragEl.style.transform=`translateY(${translate}px)`; };
       let grabOffset=0;
+      const glue=()=>{ const naturalTop=dragEl.getBoundingClientRect().top - translate; translate=(lastY - grabOffset) - naturalTop; dragEl.style.transform=`translateY(${translate}px)`; };
       const blockScroll=ev=>ev.preventDefault();
 
       function arm(){
