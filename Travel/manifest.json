@@ -1,0 +1,13 @@
+{
+  "name": "普吉岛行程",
+  "short_name": "普吉行程",
+  "description": "普吉岛 9 天行程 + 记账工具",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f1720",
+  "theme_color": "#0ea5a4",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
