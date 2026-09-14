@@ -127,6 +127,17 @@
   .addexp{display:flex; gap:6px; margin:10px 0}
   .addexp input.amt{flex:0 0 26%} .addexp select.cur{flex:0 0 auto; width:56px; padding:11px 6px} .addexp input.note{flex:1}
   .addexp button{flex:0 0 auto; padding:11px 16px; border:none; border-radius:11px; background:var(--accent); color:#04211f; font-weight:700; cursor:pointer}
+  .ntgroup{margin-top:16px}
+  .ntgh{font-size:13px; font-weight:700; color:var(--accent2); padding:6px 0 5px; border-bottom:1px solid var(--line)}
+  .ntitem{display:flex; align-items:flex-start; gap:11px; padding:11px 0; border-bottom:1px solid var(--line)}
+  .ntitem:last-child{border-bottom:none}
+  .ntitem .ck{flex:0 0 auto; width:24px; height:24px; border-radius:50%; border:2px solid var(--line);
+    background:var(--card2); cursor:pointer; display:flex; align-items:center; justify-content:center;
+    font-size:14px; color:transparent; margin-top:1px; padding:0}
+  .ntitem.done .ck{background:var(--accent); border-color:var(--accent); color:#04211f}
+  .ntitem .nt-tx{flex:1; font-size:14px; word-break:break-word; line-height:1.5}
+  .ntitem.done .nt-tx{color:var(--muted); text-decoration:line-through}
+  .ntitem .nt-del{flex:0 0 auto; background:transparent; border:none; color:var(--danger); font-size:17px; cursor:pointer; padding:0 2px}
   code{background:var(--card2); padding:1px 6px; border-radius:6px; font-size:12px}
 </style>
 </head>
@@ -162,6 +173,21 @@
   <!-- ============ 计划 ============ -->
   <section id="view-plan" class="view"></section>
 
+  <!-- ============ 备忘 ============ -->
+  <section id="view-notes" class="view">
+    <div class="card">
+      <h2>📌 注意事项 / 待办 <span id="notesCount" class="mini" style="margin-left:auto"></span></h2>
+      <div class="hint" style="margin-top:0">按天分组的预订事项 + 出发前准备。点左侧圆圈打勾表示已完成，可自行增删。</div>
+      <label style="margin-top:12px">添加事项到</label>
+      <select id="noteGroup"></select>
+      <div class="addexp" style="margin-top:8px">
+        <input class="note" id="noteInput" placeholder="事项内容，如：某某酒店提前预约…">
+        <button id="noteAdd" type="button">添加</button>
+      </div>
+      <div id="notesList"></div>
+    </div>
+  </section>
+
   <!-- ============ 设置 ============ -->
   <section id="view-set" class="view">
     <div class="card">
@@ -193,6 +219,7 @@
 <nav class="tabbar">
   <button data-view="days" class="active"><span class="ico">🗺️</span>行程</button>
   <button data-view="plan"><span class="ico">📋</span>计划</button>
+  <button data-view="notes"><span class="ico">📌</span>备忘</button>
   <button data-view="stats"><span class="ico">📊</span>统计</button>
   <button data-view="set"><span class="ico">⚙️</span>设置</button>
 </nav>
@@ -255,6 +282,25 @@ const REC_TIPS={
 };
 const DEFAULT_CFG={budget:5000,people:4,currency:'¥',rate:5,title:'普吉岛 11/28–12/6',
   catBudget:{stay:1050,food:1200,fun:1500,transport:400,other:300}};
+// 备忘/待办 预置项（首次打开时生成，之后随你增删，更新不会覆盖）
+// group: 具体日期(挂到对应 Day) 或 'prep'(出发前准备)
+const NOTE_SEED=[
+ {g:'11/29', t:'🐘 大象营（观察型）官网 / Klook 提前订，热门日期要早订'},
+ {g:'11/30', t:'🏨 皇帝岛「拉查海滩度假酒店」提前在官网 / Booking 订好（房量少）'},
+ {g:'11/30', t:'🤿 皇帝岛深潜体验提前订，需签健康声明；体验潜无需执照'},
+ {g:'12/2',  t:'🚤 皮皮岛 + 蛋岛拼团一日游提前订（Klook / KKday）'},
+ {g:'12/3',  t:'🌿 丛林飞跃（Hanuman World / Flying Hanuman）提前订、含接送'},
+ {g:'12/4',  t:'💆 Phumontra SPA 官网或 LINE 提前预约'},
+ {g:'12/4',  t:'🔫 Gold Shooter Club 可提前问价 / 预约'},
+ {g:'12/6',  t:'✈️ 回程 08:35，提前 2 小时到机场；确认行李额'},
+ {g:'prep',  t:'🛂 护照有效期 ≥6 个月，确认签证 / 落地签材料'},
+ {g:'prep',  t:'📱 电话卡 AIS / True 机场柜台或 Klook 预订'},
+ {g:'prep',  t:'💵 备好现金 / 换钱，皇帝岛 ATM 少、物价偏高'},
+ {g:'prep',  t:'💳 通知银行开通境外用卡，备一张境外可用的卡'},
+ {g:'prep',  t:'💊 备晕船药（皮皮岛开阔海较颠）、常用药'},
+ {g:'prep',  t:'🔌 转换插头（泰式插座）、防晒、驱蚊'},
+];
+function seedNotes(){return NOTE_SEED.map(n=>({id:uid(),group:n.g,text:n.t,done:false}));}
 
 /* ================= 工具 ================= */
 const $=id=>document.getElementById(id);
@@ -276,20 +322,22 @@ function load(){
     DB.days.forEach(x=>{ if(!x.meals) x.meals={b:'',l:'',d:x.food||''}; if(x.tips===undefined) x.tips='';
       if(!x.cb) x.cb={stay:0,food:0,fun:0,transport:0,other:0}; if(!x.ab) x.ab=newAB(); if(!x.ac) x.ac=newAC(); });
     if(!DB.config.catBudget) DB.config.catBudget={...DEFAULT_CFG.catBudget};
-    // 行程版本升级：刷新行程内容，保留各天已记的实际支出（ab/ac）
+    if(!Array.isArray(DB.notes)) DB.notes=seedNotes();   // 首次生成备忘，之后保留用户增删
+    // 行程版本升级：刷新行程内容，保留各天已记的实际支出（ab/ac）与你改过的餐饮（meals）
     if(DB.planVer!==PLAN_VER){
-      const kAb={},kAc={};
+      const kAb={},kAc={},kMeals={};
       DB.days.forEach(x=>{
+        if(x.meals) kMeals[x.date]=x.meals;
         const abSum=x.ab?DCATS.reduce((s,[k])=>s+((x.ab[k])||0),0):0;
         if(abSum>0){ kAb[x.date]=x.ab; kAc[x.date]=x.ac||{}; }
         else if(x.expenses&&x.expenses.length){ kAb[x.date]={stay:0,food:0,fun:0,transport:0,other:x.expenses.reduce((a,e)=>a+toBase(e),0)}; kAc[x.date]={}; }
       });
       seedDays();
-      DB.days.forEach(x=>{ if(kAb[x.date]) x.ab={...x.ab,...kAb[x.date]}; if(kAc[x.date]) x.ac={...x.ac,...kAc[x.date]}; });
+      DB.days.forEach(x=>{ if(kAb[x.date]) x.ab={...x.ab,...kAb[x.date]}; if(kAc[x.date]) x.ac={...x.ac,...kAc[x.date]}; if(kMeals[x.date]) x.meals={...x.meals,...kMeals[x.date]}; });
       DB.planVer=PLAN_VER; persist();
     }
     return;}}catch(e){}
-  DB={config:{...DEFAULT_CFG},days:[]}; seedDays(); DB.planVer=PLAN_VER; persist();
+  DB={config:{...DEFAULT_CFG},days:[]}; seedDays(); DB.notes=seedNotes(); DB.planVer=PLAN_VER; persist();
 }
 function people(){return +DB.config.people||4}
 function num(n){n=Math.round((+n||0)*100)/100;return Number.isInteger(n)?n:n.toFixed(2)}
@@ -482,7 +530,50 @@ function renderPlan(){
   $('view-plan').innerHTML=html;
 }
 
-function renderAll(){renderDays();renderPlan();renderStats();renderSet();}
+/* ================= 渲染：备忘/待办 ================= */
+// 按 Day 分组（含日期的挂到对应天），未匹配到的一律并入「出发前准备」
+function noteGroups(){
+  const groups=DB.days.map((d,i)=>({key:d.date,label:`Day ${i+1} · ${d.date} ${d.dow}`,notes:[]}));
+  const prep={key:'prep',label:'🎒 出发前准备',notes:[]};
+  DB.notes.forEach(n=>{ const g=groups.find(x=>x.key===n.group); (g||prep).notes.push(n); });
+  groups.push(prep);
+  return groups;
+}
+function fillNoteGroups(){
+  const sel=$('noteGroup'); if(!sel) return;
+  sel.innerHTML = DB.days.map((d,i)=>`<option value="${d.date}">Day ${i+1} · ${d.date}</option>`).join('')
+    + `<option value="prep" selected>🎒 出发前准备</option>`;
+}
+function renderNotes(){
+  if(!Array.isArray(DB.notes)) DB.notes=[];
+  const done=DB.notes.filter(n=>n.done).length;
+  $('notesCount').textContent = DB.notes.length ? `已完成 ${done}/${DB.notes.length}` : '';
+  const groups=noteGroups().filter(g=>g.notes.length);
+  const wrap=$('notesList');
+  wrap.innerHTML = groups.length
+    ? groups.map(g=>`<div class="ntgroup"><div class="ntgh">${esc(g.label)}</div>`
+        + g.notes.map(n=>`<div class="ntitem${n.done?' done':''}">
+            <button class="ck" data-nck="${n.id}" type="button">✓</button>
+            <span class="nt-tx">${esc(n.text)}</span>
+            <button class="nt-del" data-ndel="${n.id}" type="button">🗑️</button></div>`).join('')
+        + `</div>`).join('')
+    : '<div class="mini" style="padding:10px 0">还没有事项，在上面添加一条吧。</div>';
+  wrap.querySelectorAll('[data-nck]').forEach(b=>b.onclick=()=>{
+    const n=DB.notes.find(x=>x.id===b.dataset.nck); if(n){n.done=!n.done; persist(); renderNotes();}
+  });
+  wrap.querySelectorAll('[data-ndel]').forEach(b=>b.onclick=()=>{
+    if(!confirm('删除这条备忘？'))return;
+    DB.notes=DB.notes.filter(x=>x.id!==b.dataset.ndel); persist(); renderNotes();
+  });
+}
+function addNote(){
+  const inp=$('noteInput'), v=(inp.value||'').trim(); if(!v)return;
+  if(!Array.isArray(DB.notes)) DB.notes=[];
+  const g=($('noteGroup')&&$('noteGroup').value)||'prep';
+  DB.notes.push({id:uid(),group:g,text:v,done:false}); inp.value=''; persist(); renderNotes(); toast('已添加');
+}
+
+function renderAll(){renderDays();renderPlan();renderStats();renderSet();renderNotes();}
 
 /* ================= 事件 ================= */
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{
@@ -490,6 +581,8 @@ document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   b.classList.add('active'); $('view-'+b.dataset.view).classList.add('active'); window.scrollTo(0,0);
 });
+$('noteAdd').onclick=addNote;
+$('noteInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault(); addNote();} });
 $('saveCfg').onclick=()=>{
   DB.config.budget=parseFloat($('cfgBudget').value)||0;
   DB.config.people=parseInt($('cfgPeople').value)||4;
@@ -506,7 +599,7 @@ $('importBtn').onclick=()=>$('importFile').click();
 $('importFile').onchange=e=>{
   const f=e.target.files[0]; if(!f)return; const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result); if(!d.days)throw 0;
-    DB={config:{...DEFAULT_CFG,...(d.config||{})},days:d.days};
+    DB={config:{...DEFAULT_CFG,...(d.config||{})},days:d.days,notes:Array.isArray(d.notes)?d.notes:seedNotes(),planVer:d.planVer};
     DB.days.forEach(x=>{ if(!x.meals)x.meals={b:'',l:'',d:''}; if(x.tips===undefined)x.tips=''; if(!x.cb)x.cb={stay:0,food:0,fun:0,transport:0,other:0}; if(!x.ab)x.ab=newAB(); if(!x.ac)x.ac=newAC(); });
     persist(); renderAll(); toast('导入成功');
   }catch(err){toast('文件无法识别')}}; r.readAsText(f);
@@ -523,7 +616,7 @@ $('clearBtn').onclick=()=>{
 };
 
 /* ================= 启动 ================= */
-load(); renderAll();
+load(); fillNoteGroups(); renderAll();
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 </script>
 </body>
