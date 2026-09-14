@@ -207,23 +207,23 @@
 <script>
 /* ================= 默认行程数据 ================= */
 const DEFAULT_DAYS=[
-  {date:'11/28',dow:'周六',title:'抵达普吉 · 芭东',hotel:'芭东 Patong（①段 3 晚）',budget:280,
-   meals:{b:'（航班上/落地简餐）',l:'（航班上）',d:'No.6 Restaurant（芭东超人气平价泰餐）或 Savoey 海鲜'},
-   plan:'17:40 普吉机场落地，取行李、办电话卡/换钱\n19:00 Grab 前往芭东 Patong 酒店入住\n20:00 芭东晚餐；可逛 Bangla Road 感受夜生活'},
-  {date:'11/29',dow:'周日',title:'射击 + 老城周日夜市',hotel:'芭东 Patong',budget:540,
-   meals:{b:'酒店早餐 / Kaya Coffee（芭东咖啡）',l:'芭东当地简餐',d:'老城 Kopitiam by Wilai / One Chun + Lard Yai 夜市小吃'},
-   plan:'上午 芭东海滩 / 咖啡馆慢活\n14:00 Patong 靶场打靶（提前定好子弹数，别被推销加量）\n17:00 Grab 前往普吉老城\n傍晚 老城 walk + 咖啡馆 + Lard Yai 周日夜市（Thalang 路，约16:00–22:00）'},
-  {date:'11/30',dow:'周一',title:'跳岛 Day1 · 皇帝岛 + 珊瑚岛',hotel:'芭东 Patong',budget:570,
-   meals:{b:'酒店早餐（早出发可打包）',l:'皇帝岛团餐（多含）',d:'芭东 Savoey Seafood / Meena Restaurant'},
-   plan:'07:30 酒店接送前往查龙码头\n08:30 速度艇往皇帝岛（约40分钟，晕船提前吃药、坐船中后、看海平线）\n全天 皇帝岛浮潜/白沙滩 + 珊瑚岛\n16:30 返回酒店休息'},
-  {date:'12/1',dow:'周二',title:'大象营 + 搬Kata + 神仙半岛日落',hotel:'卡塔 Kata（②段 3 晚）',budget:760,
-   meals:{b:'芭东酒店早餐（退房前）',l:'大象营/回程路上简餐',d:'Rawai 海鲜市场加工 或 Kata Mama（海边泰餐）'},
-   plan:'08:30 大象营接送（选不骑象的道德营地）：喂象/观察/泥浴\n14:00 返回芭东取寄存行李\n15:00 Grab 搬到 Kata 入住\n17:30 前往神仙半岛 Promthep Cape 看日落\n19:30 Kata 晚餐'},
-  {date:'12/2',dow:'周三',title:'跳岛 Day2 · 蛋岛',hotel:'卡塔 Kata',budget:530,
-   meals:{b:'酒店早餐',l:'蛋岛团餐（多含）',d:'Kata：Red Duck（泰餐）/ Capannina（意餐）'},
+  {date:'11/28',dow:'周六',title:'抵达 · 普吉镇',hotel:'普吉镇 老腾精品酒店（①段 3 晚）',budget:280,
+   meals:{b:'（航班上/落地简餐）',l:'（航班上）',d:'老城 One Chun / Kopitiam by Wilai（地道老普吉菜）'},
+   plan:'17:40 普吉机场落地，取行李、办电话卡/换钱\n19:00 Grab 前往普吉镇 老腾精品酒店入住\n20:00 老城晚餐、随意夜逛'},
+  {date:'11/29',dow:'周日',title:'大象营 + 老城周日夜市',hotel:'普吉镇 老腾精品酒店',budget:800,
+   meals:{b:'酒店早餐',l:'大象营含餐 / 回程简餐',d:'老城 Lard Yai 周日夜市小吃'},
+   plan:'08:30 大象营接送（不骑象观察型，Paklok，普吉镇出发约35分钟）\n喂象/观察/泥浴，约14:00送回\n下午 老城咖啡 / 休整\n傍晚 老城 walk + Lard Yai 周日夜市（Thalang 路 16:00–22:00）'},
+  {date:'11/30',dow:'周一',title:'跳岛 Day1 · 皇帝岛 + 珊瑚岛',hotel:'普吉镇 老腾精品酒店',budget:570,
+   meals:{b:'酒店早餐（早出发可打包）',l:'皇帝岛团餐（多含）',d:'普吉镇/老城 海鲜或泰餐'},
+   plan:'07:30 酒店接送前往查龙码头\n08:30 速度艇往皇帝岛（约40分钟，晕船提前吃药、坐船中后、看海平线）\n全天 皇帝岛浮潜/白沙滩 + 珊瑚岛\n16:30 返回普吉镇休息'},
+  {date:'12/1',dow:'周二',title:'搬Kata + Karon咖啡 + 射击 + 神仙半岛日落',hotel:'卡塔/卡伦 Kata/Karon（②段 3 晚）',budget:650,
+   meals:{b:'老腾酒店早餐（退房前）',l:'Karon On the Hill（山景餐厅/咖啡打卡）',d:'Kata：Red Duck / Kata Mama 或 Rawai 海鲜'},
+   plan:'10:00 普吉镇退房 → Grab 搬去 Kata/Karon 入住（约40分钟）\n午后 Karon On the Hill 山景咖啡/午餐打卡\n16:00 Gold Shooter Club 打靶（神仙半岛附近）\n17:30 神仙半岛 Promthep Cape 看日落\n19:30 Kata 晚餐'},
+  {date:'12/2',dow:'周三',title:'跳岛 Day2 · 蛋岛',hotel:'卡塔/卡伦 Kata/Karon',budget:530,
+   meals:{b:'酒店早餐',l:'蛋岛团餐（多含）',d:'Kata：Capannina（意餐）/ 海鲜'},
    plan:'09:00 酒店接送，短船程往蛋岛 Khai（约15–20分钟，海况平、晕船友好）\n全天 浅水浮潜、沙滩躺、喂鱼\n16:00 返回，Kata 海滩看日落'},
-  {date:'12/3',dow:'周四',title:'丛林飞跃 + Phumontra SPA',hotel:'卡塔 Kata',budget:780,
-   meals:{b:'Kata 酒店早餐 / Bonus Coffee',l:'Kathu / 丛林飞跃附近',d:'Kata：Kata Mama / Rewind Kata'},
+  {date:'12/3',dow:'周四',title:'丛林飞跃 + Phumontra SPA',hotel:'卡塔/卡伦 Kata/Karon',budget:780,
+   meals:{b:'Kata 酒店早餐 / Bonus Coffee',l:'Kathu / 丛林飞跃附近',d:'Kata：Rewind Kata / Kata Mama'},
    plan:'09:00 丛林飞跃（Hanuman World / Flying Hanuman，Kathu 一带）\n13:00 午餐\n15:00 Phumontra SPA 按摩放松\n晚上 Kata 自由活动'},
   {date:'12/4',dow:'周五',title:'搬机场旁 + Bangtao海滩俱乐部日落',hotel:'奈扬/迈考 Nai Yang/Mai Khao（③段 2 晚）',budget:510,
    meals:{b:'Kata 酒店早餐',l:'Bangtao 海滩俱乐部（Cafe del Mar / Catch）',d:'奈扬沙滩海鲜排档'},
@@ -237,13 +237,13 @@ const DEFAULT_DAYS=[
 ];
 const REC_MEALS={}; DEFAULT_DAYS.forEach(d=>REC_MEALS[d.date]={...d.meals});
 const REC_TIPS={
- '11/28':'机场→芭东 Grab/出租约 600–800฿；电话卡 AIS/True(7–15天) 约 200–350฿（机场柜台或 Klook 预订）。价格为大致参考。',
- '11/29':'芭东靶场按子弹收费，手枪 10–20 发套餐约 800–1500฿/人（现场付，别被推销加子弹）；芭东↔老城 Grab 单程约 250–350฿。',
+ '11/28':'机场→普吉镇 Grab/出租约 600–700฿；电话卡 AIS/True(7–15天) 约 200–350฿（机场柜台或 Klook 预订）。价格为大致参考。',
+ '11/29':'大象营（不骑象观察型，如 Phuket Elephant Sanctuary）约 2500–3000฿/人（含接送+午餐），官网/Klook 早订，热门需提前；周日夜市免费逛。',
  '11/30':'皇帝岛+珊瑚岛拼团一日游约 1000–1500฿/人（含接送+午餐+浮潜装备），Klook / KKday 提前订；自备晕船药。',
- '12/1':'大象营（不骑象观察型，如 Phuket Elephant Sanctuary）约 2500–3000฿/人（含接送+午餐），官网/Klook 早订，热门需提前；神仙半岛免费；芭东→Kata Grab 约 300–400฿。',
+ '12/1':'普吉镇→Kata Grab 约 500–600฿；Gold Shooter Club 按子弹收费，套餐约 800–1500฿/人（现场付，别被推销加子弹）；神仙半岛免费；Karon On the Hill 建议避开正午、看海景。',
  '12/2':'蛋岛拼团一日游约 900–1300฿/人（含接送+午餐），Klook / KKday。',
  '12/3':'丛林飞跃 Hanuman World / Flying Hanuman 约 1000–1800฿/人（视线路长短，含接送），Klook/官网；Phumontra SPA 按项目约 800–1500฿/人，官网或 LINE 提前预约。',
- '12/4':'Kata→机场旁 Grab 约 500–700฿；Bangtao 海滩俱乐部（Cafe del Mar / Catch）有最低消费，人均约 500–1000฿。',
+ '12/4':'Kata→机场旁 Grab 约 600–800฿；Bangtao 海滩俱乐部（Cafe del Mar / Catch）有最低消费，人均约 500–1000฿。',
  '12/5':'机场旁休闲；奈扬海滩海鲜排档人均约 300–600฿。',
  '12/6':'酒店→机场 Grab 约 150–250฿（很近）；国际航班建议提前 2 小时，约 06:30 出发。',
 };
@@ -259,6 +259,7 @@ function money(n){n=Math.round((+n||0)*100)/100; const s=Number.isInteger(n)?n:n
 
 /* ================= 状态 ================= */
 const KEY='travel_phuket_v1';
+const PLAN_VER=2; // 行程结构版本，变动时自动刷新行程（保留已记花销）
 let DB={config:{...DEFAULT_CFG},days:[]};
 function seedDays(){ DB.days=DEFAULT_DAYS.map(d=>({...d, meals:d.meals?{...d.meals}:{b:'',l:'',d:''}, tips:REC_TIPS[d.date]||'', expenses:[]})); }
 function load(){
@@ -271,8 +272,14 @@ function load(){
       localStorage.setItem('trip_seed_v2','1'); persist();
     }
     if(!DB.config.catBudget) DB.config.catBudget={...DEFAULT_CFG.catBudget};
+    // 行程版本升级：结构变动时刷新行程内容，保留各天已记的花销
+    if(DB.planVer!==PLAN_VER){
+      const keep={}; DB.days.forEach(x=>keep[x.date]=x.expenses||[]);
+      seedDays(); DB.days.forEach(x=>{ if(keep[x.date]) x.expenses=keep[x.date]; });
+      DB.planVer=PLAN_VER; persist();
+    }
     return;}}catch(e){}
-  DB={config:{...DEFAULT_CFG},days:[]}; seedDays();
+  DB={config:{...DEFAULT_CFG},days:[]}; seedDays(); DB.planVer=PLAN_VER; persist();
 }
 function people(){return +DB.config.people||4}
 function num(n){n=Math.round((+n||0)*100)/100;return Number.isInteger(n)?n:n.toFixed(2)}
@@ -466,8 +473,8 @@ function renderPlan(){
   const segs=[]; DB.days.forEach(d=>{const h=d.hotel||'—'; const last=segs[segs.length-1]; if(last&&last.hotel===h) last.dates.push(d.date); else segs.push({hotel:h,dates:[d.date]});});
   html+=`<div class="card"><h2>🏨 住宿清单</h2>`+segs.map(s=>`<div class="litem"><div class="li-nm">${esc(s.hotel)}</div><div class="li-sub">${s.dates[0]}${s.dates.length>1?' – '+s.dates[s.dates.length-1]:''}（${s.dates.length}晚）</div></div>`).join('')+`</div>`;
 
-  // 行程清单
-  html+=`<div class="card"><h2>🗺️ 行程清单</h2>`+DB.days.map((d,i)=>`<div class="litem"><div><div class="li-nm">D${i+1} · ${esc(d.date)} ${esc(d.dow)} · ${esc(d.title)}</div><div class="li-sub">${esc((d.plan||'').split('\n').filter(x=>x.trim()).join(' / '))||'（未填）'}</div></div></div>`).join('')+`</div>`;
+  // 行程清单（简洁：只列每天地点/亮点，详情看行程页）
+  html+=`<div class="card"><h2>🗺️ 行程清单</h2>`+DB.days.map((d,i)=>`<div class="litem"><div class="li-nm">D${i+1} · ${esc(d.date)} ${esc(d.dow)}</div><div class="li-sub" style="flex:1; text-align:right; margin-top:0">${esc(d.title)}</div></div>`).join('')+`</div>`;
 
   // 餐厅清单
   html+=`<div class="card"><h2>🍽️ 餐厅清单</h2>`+DB.days.map(d=>{
