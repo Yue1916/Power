@@ -1,6 +1,6 @@
 /* 普吉行程 Service Worker —— 离线可用（出国网络不稳也能开）
    更新后把版本号 +1（tv-v2），联网打开即自动更新缓存。*/
-const CACHE = 'tv-v4';
+const CACHE = 'tv-v6';
 const CORE = ['./', './index.html', './manifest.json', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
