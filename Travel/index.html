@@ -210,9 +210,9 @@ const DEFAULT_DAYS=[
   {date:'11/28',dow:'周六',title:'抵达 · 普吉镇',hotel:'普吉镇 老腾精品酒店（①段 3 晚）',budget:280,
    meals:{b:'（航班上/落地简餐）',l:'（航班上）',d:'老城 One Chun / Kopitiam by Wilai（地道老普吉菜）'},
    plan:'17:40 普吉机场落地，取行李、办电话卡/换钱\n19:00 Grab 前往普吉镇 老腾精品酒店入住\n20:00 老城晚餐、随意夜逛'},
-  {date:'11/29',dow:'周日',title:'大象营 + 老城周日夜市',hotel:'普吉镇 老腾精品酒店',budget:800,
+  {date:'11/29',dow:'周日',title:'大象营 + 购物 + 老城夜市',hotel:'普吉镇 老腾精品酒店',budget:800,
    meals:{b:'酒店早餐',l:'大象营含餐 / 回程简餐',d:'老城 Lard Yai 周日夜市小吃'},
-   plan:'08:30 大象营接送（不骑象观察型，Paklok，普吉镇出发约35分钟）\n喂象/观察/泥浴，约14:00送回\n下午 老城咖啡 / 休整\n傍晚 老城 walk + Lard Yai 周日夜市（Thalang 路 16:00–22:00）'},
+   plan:'08:30 大象营接送（不骑象观察型，Paklok，普吉镇出发约35分钟）\n喂象/观察/泥浴，约14:00送回\n下午 Central Phuket 商场逛街 + Big C/Lotus 超市囤手信\n傍晚 老城 walk + Lard Yai 周日夜市（Thalang 路 16:00–22:00）'},
   {date:'11/30',dow:'周一',title:'跳岛 Day1 · 皇帝岛 + 珊瑚岛',hotel:'普吉镇 老腾精品酒店',budget:570,
    meals:{b:'酒店早餐（早出发可打包）',l:'皇帝岛团餐（多含）',d:'普吉镇/老城 海鲜或泰餐'},
    plan:'07:30 酒店接送前往查龙码头\n08:30 速度艇往皇帝岛（约40分钟，晕船提前吃药、坐船中后、看海平线）\n全天 皇帝岛浮潜/白沙滩 + 珊瑚岛\n16:30 返回普吉镇休息'},
@@ -238,7 +238,7 @@ const DEFAULT_DAYS=[
 const REC_MEALS={}; DEFAULT_DAYS.forEach(d=>REC_MEALS[d.date]={...d.meals});
 const REC_TIPS={
  '11/28':'机场→普吉镇 Grab/出租约 600–700฿；电话卡 AIS/True(7–15天) 约 200–350฿（机场柜台或 Klook 预订）。价格为大致参考。',
- '11/29':'大象营（不骑象观察型，如 Phuket Elephant Sanctuary）约 2500–3000฿/人（含接送+午餐），官网/Klook 早订，热门需提前；周日夜市免费逛。',
+ '11/29':'大象营（不骑象观察型，如 Phuket Elephant Sanctuary）约 2500–3000฿/人（含接送+午餐），官网/Klook 早订，热门需提前。Central Phuket 商场就在普吉镇，逛街+吃饭+超市一站式；Big C/Lotus 超市适合囤零食干货手信；周日夜市免费逛。',
  '11/30':'皇帝岛+珊瑚岛拼团一日游约 1000–1500฿/人（含接送+午餐+浮潜装备），Klook / KKday 提前订；自备晕船药。',
  '12/1':'普吉镇→Kata Grab 约 500–600฿；Gold Shooter Club 按子弹收费，套餐约 800–1500฿/人（现场付，别被推销加子弹）；神仙半岛免费；Karon On the Hill 建议避开正午、看海景。',
  '12/2':'蛋岛拼团一日游约 900–1300฿/人（含接送+午餐），Klook / KKday。',
@@ -259,7 +259,7 @@ function money(n){n=Math.round((+n||0)*100)/100; const s=Number.isInteger(n)?n:n
 
 /* ================= 状态 ================= */
 const KEY='travel_phuket_v1';
-const PLAN_VER=2; // 行程结构版本，变动时自动刷新行程（保留已记花销）
+const PLAN_VER=3; // 行程结构版本，变动时自动刷新行程（保留已记花销）
 let DB={config:{...DEFAULT_CFG},days:[]};
 function seedDays(){ DB.days=DEFAULT_DAYS.map(d=>({...d, meals:d.meals?{...d.meals}:{b:'',l:'',d:''}, tips:REC_TIPS[d.date]||'', expenses:[]})); }
 function load(){
