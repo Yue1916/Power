@@ -99,6 +99,9 @@
   .crow .ccur{flex:0 0 auto; width:50px; padding:8px 4px}
   .costtot{margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:baseline; border-top:1px solid var(--line); padding-top:9px; font-size:13px}
   .costtot .mplan{color:var(--muted)} .costtot .mact{color:var(--gold); font-weight:700}
+  .costsum{margin-top:10px; border-top:1px solid var(--line); padding-top:9px; font-size:13px; display:flex; flex-direction:column; gap:5px}
+  .costsum span{color:var(--muted); display:inline-block; width:38px}
+  .costsum b.gold{color:var(--gold)} .costsum b.g{color:var(--accent)} .costsum b.warn{color:var(--danger)}
   .bar{height:16px; border-radius:999px; overflow:hidden; background:var(--card2); border:1px solid var(--line); margin:2px 0 6px}
   .bar > div{height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2))}
   .bar > div.over{background:linear-gradient(90deg,#f97316,var(--danger))}
@@ -152,7 +155,7 @@
     </div>
     <div class="card">
       <h2>📅 每日花费（计划 vs 实际）</h2>
-      <table class="tbl"><thead><tr><th class="nm">日期</th><th>计划/人</th><th>计划/4人</th><th>实际/4人</th></tr></thead><tbody id="dayTbody"></tbody></table>
+      <table class="tbl"><thead><tr><th class="nm">日期</th><th>计划(4人)</th><th>实际(4人)</th><th>结余</th></tr></thead><tbody id="dayTbody"></tbody></table>
     </div>
   </section>
 
@@ -356,16 +359,20 @@ function renderDays(){
          <div class="plan">${planTimeline(d.plan)||'<div class="mini">（点 ✏️ 添加行程）</div>'}</div>`;
     const base=DB.config.currency||'¥';
     const costRows=DCATS.map(([k,label])=>{
-      const planPP=(d.cb&&d.cb[k])||0, av=(d.ab&&d.ab[k])||0, ac=(d.ac&&d.ac[k])||base;
+      const plan4=((d.cb&&d.cb[k])||0)*pp, av=(d.ab&&d.ab[k])||0, ac=(d.ac&&d.ac[k])||base;
       return `<div class="crow"><span class="clabel">${label}</span>
-        <span class="cplan">计划 ${money(planPP)}</span>
+        <span class="cplan">计划 ${money(plan4)}</span>
         <input class="cact" data-cost="${i}:${k}" type="number" inputmode="decimal" placeholder="实际(4人)" value="${av?av:''}">
         <select class="ccur" data-ccur="${i}:${k}"><option value="¥"${ac==='¥'?' selected':''}>¥</option><option value="฿"${ac==='฿'?' selected':''}>฿</option></select></div>`;
     }).join('');
-    const planPPtot=DCATS.reduce((s,[k])=>s+((d.cb&&d.cb[k])||0),0);
-    const costBlock=`<div class="planhead" style="margin-top:12px"><span>💰 预算明细</span><span class="mini" style="font-weight:400">计划=人均 · 实际=4人</span></div>
+    const planPPtot=DCATS.reduce((s,[k])=>s+((d.cb&&d.cb[k])||0),0), plan4=planPPtot*pp, left=plan4-spent;
+    const costBlock=`<div class="planhead" style="margin-top:12px"><span>💰 预算明细（均按4人）</span></div>
       ${costRows}
-      <div class="costtot"><span class="mplan">计划 人均 ${money(planPPtot)} · 4人 ${money(planPPtot*pp)}</span><span style="flex:1"></span><span class="mact">实际(4人) ${money(spent)}（${otherCur(spent)}）</span></div>`;
+      <div class="costsum">
+        <div><span>计划</span><b>人均 ${money(planPPtot)}</b> · <b>4人 ${money(plan4)}</b></div>
+        <div><span>实际</span><b class="gold">人均 ${money(spent/pp)}</b> · <b class="gold">4人 ${money(spent)}</b></div>
+        <div><span>结余</span><b class="${left>=0?'g':'warn'}">4人 ${money(left)}</b> · <b class="${left>=0?'g':'warn'}">人均 ${money(left/pp)}</b></div>
+      </div>`;
     el.innerHTML=`
       <div class="dtop"><div class="dtitle">Day ${i+1} · ${esc(d.date)} ${esc(d.dow)}${titleBlock}</div></div>
       ${planBlock}
@@ -417,9 +424,10 @@ function renderStats(){
     ? `人均：已花 ${money(spent/pp)} · 预算 ${money(budgetPP)} · 剩余 ${money(left/pp)}`
     : '';
   const tb=$('dayTbody'); tb.innerHTML=DB.days.map((d,i)=>{
-    const sp=daySpent(d), planPP=+d.budget||0, planTot=planPP*pp;
+    const sp=daySpent(d), planTot=(+d.budget||0)*pp, left=planTot-sp;
     const actTxt = sp===0?'—':(sp>planTot?`<span class="over">${money(sp)}</span>`:money(sp));
-    return `<tr><td class="nm">${esc(d.date)} ${esc(d.dow)}</td><td>${money(planPP)}</td><td>${money(planTot)}</td><td>${actTxt}</td></tr>`;
+    const leftTxt = sp===0?'—':(left>=0?money(left):`<span class="over">${money(left)}</span>`);
+    return `<tr><td class="nm">${esc(d.date)} ${esc(d.dow)}</td><td>${money(planTot)}</td><td>${actTxt}</td><td>${leftTxt}</td></tr>`;
   }).join('');
 }
 
@@ -443,11 +451,20 @@ function renderPlan(){
   DCATS.forEach(([k])=>{ planByCat[k]=0; actByCat[k]=0; });
   DB.days.forEach(d=>{ DCATS.forEach(([k])=>{ planByCat[k]+=(d.cb&&d.cb[k])||0; actByCat[k]+=dcatBase(d,k); }); });
   const planSum=DCATS.reduce((s,[k])=>s+planByCat[k],0), actSum=DCATS.reduce((s,[k])=>s+actByCat[k],0);
-  let html=`<div class="card"><h2>💰 分类预算 vs 实际</h2><div class="hint" style="margin-top:0">计划=人均（各天明细汇总）· 实际=4人合计。数字随「行程」页实时更新。</div>`;
+  let html=`<div class="card"><h2>💰 分类预算 vs 实际（全程·4人）</h2><div class="hint" style="margin-top:0">各天明细汇总，随「行程」页实时更新。</div>
+    <table class="tbl" style="margin-top:8px"><thead><tr><th class="nm">类别</th><th>计划(4人)</th><th>实际(4人)</th></tr></thead><tbody>`;
   DCATS.forEach(([k,label])=>{
-    html+=`<div class="frow"><span class="flabel" style="flex:0 0 66px">${label}</span><span class="li-sub" style="flex:1; text-align:right; margin-top:0">计划 人均 ${money(planByCat[k])} · 4人 ${money(planByCat[k]*pp)}　｜　<b style="color:var(--gold)">实际(4人) ${money(actByCat[k])}</b></span></div>`;
+    const p4=planByCat[k]*pp, a=actByCat[k];
+    const aTxt=a>p4?`<span class="over">${money(a)}</span>`:money(a);
+    html+=`<tr><td class="nm">${label}</td><td>${money(p4)}</td><td>${aTxt}</td></tr>`;
   });
-  html+=`<div class="costtot"><span class="mplan">计划 人均 ${money(planSum)} · 4人 ${money(planSum*pp)}</span><span style="flex:1"></span><span class="mact">实际(4人) ${money(actSum)}（${otherCur(actSum)}）</span></div></div>`;
+  html+=`</tbody></table>`;
+  const plan4=planSum*pp, left4=plan4-actSum;
+  html+=`<div class="costsum">
+    <div><span>计划</span><b>人均 ${money(planSum)}</b> · <b>4人 ${money(plan4)}</b></div>
+    <div><span>实际</span><b class="gold">人均 ${money(actSum/pp)}</b> · <b class="gold">4人 ${money(actSum)}</b></div>
+    <div><span>结余</span><b class="${left4>=0?'g':'warn'}">4人 ${money(left4)}（${otherCur(left4)}）</b> · <b class="${left4>=0?'g':'warn'}">人均 ${money(left4/pp)}</b></div>
+  </div></div>`;
 
   // 住宿清单（按连续相同酒店分段）
   const segs=[]; DB.days.forEach(d=>{const h=d.hotel||'—'; const last=segs[segs.length-1]; if(last&&last.hotel===h) last.dates.push(d.date); else segs.push({hotel:h,dates:[d.date]});});
