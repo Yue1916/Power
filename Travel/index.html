@@ -92,6 +92,13 @@
   .fpen{flex:0 0 auto; background:transparent; border:none; color:var(--accent2); font-size:15px; cursor:pointer; padding:0 2px}
   .fedit{margin-top:9px; background:var(--card2); border:1px solid var(--line); border-radius:11px; padding:11px}
   .fedit label{margin-top:0}
+  .crow{display:flex; align-items:center; gap:6px; margin-top:8px; font-size:13px}
+  .crow .clabel{flex:0 0 66px; color:var(--muted)}
+  .crow .cplan{flex:0 0 auto; color:var(--muted); min-width:66px; font-size:12px}
+  .crow .cact{flex:1; padding:8px; text-align:right; min-width:0}
+  .crow .ccur{flex:0 0 auto; width:50px; padding:8px 4px}
+  .costtot{margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:baseline; border-top:1px solid var(--line); padding-top:9px; font-size:13px}
+  .costtot .mplan{color:var(--muted)} .costtot .mact{color:var(--gold); font-weight:700}
   .bar{height:16px; border-radius:999px; overflow:hidden; background:var(--card2); border:1px solid var(--line); margin:2px 0 6px}
   .bar > div{height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2))}
   .bar > div.over{background:linear-gradient(90deg,#f97316,var(--danger))}
@@ -189,52 +196,48 @@
 
 <div class="toast" id="toast"></div>
 
-<div class="modal" id="expSheet">
-  <div class="sheet">
-    <h3 id="expTitle">记一笔</h3>
-    <div class="hint" style="margin-top:0">记录当天 <b>4 人合计</b>花销，可多笔（如：门票 4 人 1400、午餐 600、打车 200）。</div>
-    <div class="addexp">
-      <input class="amt" type="number" inputmode="decimal" id="expAmt" placeholder="金额">
-      <select class="cur" id="expCur"><option value="¥">¥</option><option value="฿">฿</option></select>
-      <input class="note" id="expNote" placeholder="备注（如：午餐/门票/打车）">
-      <button id="expAdd" type="button">＋</button>
-    </div>
-    <div id="expList"></div>
-    <button class="btn ghost" id="expClose" type="button">关闭</button>
-  </div>
-</div>
 
 <script>
 /* ================= 默认行程数据 ================= */
 const DEFAULT_DAYS=[
   {date:'11/28',dow:'周六',title:'抵达 · 普吉镇',hotel:'普吉镇 老腾精品酒店（①段 3 晚）',budget:280,
+   cb:{stay:120,food:100,fun:0,transport:40,other:20},
    meals:{b:'（航班上/落地简餐）',l:'（航班上）',d:'老城 One Chun / Kopitiam by Wilai（地道老普吉菜）'},
    plan:'17:40 普吉机场落地，取行李、办电话卡/换钱\n19:00 Grab 前往普吉镇 老腾精品酒店入住\n20:00 老城晚餐、随意夜逛'},
   {date:'11/29',dow:'周日',title:'大象营 + 购物 + 老城夜市',hotel:'普吉镇 老腾精品酒店',budget:800,
+   cb:{stay:120,food:120,fun:500,transport:40,other:20},
    meals:{b:'酒店早餐',l:'大象营含餐 / 回程简餐',d:'老城 Lard Yai 周日夜市小吃'},
    plan:'08:30 大象营接送（不骑象观察型，Paklok，普吉镇出发约35分钟）\n喂象/观察/泥浴，约14:00送回\n下午 Central Phuket 商场逛街 + Big C/Lotus 超市囤手信\n傍晚 老城 walk + Lard Yai 周日夜市（Thalang 路 16:00–22:00）'},
   {date:'11/30',dow:'周一',title:'跳岛 Day1 · 皇帝岛 + 珊瑚岛',hotel:'普吉镇 老腾精品酒店',budget:570,
+   cb:{stay:120,food:100,fun:300,transport:30,other:20},
    meals:{b:'酒店早餐（早出发可打包）',l:'皇帝岛团餐（多含）',d:'普吉镇/老城 海鲜或泰餐'},
    plan:'07:30 酒店接送前往查龙码头\n08:30 速度艇往皇帝岛（约40分钟，晕船提前吃药、坐船中后、看海平线）\n全天 皇帝岛浮潜/白沙滩 + 珊瑚岛\n16:30 返回普吉镇休息'},
   {date:'12/1',dow:'周二',title:'搬Kata + Karon咖啡 + 射击 + 神仙半岛日落',hotel:'卡塔/卡伦 Kata/Karon（②段 3 晚）',budget:650,
+   cb:{stay:130,food:120,fun:300,transport:80,other:20},
    meals:{b:'老腾酒店早餐（退房前）',l:'Karon On the Hill（山景餐厅/咖啡打卡）',d:'Kata：Red Duck / Kata Mama 或 Rawai 海鲜'},
    plan:'10:00 普吉镇退房 → Grab 搬去 Kata/Karon 入住（约40分钟）\n午后 Karon On the Hill 山景咖啡/午餐打卡\n16:00 Gold Shooter Club 打靶（神仙半岛附近）\n17:30 神仙半岛 Promthep Cape 看日落\n19:30 Kata 晚餐'},
   {date:'12/2',dow:'周三',title:'跳岛 Day2 · 蛋岛',hotel:'卡塔/卡伦 Kata/Karon',budget:530,
+   cb:{stay:130,food:100,fun:270,transport:20,other:10},
    meals:{b:'酒店早餐',l:'蛋岛团餐（多含）',d:'Kata：Capannina（意餐）/ 海鲜'},
    plan:'09:00 酒店接送，短船程往蛋岛 Khai（约15–20分钟，海况平、晕船友好）\n全天 浅水浮潜、沙滩躺、喂鱼\n16:00 返回，Kata 海滩看日落'},
   {date:'12/3',dow:'周四',title:'丛林飞跃 + Phumontra SPA',hotel:'卡塔/卡伦 Kata/Karon',budget:780,
+   cb:{stay:130,food:120,fun:480,transport:30,other:20},
    meals:{b:'Kata 酒店早餐 / Bonus Coffee',l:'Kathu / 丛林飞跃附近',d:'Kata：Rewind Kata / Kata Mama'},
    plan:'09:00 丛林飞跃（Hanuman World / Flying Hanuman，Kathu 一带）\n13:00 午餐\n15:00 Phumontra SPA 按摩放松\n晚上 Kata 自由活动'},
   {date:'12/4',dow:'周五',title:'搬机场旁 + Bangtao海滩俱乐部日落',hotel:'奈扬/迈考 Nai Yang/Mai Khao（③段 2 晚）',budget:510,
+   cb:{stay:150,food:120,fun:150,transport:70,other:20},
    meals:{b:'Kata 酒店早餐',l:'Bangtao 海滩俱乐部（Cafe del Mar / Catch）',d:'奈扬沙滩海鲜排档'},
    plan:'11:00 Kata 退房，Grab 出发\n途中 Bangtao 海滩俱乐部（Cafe del Mar / Catch）午后 + 日落一杯（有最低消费）\n傍晚 前往机场旁酒店入住'},
   {date:'12/5',dow:'周六',title:'机场旁躺平',hotel:'奈扬/迈考',budget:320,
+   cb:{stay:150,food:120,fun:0,transport:30,other:20},
    meals:{b:'机场旁酒店早餐 / 咖啡',l:'奈扬海滩简餐',d:'奈扬海鲜 / Turtle Village（迈考）'},
    plan:'全天 酒店泳池/海滩休闲，收拾行李\n附近奈扬海滩、咖啡馆'},
   {date:'12/6',dow:'周日',title:'返程',hotel:'—',budget:60,
+   cb:{stay:0,food:20,fun:0,transport:40,other:0},
    meals:{b:'机场早餐',l:'（航班上）',d:'—'},
    plan:'06:30 退房去机场（5–15分钟）\n08:35 起飞回程'},
 ];
+const DCATS=[['stay','🏨 住宿'],['food','🍽️ 吃喝'],['fun','🎡 娱乐'],['transport','🚕 交通'],['other','🛍️ 其他']];
 const REC_MEALS={}; DEFAULT_DAYS.forEach(d=>REC_MEALS[d.date]={...d.meals});
 const REC_TIPS={
  '11/28':'机场→普吉镇 Grab/出租约 600–700฿；电话卡 AIS/True(7–15天) 约 200–350฿（机场柜台或 Klook 预订）。价格为大致参考。',
@@ -259,23 +262,27 @@ function money(n){n=Math.round((+n||0)*100)/100; const s=Number.isInteger(n)?n:n
 
 /* ================= 状态 ================= */
 const KEY='travel_phuket_v1';
-const PLAN_VER=3; // 行程结构版本，变动时自动刷新行程（保留已记花销）
+const PLAN_VER=4; // 行程结构版本，变动时自动刷新行程（保留已记的实际支出）
 let DB={config:{...DEFAULT_CFG},days:[]};
-function seedDays(){ DB.days=DEFAULT_DAYS.map(d=>({...d, meals:d.meals?{...d.meals}:{b:'',l:'',d:''}, tips:REC_TIPS[d.date]||'', expenses:[]})); }
+function newAB(){return {stay:0,food:0,fun:0,transport:0,other:0}}
+function newAC(){return {stay:'¥',food:'¥',fun:'¥',transport:'¥',other:'¥'}}
+function seedDays(){ DB.days=DEFAULT_DAYS.map(d=>({...d, meals:d.meals?{...d.meals}:{b:'',l:'',d:''}, tips:REC_TIPS[d.date]||'',
+  cb:d.cb?{...d.cb}:{stay:0,food:0,fun:0,transport:0,other:0}, ab:newAB(), ac:newAC()})); }
 function load(){
   try{const d=JSON.parse(localStorage.getItem(KEY)); if(d&&d.days){DB=d; DB.config={...DEFAULT_CFG,...(d.config||{})};
-    DB.days.forEach(x=>{ if(!x.expenses) x.expenses=[]; if(!x.meals) x.meals={b:'',l:'',d:x.food||''}; if(x.tips===undefined) x.tips=''; });
-    // 一次性：给空的三餐位、提示补上推荐（不覆盖已填内容）
-    if(!localStorage.getItem('trip_seed_v2')){
-      DB.days.forEach(x=>{ const r=REC_MEALS[x.date]; if(r){['b','l','d'].forEach(k=>{ if(!x.meals[k]) x.meals[k]=r[k]||''; });}
-        if(!x.tips && REC_TIPS[x.date]) x.tips=REC_TIPS[x.date]; });
-      localStorage.setItem('trip_seed_v2','1'); persist();
-    }
+    DB.days.forEach(x=>{ if(!x.meals) x.meals={b:'',l:'',d:x.food||''}; if(x.tips===undefined) x.tips='';
+      if(!x.cb) x.cb={stay:0,food:0,fun:0,transport:0,other:0}; if(!x.ab) x.ab=newAB(); if(!x.ac) x.ac=newAC(); });
     if(!DB.config.catBudget) DB.config.catBudget={...DEFAULT_CFG.catBudget};
-    // 行程版本升级：结构变动时刷新行程内容，保留各天已记的花销
+    // 行程版本升级：刷新行程内容，保留各天已记的实际支出（ab/ac）
     if(DB.planVer!==PLAN_VER){
-      const keep={}; DB.days.forEach(x=>keep[x.date]=x.expenses||[]);
-      seedDays(); DB.days.forEach(x=>{ if(keep[x.date]) x.expenses=keep[x.date]; });
+      const kAb={},kAc={};
+      DB.days.forEach(x=>{
+        const abSum=x.ab?DCATS.reduce((s,[k])=>s+((x.ab[k])||0),0):0;
+        if(abSum>0){ kAb[x.date]=x.ab; kAc[x.date]=x.ac||{}; }
+        else if(x.expenses&&x.expenses.length){ kAb[x.date]={stay:0,food:0,fun:0,transport:0,other:x.expenses.reduce((a,e)=>a+toBase(e),0)}; kAc[x.date]={}; }
+      });
+      seedDays();
+      DB.days.forEach(x=>{ if(kAb[x.date]) x.ab={...x.ab,...kAb[x.date]}; if(kAc[x.date]) x.ac={...x.ac,...kAc[x.date]}; });
       DB.planVer=PLAN_VER; persist();
     }
     return;}}catch(e){}
@@ -294,7 +301,8 @@ function toBase(e){
   return amt;
 }
 function persist(){localStorage.setItem(KEY,JSON.stringify(DB))}
-function daySpent(d){return (d.expenses||[]).reduce((s,e)=>s+toBase(e),0)}
+function dcatBase(d,k){return toBase({amt:(d.ab&&d.ab[k])||0, cur:(d.ac&&d.ac[k])||(DB.config.currency||'¥')})}
+function daySpent(d){return DCATS.reduce((s,[k])=>s+dcatBase(d,k),0)}
 function totalSpent(){return DB.days.reduce((s,d)=>s+daySpent(d),0)}
 function totalPlanned(){return DB.days.reduce((s,d)=>s+(+d.budget||0),0)}
 
@@ -346,17 +354,18 @@ function renderDays(){
          <button class="btn sm ghost" data-fcancel type="button" style="flex:0 0 76px">取消</button></div></div>`
       : `<div class="planhead"><span>🗓️ 行程安排</span><button class="fpen" data-fedit="${i}:plan" type="button">✏️</button></div>
          <div class="plan">${planTimeline(d.plan)||'<div class="mini">（点 ✏️ 添加行程）</div>'}</div>`;
-    const budgetBlock = (editState.di===i && editState.f==='budget')
-      ? `<div class="fedit"><label>当日计划预算（人均）</label><input type="number" inputmode="decimal" id="ed-${i}-budget" value="${d.budget}">
-         <div class="row"><button class="btn sm" data-fsave="${i}:budget" type="button">保存</button>
-         <button class="btn sm ghost" data-fcancel type="button" style="flex:0 0 76px">取消</button></div></div>`
-      : `<div class="daymoney">
-           <span class="mplan">计划 人均 ${money(d.budget)} · 4人 ${money(d.budget*pp)}</span>
-           <button class="fpen" data-fedit="${i}:budget" type="button">✏️</button>
-           <span class="sp"></span>
-           <span class="mact">实际(4人) ${money(spent)}</span>
-           <button class="btn sm blue" data-exp="${i}" type="button">＋ 记一笔</button>
-         </div>`;
+    const base=DB.config.currency||'¥';
+    const costRows=DCATS.map(([k,label])=>{
+      const planPP=(d.cb&&d.cb[k])||0, av=(d.ab&&d.ab[k])||0, ac=(d.ac&&d.ac[k])||base;
+      return `<div class="crow"><span class="clabel">${label}</span>
+        <span class="cplan">计划 ${money(planPP)}</span>
+        <input class="cact" data-cost="${i}:${k}" type="number" inputmode="decimal" placeholder="实际(4人)" value="${av?av:''}">
+        <select class="ccur" data-ccur="${i}:${k}"><option value="¥"${ac==='¥'?' selected':''}>¥</option><option value="฿"${ac==='฿'?' selected':''}>฿</option></select></div>`;
+    }).join('');
+    const planPPtot=DCATS.reduce((s,[k])=>s+((d.cb&&d.cb[k])||0),0);
+    const costBlock=`<div class="planhead" style="margin-top:12px"><span>💰 预算明细</span><span class="mini" style="font-weight:400">计划=人均 · 实际=4人</span></div>
+      ${costRows}
+      <div class="costtot"><span class="mplan">计划 人均 ${money(planPPtot)} · 4人 ${money(planPPtot*pp)}</span><span style="flex:1"></span><span class="mact">实际(4人) ${money(spent)}（${otherCur(spent)}）</span></div>`;
     el.innerHTML=`
       <div class="dtop"><div class="dtitle">Day ${i+1} · ${esc(d.date)} ${esc(d.dow)}${titleBlock}</div></div>
       ${planBlock}
@@ -365,7 +374,7 @@ function renderDays(){
       ${fieldRow(i,'l','🍜','午餐',d.meals.l,false)}
       ${fieldRow(i,'d','🍽️','晚餐',d.meals.d,false)}
       ${fieldRow(i,'tips','💡','提示/预订',d.tips||'',true)}
-      ${budgetBlock}`;
+      ${costBlock}`;
     wrap.appendChild(el);
   });
 
@@ -381,46 +390,13 @@ function renderDays(){
     else if(f==='b'||f==='l'||f==='d'){ if(!d.meals)d.meals={b:'',l:'',d:''}; d.meals[f]=v; }
     editState={di:-1,f:null}; persist(); renderAll(); toast('已保存');
   });
-  wrap.querySelectorAll('[data-exp]').forEach(b=>b.onclick=()=>openExp(+b.dataset.exp));
+  wrap.querySelectorAll('[data-cost]').forEach(inp=>inp.addEventListener('change',()=>{
+    const [di,k]=inp.dataset.cost.split(':'); const d=DB.days[+di]; if(!d.ab)d.ab=newAB(); d.ab[k]=parseFloat(inp.value)||0; persist(); renderAll();
+  }));
+  wrap.querySelectorAll('[data-ccur]').forEach(sel=>sel.addEventListener('change',()=>{
+    const [di,k]=sel.dataset.ccur.split(':'); const d=DB.days[+di]; if(!d.ac)d.ac=newAC(); d.ac[k]=sel.value; persist(); renderAll();
+  }));
 }
-
-/* ================= 记账 sheet ================= */
-let expDay=-1;
-function expLabel(e){
-  const base=DB.config.currency||'¥', cur=e.cur||base, amt=+e.amt||0;
-  const orig=cur+(Number.isInteger(amt)?amt:amt.toFixed(2));
-  return cur!==base ? `${orig}（≈${money(toBase(e))}）` : orig;
-}
-function openExp(i){
-  expDay=i; const d=DB.days[i];
-  openExpTitle();
-  renderExpList();
-  $('expAmt').value=''; $('expNote').value='';
-  $('expCur').value=localStorage.getItem('trip_lastcur')||DB.config.currency||'¥';
-  $('expSheet').classList.add('show');
-}
-function renderExpList(){
-  const d=DB.days[expDay]; const list=$('expList');
-  const rows=(d.expenses||[]).slice().sort((a,b)=>b.ts-a.ts);
-  list.innerHTML = rows.length ? rows.map(e=>`<div class="exp"><span>${expLabel(e)}${e.note?' · '+esc(e.note):''}</span><button class="del" data-del="${e.id}">✕</button></div>`).join('')
-    : '<div class="mini" style="padding:6px 0">还没有记录</div>';
-  list.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
-    d.expenses=d.expenses.filter(x=>x.id!==b.dataset.del); persist(); renderExpList(); renderStats(); renderDays(); openExpTitle();
-  });
-}
-function openExpTitle(){const d=DB.days[expDay]; if(d)$('expTitle').textContent=`Day ${expDay+1} · ${d.date} 记账（实际 ${money(daySpent(d))}）`;}
-$('expAdd').onclick=()=>{
-  const amt=parseFloat($('expAmt').value); if(isNaN(amt)||amt<0){toast('请输入金额');return}
-  const cur=$('expCur').value||'¥';
-  const d=DB.days[expDay]; if(!d.expenses)d.expenses=[];
-  d.expenses.push({id:uid(),amt,cur,note:$('expNote').value.trim(),ts:Date.now()});
-  localStorage.setItem('trip_lastcur',cur);
-  persist(); $('expAmt').value=''; $('expNote').value='';
-  renderExpList(); openExpTitle(); renderStats(); renderDays();
-  toast('已记 '+cur+amt);
-};
-$('expClose').onclick=()=>$('expSheet').classList.remove('show');
-$('expSheet').onclick=e=>{if(e.target===$('expSheet'))$('expSheet').classList.remove('show')};
 
 /* ================= 渲染：统计 ================= */
 function renderStats(){
@@ -461,13 +437,17 @@ function renderSet(){
 
 /* ================= 渲染：计划 ================= */
 function renderPlan(){
-  const pp=people(), c=DB.config.catBudget||{};
-  const cats=[['stay','🏨 住宿'],['food','🍽️ 吃喝'],['fun','🎡 玩乐 / 项目门票'],['transport','🚕 交通'],['other','🛍️ 其他']];
-  const sum=cats.reduce((s,[k])=>s+(+c[k]||0),0);
-  let html=`<div class="card"><h2>💰 人均预算分配</h2><div class="hint" style="margin-top:0">按人均分类估算，可改；下方清单随「行程」页实时更新。</div>`;
-  cats.forEach(([k,label])=>{ html+=`<div class="frow"><span class="flabel" style="flex:1">${label}<span class="li-sub" style="margin-left:8px">${otherCur(+c[k]||0)}</span></span><input class="catin" data-cat="${k}" type="number" inputmode="decimal" value="${+c[k]||0}" style="flex:0 0 120px"></div>`; });
-  html+=`<div class="daymoney" style="margin-top:10px"><span class="mplan">人均合计 ${money(sum)}（${otherCur(sum)}）</span><span class="sp"></span><span class="mact">4人合计 ${money(sum*pp)}（${otherCur(sum*pp)}）</span></div>
-    <button class="btn" id="catSave" type="button">💾 保存预算</button></div>`;
+  const pp=people();
+  // 按分类汇总：计划(人均，来自每天明细) vs 实际(4人，来自每天记录)
+  const planByCat={}, actByCat={};
+  DCATS.forEach(([k])=>{ planByCat[k]=0; actByCat[k]=0; });
+  DB.days.forEach(d=>{ DCATS.forEach(([k])=>{ planByCat[k]+=(d.cb&&d.cb[k])||0; actByCat[k]+=dcatBase(d,k); }); });
+  const planSum=DCATS.reduce((s,[k])=>s+planByCat[k],0), actSum=DCATS.reduce((s,[k])=>s+actByCat[k],0);
+  let html=`<div class="card"><h2>💰 分类预算 vs 实际</h2><div class="hint" style="margin-top:0">计划=人均（各天明细汇总）· 实际=4人合计。数字随「行程」页实时更新。</div>`;
+  DCATS.forEach(([k,label])=>{
+    html+=`<div class="frow"><span class="flabel" style="flex:0 0 66px">${label}</span><span class="li-sub" style="flex:1; text-align:right; margin-top:0">计划 人均 ${money(planByCat[k])} · 4人 ${money(planByCat[k]*pp)}　｜　<b style="color:var(--gold)">实际(4人) ${money(actByCat[k])}</b></span></div>`;
+  });
+  html+=`<div class="costtot"><span class="mplan">计划 人均 ${money(planSum)} · 4人 ${money(planSum*pp)}</span><span style="flex:1"></span><span class="mact">实际(4人) ${money(actSum)}（${otherCur(actSum)}）</span></div></div>`;
 
   // 住宿清单（按连续相同酒店分段）
   const segs=[]; DB.days.forEach(d=>{const h=d.hotel||'—'; const last=segs[segs.length-1]; if(last&&last.hotel===h) last.dates.push(d.date); else segs.push({hotel:h,dates:[d.date]});});
@@ -482,12 +462,7 @@ function renderPlan(){
     return `<div class="litem"><div><div class="li-nm">${esc(d.date)} ${esc(d.dow)}</div><div class="li-sub">${parts.length?esc(parts.join('　｜　')):'（未填）'}</div></div></div>`;
   }).join('')+`</div>`;
 
-  const wrap=$('view-plan'); wrap.innerHTML=html;
-  $('catSave').onclick=()=>{
-    if(!DB.config.catBudget)DB.config.catBudget={};
-    wrap.querySelectorAll('.catin').forEach(inp=>{DB.config.catBudget[inp.dataset.cat]=parseFloat(inp.value)||0;});
-    persist(); renderPlan(); toast('预算已保存');
-  };
+  $('view-plan').innerHTML=html;
 }
 
 function renderAll(){renderDays();renderPlan();renderStats();renderSet();}
@@ -514,14 +489,15 @@ $('importBtn').onclick=()=>$('importFile').click();
 $('importFile').onchange=e=>{
   const f=e.target.files[0]; if(!f)return; const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result); if(!d.days)throw 0;
-    DB={config:{...DEFAULT_CFG,...(d.config||{})},days:d.days}; DB.days.forEach(x=>{if(!x.expenses)x.expenses=[]});
+    DB={config:{...DEFAULT_CFG,...(d.config||{})},days:d.days};
+    DB.days.forEach(x=>{ if(!x.meals)x.meals={b:'',l:'',d:''}; if(x.tips===undefined)x.tips=''; if(!x.cb)x.cb={stay:0,food:0,fun:0,transport:0,other:0}; if(!x.ab)x.ab=newAB(); if(!x.ac)x.ac=newAC(); });
     persist(); renderAll(); toast('导入成功');
   }catch(err){toast('文件无法识别')}}; r.readAsText(f);
 };
 $('resetBtn').onclick=()=>{
-  if(!confirm('恢复默认行程？你的记账（实际花销）会保留、其它编辑会被覆盖。'))return;
-  const keep={}; DB.days.forEach(d=>keep[d.date]=d.expenses||[]);
-  seedDays(); DB.days.forEach(d=>{ if(keep[d.date]) d.expenses=keep[d.date]; });
+  if(!confirm('恢复默认行程？你记录的实际支出会保留、其它编辑会被覆盖。'))return;
+  const kAb={},kAc={}; DB.days.forEach(d=>{kAb[d.date]=d.ab; kAc[d.date]=d.ac;});
+  seedDays(); DB.days.forEach(d=>{ if(kAb[d.date]) d.ab={...d.ab,...kAb[d.date]}; if(kAc[d.date]) d.ac={...d.ac,...kAc[d.date]}; });
   persist(); renderAll(); toast('已恢复默认行程');
 };
 $('clearBtn').onclick=()=>{
