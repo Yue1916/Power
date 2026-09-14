@@ -557,11 +557,8 @@ function enableDragSort(listEl, onReorder){
           let ref=null;
           for(const it of others){ const r=it.getBoundingClientRect(); if(dragCenter < r.top + r.height/2){ ref=it; break; } }
           if(ref!==dragEl.nextElementSibling && ref!==dragEl){
-            const firstTops=new Map(others.map(it=>[it, it.getBoundingClientRect().top]));
             listEl.insertBefore(dragEl, ref);
-            glue();
-            others.forEach(it=>{ const delta=firstTops.get(it) - it.getBoundingClientRect().top; if(delta){ it.style.transition='none'; it.style.transform=`translateY(${delta}px)`; } });
-            requestAnimationFrame(()=>{ others.forEach(it=>{ it.style.transition='transform .16s ease'; it.style.transform=''; }); });
+            glue(); // 重排后重新贴住手指；不给其它项加动画，避免抖动
           }
         });
       };
@@ -1577,6 +1574,7 @@ function planItemHtml(it,ii){
     ${it.tip?`<div class="note" style="font-style:normal;color:var(--muted)">💡 ${it.tip}</div>`:''}
     ${it.note?`<div class="note" style="font-style:normal">📝 ${it.note}</div>`:''}
     <div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap">
+      <span class="link" onclick="planRenameItem(${ii})">✎ 改动作</span>
       ${it.type==='strength'?`<span class="link" onclick="planAddSetToItem(${ii})">＋ 加一组</span>`:''}
       ${it.type==='strength'&&it.sets.length>1?`<span class="link danger" onclick="planRemoveSetFromItem(${ii})">－ 删一组</span>`:''}
       <span class="link" onclick="editPlanNote(${ii})">${it.note?'✎ 修改心得':'＋ 添加心得'}</span>
@@ -1605,6 +1603,15 @@ function editPlanNote(ii){
   const v=prompt('心得 / 备注', it.note||''); if(v===null)return;
   it.note=v.trim(); save(DB); renderPlan();
 }
+function planRenameItem(ii){
+  const it=DB.plan.items[ii]; if(!it)return;
+  const v=prompt('修改动作名称（换成你实际做的动作/器械）', it.exercise); if(v===null)return;
+  const name=v.trim(); if(!name){ toast('名称不能为空'); return; }
+  it.exercise=name;
+  const p=partOfExercise(name); if(p) it.part=p; // 已知动作自动归到对应部位
+  save(DB); renderPlan(); toast('已改动作');
+}
+window.planRenameItem=planRenameItem;
 function planAddSetToItem(ii){
   const it=DB.plan.items[ii]; if(!it||it.type==='cardio')return;
   const last=it.sets[it.sets.length-1]||{w:0,r:8};
