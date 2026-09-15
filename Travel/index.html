@@ -137,7 +137,10 @@
   .ntitem.done .ck{background:var(--accent); border-color:var(--accent); color:#04211f}
   .ntitem .nt-tx{flex:1; font-size:14px; word-break:break-word; line-height:1.5}
   .ntitem.done .nt-tx{color:var(--muted); text-decoration:line-through}
+  .ntitem .nt-ed{flex:0 0 auto; background:transparent; border:none; color:var(--accent2); font-size:15px; cursor:pointer; padding:0 2px}
   .ntitem .nt-del{flex:0 0 auto; background:transparent; border:none; color:var(--danger); font-size:17px; cursor:pointer; padding:0 2px}
+  .ntedit{flex:1}
+  .ntedit textarea{min-height:64px}
   code{background:var(--card2); padding:1px 6px; border-radius:6px; font-size:12px}
 </style>
 </head>
@@ -150,7 +153,7 @@
 
 <main>
   <!-- ============ 行程 ============ -->
-  <section id="view-days" class="view active"></section>
+  <section id="view-days" class="view"></section>
 
   <!-- ============ 统计 ============ -->
   <section id="view-stats" class="view">
@@ -174,7 +177,7 @@
   <section id="view-plan" class="view"></section>
 
   <!-- ============ 备忘 ============ -->
-  <section id="view-notes" class="view">
+  <section id="view-notes" class="view active">
     <div class="card">
       <h2>📌 注意事项 / 待办 <span id="notesCount" class="mini" style="margin-left:auto"></span></h2>
       <div class="hint" style="margin-top:0">按天分组的预订事项 + 出发前准备。点左侧圆圈打勾表示已完成，可自行增删。</div>
@@ -217,9 +220,9 @@
 </main>
 
 <nav class="tabbar">
-  <button data-view="days" class="active"><span class="ico">🗺️</span>行程</button>
+  <button data-view="notes" class="active"><span class="ico">📌</span>备忘</button>
   <button data-view="plan"><span class="ico">📋</span>计划</button>
-  <button data-view="notes"><span class="ico">📌</span>备忘</button>
+  <button data-view="days"><span class="ico">🗺️</span>行程</button>
   <button data-view="stats"><span class="ico">📊</span>统计</button>
   <button data-view="set"><span class="ico">⚙️</span>设置</button>
 </nav>
@@ -246,14 +249,14 @@ const DEFAULT_DAYS=[
    cb:{stay:130,food:120,fun:80,transport:80,other:20},
    meals:{b:'拉查海滩度假酒店早餐',l:'Karon On the Hill（山景午餐/咖啡打卡）',d:'Kata：Red Duck / Kata Mama'},
    plan:'上午 皇帝岛海滩 → 速度艇返回普吉（约40分钟）\n中午 Grab 到 Kata/Karon 入住，休息一会儿\n傍晚 悬崖咖啡 After Beach Bar（卡伦观景台旁）看日落\n晚上 Kata 晚餐'},
-  {date:'12/2',dow:'周三',title:'皮皮岛 + 蛋岛 一日游',hotel:'卡塔/卡伦 Kata/Karon',budget:610,
-   cb:{stay:130,food:100,fun:350,transport:20,other:10},
-   meals:{b:'酒店早餐',l:'团餐（多含）',d:'Kata：Capannina（意餐）/ 海鲜'},
-   plan:'07:30 酒店接送前往码头\n速度艇往皮皮岛（约45分钟开阔海，晕船提前吃药、坐船中后）\n玛雅湾/浮潜 + 蛋岛浅水浮潜、喂鱼\n16:30 返回，Kata 海滩看日落'},
-  {date:'12/3',dow:'周四',title:'丛林飞跃 + Kata 休闲',hotel:'卡塔/卡伦 Kata/Karon',budget:600,
+  {date:'12/2',dow:'周三',title:'丛林飞跃 + Kata 休闲',hotel:'卡塔/卡伦 Kata/Karon',budget:600,
    cb:{stay:130,food:120,fun:300,transport:30,other:20},
    meals:{b:'Kata 酒店早餐 / Bonus Coffee',l:'午餐（丛林飞跃附近 / Kata）',d:'Kata：Red Duck / Kata Mama'},
    plan:'09:00 丛林飞跃（Hanuman World / Flying Hanuman，Kathu 一带）\n13:00 午餐\n下午 返回 Kata，海滩 / 泳池自由休闲\n晚上 Kata 晚餐'},
+  {date:'12/3',dow:'周四',title:'皮皮岛 + 蛋岛 一日游',hotel:'卡塔/卡伦 Kata/Karon',budget:610,
+   cb:{stay:130,food:100,fun:350,transport:20,other:10},
+   meals:{b:'酒店早餐',l:'团餐（多含）',d:'Kata：Capannina（意餐）/ 海鲜'},
+   plan:'07:30 酒店接送前往码头\n速度艇往皮皮岛（约45分钟开阔海，晕船提前吃药、坐船中后）\n玛雅湾/浮潜 + 蛋岛浅水浮潜、喂鱼\n16:30 返回，Kata 海滩看日落'},
   {date:'12/4',dow:'周五',title:'SPA + 射击 + 神仙半岛日落',hotel:'卡塔/卡伦 Kata/Karon',budget:820,
    cb:{stay:130,food:120,fun:500,transport:50,other:20},
    meals:{b:'Kata 酒店早餐 / Bonus Coffee',l:'Rawai / 神仙半岛一带午餐',d:'Rawai 海鲜市场 / Kata 晚餐'},
@@ -274,8 +277,8 @@ const REC_TIPS={
  '11/29':'大象营（不骑象观察型，如 Phuket Elephant Sanctuary）约 2500–3000฿/人（含接送+午餐），官网/Klook 早订，热门需提前。Central Phuket 商场就在普吉镇，逛街+吃饭+超市一站式；Big C/Lotus 超市适合囤零食干货手信；周日夜市免费逛。',
  '11/30':'住皇帝岛「拉查海滩度假酒店」1晚（另订）。往返速度艇/酒店接驳约 40 分钟。深潜体验约 1500–2500฿/人（体验潜无需执照，含装备+教练，需签健康声明；Klook/岛上潜店可订）。岛上物价偏高、ATM 少，带够现金。',
  '12/1':'皇帝岛→普吉 速度艇约 40 分钟；到 Kata 先休息缓一缓；悬崖咖啡 After Beach Bar（卡伦观景台旁）有低消、饮品 150–300฿，日落前去占位；Karon On the Hill 午餐避开正午看海景。',
- '12/2':'皮皮岛+蛋岛拼团一日游约 1200–1800฿/人（含接送+午餐+浮潜），Klook / KKday 提前订；皮皮走开阔海约 45 分钟较颠，晕船务必提前吃药。',
- '12/3':'丛林飞跃 Hanuman World / Flying Hanuman 约 1000–1800฿/人（含接送），Klook/官网；下午返回 Kata 海滩/泳池躺平，轻松半天。',
+ '12/2':'丛林飞跃 Hanuman World / Flying Hanuman 约 1000–1800฿/人（含接送），Klook/官网；下午返回 Kata 海滩/泳池躺平，轻松半天。',
+ '12/3':'皮皮岛+蛋岛拼团一日游约 1200–1800฿/人（含接送+午餐+浮潜），Klook / KKday 提前订；皮皮走开阔海约 45 分钟较颠，晕船务必提前吃药。',
  '12/4':'南部一日：SPA、射击、神仙半岛都在南边，Kata↔Rawai↔神仙半岛车程都很近。Phumontra SPA 按项目 800–1500฿/人，官网或 LINE 提前预约；Gold Shooter Club 按子弹 800–1500฿/人（别被推销加子弹）；神仙半岛免费，日落人多提前到占位。',
  '12/5':'Kata→机场旁 Grab 约 600–800฿；途中 Bangtao 海滩俱乐部（Cafe del Mar / Catch）有低消、人均约 500–1000฿；奈扬海鲜排档人均 300–600฿。',
  '12/6':'酒店→机场 Grab 约 150–250฿（很近）；国际航班建议提前 2 小时，约 06:30 出发。',
@@ -288,8 +291,8 @@ const NOTE_SEED=[
  {g:'11/29', t:'🐘 大象营（观察型）官网 / Klook 提前订，热门日期要早订'},
  {g:'11/30', t:'🏨 皇帝岛「拉查海滩度假酒店」提前在官网 / Booking 订好（房量少）'},
  {g:'11/30', t:'🤿 皇帝岛深潜体验提前订，需签健康声明；体验潜无需执照'},
- {g:'12/2',  t:'🚤 皮皮岛 + 蛋岛拼团一日游提前订（Klook / KKday）'},
- {g:'12/3',  t:'🌿 丛林飞跃（Hanuman World / Flying Hanuman）提前订、含接送'},
+ {g:'12/2',  t:'🌿 丛林飞跃（Hanuman World / Flying Hanuman）提前订、含接送'},
+ {g:'12/3',  t:'🚤 皮皮岛 + 蛋岛拼团一日游提前订（Klook / KKday）'},
  {g:'12/4',  t:'💆 Phumontra SPA 官网或 LINE 提前预约'},
  {g:'12/4',  t:'🔫 Gold Shooter Club 可提前问价 / 预约'},
  {g:'12/6',  t:'✈️ 回程 08:35，提前 2 小时到机场；确认行李额'},
@@ -311,7 +314,7 @@ function money(n){n=Math.round((+n||0)*100)/100; const s=Number.isInteger(n)?n:n
 
 /* ================= 状态 ================= */
 const KEY='travel_phuket_v1';
-const PLAN_VER=7; // 行程结构版本，变动时自动刷新行程（保留已记的实际支出）
+const PLAN_VER=10; // 行程结构版本，变动时自动刷新行程（保留已记的实际支出）
 let DB={config:{...DEFAULT_CFG},days:[]};
 function newAB(){return {stay:0,food:0,fun:0,transport:0,other:0}}
 function newAC(){return {stay:'¥',food:'¥',fun:'¥',transport:'¥',other:'¥'}}
@@ -531,18 +534,18 @@ function renderPlan(){
 }
 
 /* ================= 渲染：备忘/待办 ================= */
-// 按 Day 分组（含日期的挂到对应天），未匹配到的一律并入「出发前准备」
+// 分组：出发前准备置顶，其后按 Day 顺序；未匹配到日期的并入「出发前准备」
+let noteEdit=null;   // 正在编辑的备忘 id
 function noteGroups(){
-  const groups=DB.days.map((d,i)=>({key:d.date,label:`Day ${i+1} · ${d.date} ${d.dow}`,notes:[]}));
+  const dayGroups=DB.days.map((d,i)=>({key:d.date,label:`Day ${i+1} · ${d.date} ${d.dow}`,notes:[]}));
   const prep={key:'prep',label:'🎒 出发前准备',notes:[]};
-  DB.notes.forEach(n=>{ const g=groups.find(x=>x.key===n.group); (g||prep).notes.push(n); });
-  groups.push(prep);
-  return groups;
+  DB.notes.forEach(n=>{ const g=dayGroups.find(x=>x.key===n.group); (g||prep).notes.push(n); });
+  return [prep, ...dayGroups];
 }
 function fillNoteGroups(){
   const sel=$('noteGroup'); if(!sel) return;
-  sel.innerHTML = DB.days.map((d,i)=>`<option value="${d.date}">Day ${i+1} · ${d.date}</option>`).join('')
-    + `<option value="prep" selected>🎒 出发前准备</option>`;
+  sel.innerHTML = `<option value="prep" selected>🎒 出发前准备</option>`
+    + DB.days.map((d,i)=>`<option value="${d.date}">Day ${i+1} · ${d.date}</option>`).join('');
 }
 function renderNotes(){
   if(!Array.isArray(DB.notes)) DB.notes=[];
@@ -550,20 +553,32 @@ function renderNotes(){
   $('notesCount').textContent = DB.notes.length ? `已完成 ${done}/${DB.notes.length}` : '';
   const groups=noteGroups().filter(g=>g.notes.length);
   const wrap=$('notesList');
+  const itemHtml=n=> noteEdit===n.id
+    ? `<div class="ntitem"><div class="ntedit">
+         <textarea id="ned-${n.id}">${esc(n.text)}</textarea>
+         <div class="row"><button class="btn sm" data-nsave="${n.id}" type="button">保存</button>
+         <button class="btn sm ghost" data-ncancel type="button" style="flex:0 0 76px">取消</button></div>
+       </div></div>`
+    : `<div class="ntitem${n.done?' done':''}">
+         <button class="ck" data-nck="${n.id}" type="button">✓</button>
+         <span class="nt-tx">${esc(n.text)}</span>
+         <button class="nt-ed" data-ned="${n.id}" type="button">✏️</button>
+         <button class="nt-del" data-ndel="${n.id}" type="button">🗑️</button></div>`;
   wrap.innerHTML = groups.length
-    ? groups.map(g=>`<div class="ntgroup"><div class="ntgh">${esc(g.label)}</div>`
-        + g.notes.map(n=>`<div class="ntitem${n.done?' done':''}">
-            <button class="ck" data-nck="${n.id}" type="button">✓</button>
-            <span class="nt-tx">${esc(n.text)}</span>
-            <button class="nt-del" data-ndel="${n.id}" type="button">🗑️</button></div>`).join('')
-        + `</div>`).join('')
+    ? groups.map(g=>`<div class="ntgroup"><div class="ntgh">${esc(g.label)}</div>`+g.notes.map(itemHtml).join('')+`</div>`).join('')
     : '<div class="mini" style="padding:10px 0">还没有事项，在上面添加一条吧。</div>';
   wrap.querySelectorAll('[data-nck]').forEach(b=>b.onclick=()=>{
     const n=DB.notes.find(x=>x.id===b.dataset.nck); if(n){n.done=!n.done; persist(); renderNotes();}
   });
+  wrap.querySelectorAll('[data-ned]').forEach(b=>b.onclick=()=>{ noteEdit=b.dataset.ned; renderNotes(); });
+  wrap.querySelectorAll('[data-ncancel]').forEach(b=>b.onclick=()=>{ noteEdit=null; renderNotes(); });
+  wrap.querySelectorAll('[data-nsave]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.nsave, n=DB.notes.find(x=>x.id===id), v=($('ned-'+id).value||'').trim();
+    if(n&&v) n.text=v; noteEdit=null; persist(); renderNotes(); toast('已保存');
+  });
   wrap.querySelectorAll('[data-ndel]').forEach(b=>b.onclick=()=>{
     if(!confirm('删除这条备忘？'))return;
-    DB.notes=DB.notes.filter(x=>x.id!==b.dataset.ndel); persist(); renderNotes();
+    DB.notes=DB.notes.filter(x=>x.id!==b.dataset.ndel); if(noteEdit===b.dataset.ndel) noteEdit=null; persist(); renderNotes();
   });
 }
 function addNote(){
