@@ -58,6 +58,9 @@
   .dedit{flex:0 0 auto; background:var(--card2); border:1px solid var(--line); color:var(--text);
     border-radius:10px; padding:6px 10px; font-size:13px; cursor:pointer}
   .plan{margin:12px 0 6px}
+  .routes{margin:6px 0}
+  .rline{font-size:14px; padding:5px 0; border-bottom:1px dashed var(--line)}
+  .rline:last-child{border-bottom:none}
   .pl{display:flex; gap:8px; padding:5px 0; font-size:14px; border-bottom:1px dashed var(--line)}
   .pl:last-child{border-bottom:none}
   .pl .tm{flex:0 0 auto; color:var(--accent2); font-variant-numeric:tabular-nums; min-width:44px}
@@ -234,38 +237,47 @@
 /* ================= 默认行程数据 ================= */
 const DEFAULT_DAYS=[
   {date:'11/28',dow:'周六',title:'抵达 · 普吉镇',hotel:'普吉镇 老腾精品酒店（①段 2 晚）',budget:280,
+   routes:'机场 → 普吉镇(老腾)：约32km，车40–50分钟\n酒店 → 老城/Lard Yai 夜市：约1.5km，步行20分钟 / 车5分钟',
    cb:{stay:120,food:100,fun:0,transport:40,other:20},
    meals:{b:'（航班上/落地简餐）',l:'（航班上）',d:'老城 One Chun / Kopitiam by Wilai（地道老普吉菜）'},
    plan:'17:40 普吉机场落地，取行李、办电话卡/换钱\n19:00 Grab 前往普吉镇 老腾精品酒店入住\n20:00 老城晚餐、随意夜逛'},
   {date:'11/29',dow:'周日',title:'大象营 + 购物 + 老城夜市',hotel:'普吉镇 老腾精品酒店',budget:800,
+   routes:'普吉镇 → 大象营(Paklok)：约20km，车35–40分钟(含接送)\n普吉镇 → Central 商场：约3km，车10分钟\n商场 → 老城夜市：约3km，车10分钟 / 步行30分钟',
    cb:{stay:120,food:120,fun:500,transport:40,other:20},
    meals:{b:'酒店早餐',l:'大象营含餐 / 回程简餐',d:'老城 Lard Yai 周日夜市小吃'},
    plan:'08:30 大象营接送（不骑象观察型，Paklok，普吉镇出发约35分钟）\n喂象/观察/泥浴，约14:00送回\n下午 Central Phuket 商场逛街 + Big C/Lotus 超市囤手信\n傍晚 老城 walk + Lard Yai 周日夜市（Thalang 路 16:00–22:00）'},
   {date:'11/30',dow:'周一',title:'皇帝岛（深潜/浮潜）· 宿岛上',hotel:'皇帝岛 拉查海滩度假酒店（1 晚）',budget:920,
+   routes:'老腾(普吉镇) → 查龙码头：约12km，车20–25分钟\n查龙码头 → 皇帝岛：速度艇约40–50分钟',
    cb:{stay:250,food:150,fun:450,transport:50,other:20},
    meals:{b:'老腾早餐（退房前）/ 打包',l:'皇帝岛餐厅 / 度假村',d:'拉查海滩度假酒店晚餐（岛上选择少，早点吃）'},
    plan:'上午 老腾退房 → 查龙码头 → 速度艇往皇帝岛（约40分钟）\n入住 拉查海滩度假酒店，寄存行李\n下午 皇帝岛浮潜/白沙滩 + 深潜体验（4人）\n傍晚 岛上看日落、住一晚'},
   {date:'12/1',dow:'周二',title:'皇帝岛返程 + 休息 + 悬崖咖啡',hotel:'卡塔/卡伦 Kata/Karon（②段 4 晚）',budget:430,
+   routes:'皇帝岛 → 查龙码头：速度艇约40–50分钟\n查龙码头 → Kata/Karon：约13km，车25–30分钟\nKata → Karon On the Hill：约2km，车7分钟\nKata → 悬崖咖啡(卡伦观景台)：约3km，车10分钟',
    cb:{stay:130,food:120,fun:80,transport:80,other:20},
    meals:{b:'拉查海滩度假酒店早餐',l:'Karon On the Hill（山景午餐/咖啡打卡）',d:'Kata：Red Duck / Kata Mama'},
    plan:'上午 皇帝岛海滩 → 速度艇返回普吉（约40分钟）\n中午 Grab 到 Kata/Karon 入住，休息一会儿\n傍晚 悬崖咖啡 After Beach Bar（卡伦观景台旁）看日落\n晚上 Kata 晚餐'},
   {date:'12/2',dow:'周三',title:'丛林飞跃 + Kata 休闲',hotel:'卡塔/卡伦 Kata/Karon',budget:600,
+   routes:'Kata → 丛林飞跃(Kathu 一带)：约12–15km，车25–30分钟(含接送)',
    cb:{stay:130,food:120,fun:300,transport:30,other:20},
    meals:{b:'Kata 酒店早餐 / Bonus Coffee',l:'午餐（丛林飞跃附近 / Kata）',d:'Kata：Red Duck / Kata Mama'},
    plan:'09:00 丛林飞跃（Hanuman World / Flying Hanuman，Kathu 一带）\n13:00 午餐\n下午 返回 Kata，海滩 / 泳池自由休闲\n晚上 Kata 晚餐'},
   {date:'12/3',dow:'周四',title:'皮皮岛 + 蛋岛 一日游',hotel:'卡塔/卡伦 Kata/Karon',budget:610,
+   routes:'Kata → 皮皮岛码头(酒店接送)：约40–50分钟到码头\n码头 → 皮皮岛：速度艇约45分钟',
    cb:{stay:130,food:100,fun:350,transport:20,other:10},
    meals:{b:'酒店早餐',l:'团餐（多含）',d:'Kata：Capannina（意餐）/ 海鲜'},
    plan:'07:30 酒店接送前往码头\n速度艇往皮皮岛（约45分钟开阔海，晕船提前吃药、坐船中后）\n玛雅湾/浮潜 + 蛋岛浅水浮潜、喂鱼\n16:30 返回，Kata 海滩看日落'},
   {date:'12/4',dow:'周五',title:'SPA + 射击 + 神仙半岛日落',hotel:'卡塔/卡伦 Kata/Karon',budget:820,
+   routes:'Kata → Phumontra SPA：视预约门店，约10–20分钟\nKata → Rawai：约8km，车15–20分钟\nKata/Rawai → 神仙半岛(Promthep)：约13km，车25–35分钟',
    cb:{stay:130,food:120,fun:500,transport:50,other:20},
    meals:{b:'Kata 酒店早餐 / Bonus Coffee',l:'Rawai / 神仙半岛一带午餐',d:'Rawai 海鲜市场 / Kata 晚餐'},
    plan:'上午 睡到自然醒，Phumontra SPA 按摩放松\n下午 南下 Gold Shooter Club 打靶（神仙半岛附近）\n17:30 神仙半岛 Promthep Cape 看日落\n晚上 Rawai / Kata 晚餐'},
   {date:'12/5',dow:'周六',title:'搬机场旁 + Bangtao日落 + 躺平',hotel:'奈扬/迈考 Nai Yang/Mai Khao（③段 1 晚）',budget:510,
+   routes:'Kata → Bangtao 海滩俱乐部：约25km，车40–50分钟\nBangtao → 机场旁(奈扬/迈考)：约20km，车25–35分钟\n(直达 Kata → 机场旁约40km，车50–60分钟)',
    cb:{stay:150,food:120,fun:150,transport:70,other:20},
    meals:{b:'Kata 酒店早餐',l:'Bangtao 海滩俱乐部（Cafe del Mar / Catch）',d:'奈扬沙滩海鲜排档'},
    plan:'上午 Kata 退房，Grab 出发\n途中 Bangtao 海滩俱乐部午后 + 日落一杯（有最低消费）\n傍晚 机场旁酒店入住、收拾行李'},
   {date:'12/6',dow:'周日',title:'返程',hotel:'—',budget:60,
+   routes:'机场旁酒店 → 普吉机场：约5–10km，车10–15分钟',
    cb:{stay:0,food:20,fun:0,transport:40,other:0},
    meals:{b:'机场早餐',l:'（航班上）',d:'—'},
    plan:'06:30 退房去机场（5–15分钟）\n08:35 起飞回程'},
@@ -314,29 +326,30 @@ function money(n){n=Math.round((+n||0)*100)/100; const s=Number.isInteger(n)?n:n
 
 /* ================= 状态 ================= */
 const KEY='travel_phuket_v1';
-const PLAN_VER=10; // 行程结构版本，变动时自动刷新行程（保留已记的实际支出）
+const PLAN_VER=11; // 行程结构版本，变动时自动刷新行程（保留已记的实际支出）
 let DB={config:{...DEFAULT_CFG},days:[]};
 function newAB(){return {stay:0,food:0,fun:0,transport:0,other:0}}
 function newAC(){return {stay:'¥',food:'¥',fun:'¥',transport:'¥',other:'¥'}}
-function seedDays(){ DB.days=DEFAULT_DAYS.map(d=>({...d, meals:d.meals?{...d.meals}:{b:'',l:'',d:''}, tips:REC_TIPS[d.date]||'',
+function seedDays(){ DB.days=DEFAULT_DAYS.map(d=>({...d, meals:d.meals?{...d.meals}:{b:'',l:'',d:''}, tips:REC_TIPS[d.date]||'', routes:d.routes||'',
   cb:d.cb?{...d.cb}:{stay:0,food:0,fun:0,transport:0,other:0}, ab:newAB(), ac:newAC()})); }
 function load(){
   try{const d=JSON.parse(localStorage.getItem(KEY)); if(d&&d.days){DB=d; DB.config={...DEFAULT_CFG,...(d.config||{})};
-    DB.days.forEach(x=>{ if(!x.meals) x.meals={b:'',l:'',d:x.food||''}; if(x.tips===undefined) x.tips='';
+    DB.days.forEach(x=>{ if(!x.meals) x.meals={b:'',l:'',d:x.food||''}; if(x.tips===undefined) x.tips=''; if(x.routes===undefined) x.routes='';
       if(!x.cb) x.cb={stay:0,food:0,fun:0,transport:0,other:0}; if(!x.ab) x.ab=newAB(); if(!x.ac) x.ac=newAC(); });
     if(!DB.config.catBudget) DB.config.catBudget={...DEFAULT_CFG.catBudget};
     if(!Array.isArray(DB.notes)) DB.notes=seedNotes();   // 首次生成备忘，之后保留用户增删
     // 行程版本升级：刷新行程内容，保留各天已记的实际支出（ab/ac）与你改过的餐饮（meals）
     if(DB.planVer!==PLAN_VER){
-      const kAb={},kAc={},kMeals={};
+      const kAb={},kAc={},kMeals={},kRoutes={};
       DB.days.forEach(x=>{
         if(x.meals) kMeals[x.date]=x.meals;
+        if(x.routes) kRoutes[x.date]=x.routes;
         const abSum=x.ab?DCATS.reduce((s,[k])=>s+((x.ab[k])||0),0):0;
         if(abSum>0){ kAb[x.date]=x.ab; kAc[x.date]=x.ac||{}; }
         else if(x.expenses&&x.expenses.length){ kAb[x.date]={stay:0,food:0,fun:0,transport:0,other:x.expenses.reduce((a,e)=>a+toBase(e),0)}; kAc[x.date]={}; }
       });
       seedDays();
-      DB.days.forEach(x=>{ if(kAb[x.date]) x.ab={...x.ab,...kAb[x.date]}; if(kAc[x.date]) x.ac={...x.ac,...kAc[x.date]}; if(kMeals[x.date]) x.meals={...x.meals,...kMeals[x.date]}; });
+      DB.days.forEach(x=>{ if(kAb[x.date]) x.ab={...x.ab,...kAb[x.date]}; if(kAc[x.date]) x.ac={...x.ac,...kAc[x.date]}; if(kMeals[x.date]) x.meals={...x.meals,...kMeals[x.date]}; if(kRoutes[x.date]) x.routes=kRoutes[x.date]; });
       DB.planVer=PLAN_VER; persist();
     }
     return;}}catch(e){}
@@ -370,6 +383,9 @@ function planTimeline(plan){
     if(mt) return `<div class="pl"><span class="tm">${esc(mt[1])}</span><span>${esc(mt[2])}</span></div>`;
     return `<div class="pl"><span class="tm">·</span><span>${esc(line)}</span></div>`;
   }).join('');
+}
+function routeLines(s){
+  return (s||'').split('\n').filter(x=>x.trim()).map(l=>`<div class="rline">📍 ${esc(l)}</div>`).join('');
 }
 function fieldRow(i,f,icon,label,val,isTa){
   if(editState.di===i && editState.f===f){
@@ -408,6 +424,13 @@ function renderDays(){
          <button class="btn sm ghost" data-fcancel type="button" style="flex:0 0 76px">取消</button></div></div>`
       : `<div class="planhead"><span>🗓️ 行程安排</span><button class="fpen" data-fedit="${i}:plan" type="button">✏️</button></div>
          <div class="plan">${planTimeline(d.plan)||'<div class="mini">（点 ✏️ 添加行程）</div>'}</div>`;
+    const routesBlock = (editState.di===i && editState.f==='routes')
+      ? `<div class="fedit"><label>🚗 路线/距离（每行一条，如：酒店 → 老城夜市：约3km，车10分钟 / 步行35分钟）</label>
+         <textarea id="ed-${i}-routes" placeholder="酒店 → 老城夜市：约?km，车?分钟 / 步行?分钟">${esc(d.routes||'')}</textarea>
+         <div class="row"><button class="btn sm" data-fsave="${i}:routes" type="button">保存</button>
+         <button class="btn sm ghost" data-fcancel type="button" style="flex:0 0 76px">取消</button></div></div>`
+      : `<div class="planhead" style="margin-top:12px"><span>🚗 路线/距离</span><button class="fpen" data-fedit="${i}:routes" type="button">✏️</button></div>
+         ${d.routes?`<div class="routes">${routeLines(d.routes)}</div>`:'<div class="mini">（点 ✏️ 添加路线/距离，方便决定打车还是步行）</div>'}`;
     const base=DB.config.currency||'¥';
     const costRows=DCATS.map(([k,label])=>{
       const plan4=((d.cb&&d.cb[k])||0)*pp, av=(d.ab&&d.ab[k])||0, ac=(d.ac&&d.ac[k])||base;
@@ -427,6 +450,7 @@ function renderDays(){
     el.innerHTML=`
       <div class="dtop"><div class="dtitle">Day ${i+1} · ${esc(d.date)} ${esc(d.dow)}${titleBlock}</div></div>
       ${planBlock}
+      ${routesBlock}
       ${fieldRow(i,'hotel','🏨','住宿',d.hotel,false)}
       ${fieldRow(i,'b','🍳','早餐',d.meals.b,false)}
       ${fieldRow(i,'l','🍜','午餐',d.meals.l,false)}
@@ -445,6 +469,7 @@ function renderDays(){
     else if(f==='hotel') d.hotel=v;
     else if(f==='budget') d.budget=parseFloat(v)||0;
     else if(f==='tips') d.tips=v;
+    else if(f==='routes') d.routes=v;
     else if(f==='b'||f==='l'||f==='d'){ if(!d.meals)d.meals={b:'',l:'',d:''}; d.meals[f]=v; }
     editState={di:-1,f:null}; persist(); renderAll(); toast('已保存');
   });
@@ -615,7 +640,7 @@ $('importFile').onchange=e=>{
   const f=e.target.files[0]; if(!f)return; const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result); if(!d.days)throw 0;
     DB={config:{...DEFAULT_CFG,...(d.config||{})},days:d.days,notes:Array.isArray(d.notes)?d.notes:seedNotes(),planVer:d.planVer};
-    DB.days.forEach(x=>{ if(!x.meals)x.meals={b:'',l:'',d:''}; if(x.tips===undefined)x.tips=''; if(!x.cb)x.cb={stay:0,food:0,fun:0,transport:0,other:0}; if(!x.ab)x.ab=newAB(); if(!x.ac)x.ac=newAC(); });
+    DB.days.forEach(x=>{ if(!x.meals)x.meals={b:'',l:'',d:''}; if(x.tips===undefined)x.tips=''; if(x.routes===undefined)x.routes=''; if(!x.cb)x.cb={stay:0,food:0,fun:0,transport:0,other:0}; if(!x.ab)x.ab=newAB(); if(!x.ac)x.ac=newAC(); });
     persist(); renderAll(); toast('导入成功');
   }catch(err){toast('文件无法识别')}}; r.readAsText(f);
 };
