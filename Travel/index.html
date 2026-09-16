@@ -261,11 +261,11 @@ const DEFAULT_DAYS=[
    cb:{stay:130,food:120,fun:300,transport:30,other:20},
    meals:{b:'Kata 酒店早餐 / Bonus Coffee',l:'午餐（丛林飞跃附近 / Kata）',d:'Kata：Red Duck / Kata Mama'},
    plan:'09:00 丛林飞跃（Hanuman World / Flying Hanuman，Kathu 一带）\n13:00 午餐\n下午 返回 Kata，海滩 / 泳池自由休闲\n晚上 Kata 晚餐'},
-  {date:'12/3',dow:'周四',title:'皮皮岛 + 蛋岛 一日游',hotel:'卡塔/卡伦 Kata/Karon',budget:610,
-   routes:'Kata → 皮皮岛码头(酒店接送)：约40–50分钟到码头\n码头 → 皮皮岛：速度艇约45分钟',
-   cb:{stay:130,food:100,fun:350,transport:20,other:10},
-   meals:{b:'酒店早餐',l:'团餐（多含）',d:'Kata：Capannina（意餐）/ 海鲜'},
-   plan:'07:30 酒店接送前往码头\n速度艇往皮皮岛（约45分钟开阔海，晕船提前吃药、坐船中后）\n玛雅湾/浮潜 + 蛋岛浅水浮潜、喂鱼\n16:30 返回，Kata 海滩看日落'},
+  {date:'12/3',dow:'周四',title:'斯米兰一日游（浮潜 / 白沙滩）',hotel:'卡塔/卡伦 Kata/Karon',budget:910,
+   routes:'Kata → 考拉/塔朗码头(酒店接送)：约1.5–2小时\n码头 → 斯米兰：快艇约1–1.5小时',
+   cb:{stay:130,food:100,fun:650,transport:20,other:10},
+   meals:{b:'酒店早餐（早班 / 打包）',l:'团餐（多含）',d:'Kata：晚餐（回程较晚，就近简餐）'},
+   plan:'06:00 前后 酒店接送 → 考拉/塔朗码头（约1.5–2h）\n快艇出海约1–1.5h 前往斯米兰\n浮潜 + 白沙滩 + 8号岛帆船石观景台\n团餐午餐\n约18:30 返回 Kata（长途一日）'},
   {date:'12/4',dow:'周五',title:'SPA + 射击 + 神仙半岛日落',hotel:'卡塔/卡伦 Kata/Karon',budget:820,
    routes:'Kata → Phumontra SPA：视预约门店，约10–20分钟\nKata → Rawai：约8km，车15–20分钟\nKata/Rawai → 神仙半岛(Promthep)：约13km，车25–35分钟',
    cb:{stay:130,food:120,fun:500,transport:50,other:20},
@@ -290,7 +290,7 @@ const REC_TIPS={
  '11/30':'住皇帝岛「拉查海滩度假酒店」1晚（另订）。往返速度艇/酒店接驳约 40 分钟。深潜体验约 1500–2500฿/人（体验潜无需执照，含装备+教练，需签健康声明；Klook/岛上潜店可订）。岛上物价偏高、ATM 少，带够现金。',
  '12/1':'皇帝岛→普吉 速度艇约 40 分钟；到 Kata 先休息缓一缓；悬崖咖啡 After Beach Bar（卡伦观景台旁）有低消、饮品 150–300฿，日落前去占位；Karon On the Hill 午餐避开正午看海景。',
  '12/2':'丛林飞跃 Hanuman World / Flying Hanuman 约 1000–1800฿/人（含接送），Klook/官网；下午返回 Kata 海滩/泳池躺平，轻松半天。',
- '12/3':'皮皮岛+蛋岛拼团一日游约 1200–1800฿/人（含接送+午餐+浮潜），Klook / KKday 提前订；皮皮走开阔海约 45 分钟较颠，晕船务必提前吃药。',
+ '12/3':'斯米兰一日游约 2500–3500฿/人（含接送+午餐+浮潜；国家公园门票约 500฿ 可能另收），Klook / KKday 提前订。开放季约 10/15–5/15；全程约 12 小时、约 6 点出发。从考拉出海比普吉直发短，但仍是开阔海，晕船务必提前吃药、坐船中后。',
  '12/4':'南部一日：SPA、射击、神仙半岛都在南边，Kata↔Rawai↔神仙半岛车程都很近。Phumontra SPA 按项目 800–1500฿/人，官网或 LINE 提前预约；Gold Shooter Club 按子弹 800–1500฿/人（别被推销加子弹）；神仙半岛免费，日落人多提前到占位。',
  '12/5':'Kata→机场旁 Grab 约 600–800฿；途中 Bangtao 海滩俱乐部（Cafe del Mar / Catch）有低消、人均约 500–1000฿；奈扬海鲜排档人均 300–600฿。',
  '12/6':'酒店→机场 Grab 约 150–250฿（很近）；国际航班建议提前 2 小时，约 06:30 出发。',
@@ -304,7 +304,7 @@ const NOTE_SEED=[
  {g:'11/30', t:'🏨 皇帝岛「拉查海滩度假酒店」提前在官网 / Booking 订好（房量少）'},
  {g:'11/30', t:'🤿 皇帝岛深潜体验提前订，需签健康声明；体验潜无需执照'},
  {g:'12/2',  t:'🌿 丛林飞跃（Hanuman World / Flying Hanuman）提前订、含接送'},
- {g:'12/3',  t:'🚤 皮皮岛 + 蛋岛拼团一日游提前订（Klook / KKday）'},
+ {g:'12/3',  t:'🚤 斯米兰一日游提前订（Klook / KKday），约6点出发、备晕船药'},
  {g:'12/4',  t:'💆 Phumontra SPA 官网或 LINE 提前预约'},
  {g:'12/4',  t:'🔫 Gold Shooter Club 可提前问价 / 预约'},
  {g:'12/6',  t:'✈️ 回程 08:35，提前 2 小时到机场；确认行李额'},
@@ -312,7 +312,7 @@ const NOTE_SEED=[
  {g:'prep',  t:'📱 电话卡 AIS / True 机场柜台或 Klook 预订'},
  {g:'prep',  t:'💵 备好现金 / 换钱，皇帝岛 ATM 少、物价偏高'},
  {g:'prep',  t:'💳 通知银行开通境外用卡，备一张境外可用的卡'},
- {g:'prep',  t:'💊 备晕船药（皮皮岛开阔海较颠）、常用药'},
+ {g:'prep',  t:'💊 备晕船药（斯米兰跨海较长）、常用药'},
  {g:'prep',  t:'🔌 转换插头（泰式插座）、防晒、驱蚊'},
 ];
 function seedNotes(){return NOTE_SEED.map(n=>({id:uid(),group:n.g,text:n.t,done:false}));}
@@ -326,7 +326,7 @@ function money(n){n=Math.round((+n||0)*100)/100; const s=Number.isInteger(n)?n:n
 
 /* ================= 状态 ================= */
 const KEY='travel_phuket_v1';
-const PLAN_VER=11; // 行程结构版本，变动时自动刷新行程（保留已记的实际支出）
+const PLAN_VER=12; // 行程结构版本，变动时自动刷新行程（保留已记的实际支出）
 let DB={config:{...DEFAULT_CFG},days:[]};
 function newAB(){return {stay:0,food:0,fun:0,transport:0,other:0}}
 function newAC(){return {stay:'¥',food:'¥',fun:'¥',transport:'¥',other:'¥'}}
