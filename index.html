@@ -135,7 +135,8 @@
   .mvwrap{display:flex; flex-direction:column; gap:3px; flex:0 0 auto; margin-right:4px}
   .mv{display:inline-flex; align-items:center; justify-content:center; width:28px; height:22px; padding:0; line-height:1;
     border:1px solid var(--line); background:var(--card2); color:var(--muted); border-radius:7px; font-size:11px; cursor:pointer}
-  .mv:active{transform:scale(.9); border-color:var(--accent); color:var(--accent)}
+  .mv{transition:background .15s, color .15s}
+  .mv.holding{background:var(--accent); color:#fff; border-color:var(--accent)}
   .sess-item.dragging,.log-item.dragging{position:relative; z-index:50; opacity:.97; border-color:var(--accent);
     box-shadow:0 10px 26px rgba(0,0,0,.5); transition:none; cursor:grabbing}
   .quickfill{display:flex; align-items:center; gap:6px; margin-top:6px}
@@ -622,6 +623,28 @@ function moveDayLog(id,dir){
   save(DB); renderHistory();
 }
 window.moveSession=moveSession; window.movePlan=movePlan; window.moveDayLog=moveDayLog;
+function doMv(btn){
+  const act=btn.dataset.act, dir=parseInt(btn.dataset.dir);
+  if(act==='session') moveSession(parseInt(btn.dataset.i),dir);
+  else if(act==='plan') movePlan(parseInt(btn.dataset.i),dir);
+  else if(act==='log') moveDayLog(parseInt(btn.dataset.id),dir);
+}
+// ▲▼ 需长按约 0.4 秒才生效，避免误触
+function enableHoldButtons(root){
+  if(!root) return;
+  root.querySelectorAll('.mv[data-act]').forEach(btn=>{
+    let timer=null;
+    const start=e=>{ e.preventDefault(); e.stopPropagation();
+      btn.classList.add('holding');
+      timer=setTimeout(()=>{ btn.classList.remove('holding'); doMv(btn); }, 600);
+    };
+    const cancel=()=>{ if(timer){clearTimeout(timer);timer=null;} btn.classList.remove('holding'); };
+    btn.addEventListener('pointerdown',start);
+    btn.addEventListener('pointerup',cancel);
+    btn.addEventListener('pointerleave',cancel);
+    btn.addEventListener('pointercancel',cancel);
+  });
+}
 
 /* ================= 记录页 ================= */
 let selectedParts=new Set(['胸']);
@@ -768,7 +791,7 @@ function renderSession(){
       ? `${it.cardio.min}分钟`+(it.cardio.km?` · ${it.cardio.km}km`:'')
       : it.sets.map(s=>`${s.w||'自重'}${s.w?'':''}×${s.r}`).join('  ');
     return `<div class="sess-item" data-sort-item data-sort-index="${i}">
-      <span class="mvwrap"><button class="mv" type="button" onclick="event.stopPropagation();moveSession(${i},-1)" title="上移">▲</button><button class="mv" type="button" onclick="event.stopPropagation();moveSession(${i},1)" title="下移">▼</button></span>
+      <span class="mvwrap"><button class="mv" type="button" data-act="session" data-i="${i}" data-dir="-1" title="长按上移">▲</button><button class="mv" type="button" data-act="session" data-i="${i}" data-dir="1" title="长按下移">▼</button></span>
       <div class="info">
       <div class="nm">${it.exercise}<span class="badge-part">${it.part}</span>${it._editId?'<span class="badge-edit">改</span>':''}</div>
       <div class="dt">${detail}${it.note?' · 📝'+it.note:''}</div></div>
@@ -778,6 +801,7 @@ function renderSession(){
       </div></div>`;
   }).join('');
   enableDragSort(box, order=>{ session=order.map(i=>session[i]); renderSession(); saveDraft(); });
+  enableHoldButtons(box);
 }
 function rmSession(i){session.splice(i,1);renderSession();saveDraft()}
 function loadIntoForm(it){
@@ -1047,7 +1071,7 @@ function renderHistory(){
           if(isPR)prText='🥇 刷新记录 '+round1(prevBest)+'→'+round1(cur)+unitOf(l)+'(估算1RM)';
         }
         return `<div class="log-item" data-sort-item data-sort-index="${idx}" data-log-id="${l.id}">
-          <div class="top"><div style="display:flex;align-items:center;gap:8px"><span class="mvwrap"><button class="mv" type="button" onclick="event.stopPropagation();moveDayLog(${l.id},-1)" title="上移">▲</button><button class="mv" type="button" onclick="event.stopPropagation();moveDayLog(${l.id},1)" title="下移">▼</button></span><div><span class="name">${l.exercise}</span><span class="${partCls}">${l.part}</span>${trend}</div></div>
+          <div class="top"><div style="display:flex;align-items:center;gap:8px"><span class="mvwrap"><button class="mv" type="button" data-act="log" data-id="${l.id}" data-dir="-1" title="长按上移">▲</button><button class="mv" type="button" data-act="log" data-id="${l.id}" data-dir="1" title="长按下移">▼</button></span><div><span class="name">${l.exercise}</span><span class="${partCls}">${l.part}</span>${trend}</div></div>
           <div class="log-actions"><span class="link" onclick="editHistory(${l.id})">编辑</span><span class="link danger" onclick="delLog(${l.id})">删除</span></div></div>
           <div class="sets">${setsHtml}</div>`+
           (l.note?`<div class="note">📝 ${l.note}</div>`:'')+
@@ -1060,6 +1084,7 @@ function renderHistory(){
       reorderDayLogs(dayEl.dataset.date, ids);
     });
   });
+  enableHoldButtons(list);
 }
 // 重排某一天内动作的显示顺序（保持 id 不变，仅调整 DB.logs 中同一天条目的先后）
 function reorderDayLogs(date, orderedIds){
@@ -1610,7 +1635,7 @@ function planItemHtml(it,ii){
     setsHtml=it.sets.map((s,si)=>`<span class="pset${s.done?' done':''}" data-ii="${ii}" data-si="${si}">${s.done?'✓':'☐'} ${s.w||'自重'}${s.w?'kg':''}×${s.r}</span>`).join('');
   }
   return `<div class="log-item" data-sort-item data-sort-index="${ii}"><div class="top">
-    <div style="display:flex;align-items:center;gap:8px"><span class="mvwrap"><button class="mv" type="button" onclick="event.stopPropagation();movePlan(${ii},-1)" title="上移">▲</button><button class="mv" type="button" onclick="event.stopPropagation();movePlan(${ii},1)" title="下移">▼</button></span>
+    <div style="display:flex;align-items:center;gap:8px"><span class="mvwrap"><button class="mv" type="button" data-act="plan" data-i="${ii}" data-dir="-1" title="长按上移">▲</button><button class="mv" type="button" data-act="plan" data-i="${ii}" data-dir="1" title="长按下移">▼</button></span>
     <div><span class="name">${it.exercise}</span><span class="part">${it.part}</span>${it.must===true?'<span class="badge-edit">必练</span>':(it.must===false?'<span class="badge-part">可选</span>':'')}</div></div>
     <div style="display:flex;gap:10px;align-items:center"><span style="color:var(--muted);font-size:12px">${done}/${total}</span>
     <span class="link danger" onclick="delPlanItem(${ii})">删除</span></div></div>
@@ -1641,6 +1666,7 @@ function renderPlan(){
   }).join('');
   attachPlanSetHandlers();
   enableDragSort(box, order=>{ DB.plan.items=order.map(i=>DB.plan.items[i]); save(DB); renderPlan(); });
+  enableHoldButtons(box);
 }
 function editPlanNote(ii){
   const it=DB.plan.items[ii]; if(!it)return;
