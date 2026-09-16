@@ -132,6 +132,10 @@
   .drag-handle{flex:0 0 auto; cursor:grab; touch-action:pan-y; color:var(--muted); font-size:20px; line-height:1;
     padding:4px 8px 4px 0; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none}
   .drag-handle:active{cursor:grabbing}
+  .mvwrap{display:flex; flex-direction:column; gap:3px; flex:0 0 auto; margin-right:4px}
+  .mv{display:inline-flex; align-items:center; justify-content:center; width:28px; height:22px; padding:0; line-height:1;
+    border:1px solid var(--line); background:var(--card2); color:var(--muted); border-radius:7px; font-size:11px; cursor:pointer}
+  .mv:active{transform:scale(.9); border-color:var(--accent); color:var(--accent)}
   .sess-item.dragging,.log-item.dragging{position:relative; z-index:50; opacity:.97; border-color:var(--accent);
     box-shadow:0 10px 26px rgba(0,0,0,.5); transition:none; cursor:grabbing}
   .quickfill{display:flex; align-items:center; gap:6px; margin-top:6px}
@@ -448,6 +452,21 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="modal" id="exSwapModal">
+  <div class="modal-card">
+    <div class="modal-title">改动作</div>
+    <label>选择同部位动作</label>
+    <select id="swapSelect"></select>
+    <label>或输入新动作名（选填）</label>
+    <input type="text" id="swapInput" placeholder="自定义动作/器械名">
+    <div class="row" style="margin-top:16px">
+      <button class="btn ghost" id="swapCancel" type="button" style="margin-top:0">取消</button>
+      <button class="btn green" id="swapSave" type="button" style="margin-top:0">确定</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ================= 数据层 ================= */
 const KEY='strength_log_v1';
@@ -578,6 +597,31 @@ function enableDragSort(listEl, onReorder){
     });
   });
 }
+/* ---- 上移/下移一位（比拖拽稳定） ---- */
+function moveSession(i,dir){
+  const j=i+dir; if(j<0||j>=session.length) return;
+  const t=session[i]; session[i]=session[j]; session[j]=t;
+  renderSession(); saveDraft();
+}
+function movePlan(ii,dir){
+  const items=DB.plan.items; const it=items[ii]; if(!it) return;
+  const j=ii+dir; if(j<0||j>=items.length) return;
+  const neighbor=items[j];
+  items[ii]=neighbor; items[j]=it;
+  it.day=neighbor.day||''; // 跨到相邻计划时自动并入该计划(那一天)
+  save(DB); renderPlan();
+}
+function moveDayLog(id,dir){
+  const log=DB.logs.find(l=>l.id===id); if(!log) return;
+  const abs=DB.logs.indexOf(log);
+  const idxs=DB.logs.map((l,i)=>l.date===log.date?i:-1).filter(i=>i>=0);
+  const local=idxs.indexOf(abs); const target=local+dir;
+  if(target<0||target>=idxs.length) return;
+  const a=idxs[local], b=idxs[target];
+  const t=DB.logs[a]; DB.logs[a]=DB.logs[b]; DB.logs[b]=t;
+  save(DB); renderHistory();
+}
+window.moveSession=moveSession; window.movePlan=movePlan; window.moveDayLog=moveDayLog;
 
 /* ================= 记录页 ================= */
 let selectedParts=new Set(['胸']);
@@ -724,7 +768,7 @@ function renderSession(){
       ? `${it.cardio.min}分钟`+(it.cardio.km?` · ${it.cardio.km}km`:'')
       : it.sets.map(s=>`${s.w||'自重'}${s.w?'':''}×${s.r}`).join('  ');
     return `<div class="sess-item" data-sort-item data-sort-index="${i}">
-      <span class="drag-handle" title="长按拖动排序">≡</span>
+      <span class="mvwrap"><button class="mv" type="button" onclick="event.stopPropagation();moveSession(${i},-1)" title="上移">▲</button><button class="mv" type="button" onclick="event.stopPropagation();moveSession(${i},1)" title="下移">▼</button></span>
       <div class="info">
       <div class="nm">${it.exercise}<span class="badge-part">${it.part}</span>${it._editId?'<span class="badge-edit">改</span>':''}</div>
       <div class="dt">${detail}${it.note?' · 📝'+it.note:''}</div></div>
@@ -1003,7 +1047,7 @@ function renderHistory(){
           if(isPR)prText='🥇 刷新记录 '+round1(prevBest)+'→'+round1(cur)+unitOf(l)+'(估算1RM)';
         }
         return `<div class="log-item" data-sort-item data-sort-index="${idx}" data-log-id="${l.id}">
-          <div class="top"><div style="display:flex;align-items:center;gap:8px"><span class="drag-handle" title="长按拖动排序">≡</span><div><span class="name">${l.exercise}</span><span class="${partCls}">${l.part}</span>${trend}</div></div>
+          <div class="top"><div style="display:flex;align-items:center;gap:8px"><span class="mvwrap"><button class="mv" type="button" onclick="event.stopPropagation();moveDayLog(${l.id},-1)" title="上移">▲</button><button class="mv" type="button" onclick="event.stopPropagation();moveDayLog(${l.id},1)" title="下移">▼</button></span><div><span class="name">${l.exercise}</span><span class="${partCls}">${l.part}</span>${trend}</div></div>
           <div class="log-actions"><span class="link" onclick="editHistory(${l.id})">编辑</span><span class="link danger" onclick="delLog(${l.id})">删除</span></div></div>
           <div class="sets">${setsHtml}</div>`+
           (l.note?`<div class="note">📝 ${l.note}</div>`:'')+
@@ -1566,7 +1610,7 @@ function planItemHtml(it,ii){
     setsHtml=it.sets.map((s,si)=>`<span class="pset${s.done?' done':''}" data-ii="${ii}" data-si="${si}">${s.done?'✓':'☐'} ${s.w||'自重'}${s.w?'kg':''}×${s.r}</span>`).join('');
   }
   return `<div class="log-item" data-sort-item data-sort-index="${ii}"><div class="top">
-    <div style="display:flex;align-items:center;gap:8px"><span class="drag-handle" title="长按拖动排序">≡</span>
+    <div style="display:flex;align-items:center;gap:8px"><span class="mvwrap"><button class="mv" type="button" onclick="event.stopPropagation();movePlan(${ii},-1)" title="上移">▲</button><button class="mv" type="button" onclick="event.stopPropagation();movePlan(${ii},1)" title="下移">▼</button></span>
     <div><span class="name">${it.exercise}</span><span class="part">${it.part}</span>${it.must===true?'<span class="badge-edit">必练</span>':(it.must===false?'<span class="badge-part">可选</span>':'')}</div></div>
     <div style="display:flex;gap:10px;align-items:center"><span style="color:var(--muted);font-size:12px">${done}/${total}</span>
     <span class="link danger" onclick="delPlanItem(${ii})">删除</span></div></div>
@@ -1603,14 +1647,26 @@ function editPlanNote(ii){
   const v=prompt('心得 / 备注', it.note||''); if(v===null)return;
   it.note=v.trim(); save(DB); renderPlan();
 }
+let swapIi=null;
 function planRenameItem(ii){
-  const it=DB.plan.items[ii]; if(!it)return;
-  const v=prompt('修改动作名称（换成你实际做的动作/器械）', it.exercise); if(v===null)return;
-  const name=v.trim(); if(!name){ toast('名称不能为空'); return; }
-  it.exercise=name;
-  const p=partOfExercise(name); if(p) it.part=p; // 已知动作自动归到对应部位
-  save(DB); renderPlan(); toast('已改动作');
+  const it=DB.plan.items[ii]; if(!it)return; swapIi=ii;
+  const part=it.part; const opts=[];
+  (DEFAULT_PARTS[part]||[]).forEach(e=>{ if(!opts.includes(e))opts.push(e); });
+  DB.logs.filter(l=>l.part===part).forEach(l=>{ if(!opts.includes(l.exercise))opts.push(l.exercise); });
+  if(!opts.includes(it.exercise)) opts.unshift(it.exercise);
+  $('swapSelect').innerHTML=opts.map(e=>`<option${e===it.exercise?' selected':''}>${e}</option>`).join('');
+  $('swapInput').value='';
+  $('exSwapModal').classList.add('show');
 }
+$('swapCancel').onclick=()=>$('exSwapModal').classList.remove('show');
+$('exSwapModal').onclick=e=>{ if(e.target===$('exSwapModal'))$('exSwapModal').classList.remove('show'); };
+$('swapSave').onclick=()=>{
+  const it=DB.plan.items[swapIi]; if(!it){ $('exSwapModal').classList.remove('show'); return; }
+  const name=($('swapInput').value.trim() || $('swapSelect').value || '').trim();
+  if(!name){ toast('请选择或输入动作'); return; }
+  it.exercise=name; const p=partOfExercise(name); if(p) it.part=p;
+  save(DB); $('exSwapModal').classList.remove('show'); renderPlan(); toast('已改动作');
+};
 window.planRenameItem=planRenameItem;
 function planAddSetToItem(ii){
   const it=DB.plan.items[ii]; if(!it||it.type==='cardio')return;
@@ -1720,17 +1776,19 @@ $('planQfBtn').onclick=()=>{
 $('planAdd').onclick=()=>{
   const c=planCurrentAdd(); if(!c){toast('请选择或输入动作');return}
   const note=$('planNote').value.trim();
+  // 临时加的动作自动归入当前计划（取最后一项的"天"），方便挪进计划里
+  const day=DB.plan.items.length?(DB.plan.items[DB.plan.items.length-1].day||''):'';
   if(c.type==='cardio'){
     const min=parseFloat($('planMin').value); if(isNaN(min)||min<=0){toast('请填写时长');return}
     const km=parseFloat($('planKm').value);
-    DB.plan.items.push({exercise:c.exercise,part:c.part,type:'cardio',cardio:{min,km:isNaN(km)?null:km,done:false},note});
+    DB.plan.items.push({exercise:c.exercise,part:c.part,type:'cardio',cardio:{min,km:isNaN(km)?null:km,done:false},note,day});
     $('planMin').value='';$('planKm').value='';
   }else{
     const sets=[...$('planSetsWrap').children].map(x=>({
       w:parseFloat(x.querySelector('.w').value)||0, r:parseInt(x.querySelector('.r').value), done:false
     })).filter(s=>!isNaN(s.r)&&s.r>0);
     if(!sets.length){toast('请至少填写一组次数');return}
-    DB.plan.items.push({exercise:c.exercise,part:c.part,type:'strength',sets,note});
+    DB.plan.items.push({exercise:c.exercise,part:c.part,type:'strength',sets,note,day});
     planResetSets();
   }
   $('planExNew').value=''; $('planNote').value='';
