@@ -453,7 +453,7 @@
 
 <div class="toast" id="toast"></div>
 
-<div class="modal" id="exSwapModal">
+<div class="modal" id="exSwapModal" style="display:none">
   <div class="modal-card">
     <div class="modal-title">改动作</div>
     <label>选择同部位动作</label>
@@ -1656,16 +1656,16 @@ function planRenameItem(ii){
   if(!opts.includes(it.exercise)) opts.unshift(it.exercise);
   $('swapSelect').innerHTML=opts.map(e=>`<option${e===it.exercise?' selected':''}>${e}</option>`).join('');
   $('swapInput').value='';
-  $('exSwapModal').classList.add('show');
+  $('exSwapModal').style.display='flex';
 }
-$('swapCancel').onclick=()=>$('exSwapModal').classList.remove('show');
-$('exSwapModal').onclick=e=>{ if(e.target===$('exSwapModal'))$('exSwapModal').classList.remove('show'); };
+$('swapCancel').onclick=()=>$('exSwapModal').style.display='none';
+$('exSwapModal').onclick=e=>{ if(e.target===$('exSwapModal'))$('exSwapModal').style.display='none'; };
 $('swapSave').onclick=()=>{
-  const it=DB.plan.items[swapIi]; if(!it){ $('exSwapModal').classList.remove('show'); return; }
+  const it=DB.plan.items[swapIi]; if(!it){ $('exSwapModal').style.display='none'; return; }
   const name=($('swapInput').value.trim() || $('swapSelect').value || '').trim();
   if(!name){ toast('请选择或输入动作'); return; }
   it.exercise=name; const p=partOfExercise(name); if(p) it.part=p;
-  save(DB); $('exSwapModal').classList.remove('show'); renderPlan(); toast('已改动作');
+  save(DB); $('exSwapModal').style.display='none'; renderPlan(); toast('已改动作');
 };
 window.planRenameItem=planRenameItem;
 function planAddSetToItem(ii){
