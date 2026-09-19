@@ -242,6 +242,16 @@
       <div class="timer-display" id="timerDisplay">--:--</div>
       <button class="btn ghost" id="timerStop" type="button">停止</button>
     </div>
+
+    <div class="card">
+      <h2>⚖️ 磅 ⇄ 公斤 换算</h2>
+      <div class="row" style="align-items:flex-end; gap:8px">
+        <div><label>磅 (lb)</label><input type="number" inputmode="decimal" id="convLb" placeholder="如 45"></div>
+        <div style="flex:0 0 24px; text-align:center; color:var(--muted); font-size:20px; padding-bottom:10px">⇄</div>
+        <div><label>公斤 (kg)</label><input type="number" inputmode="decimal" id="convKg" placeholder="如 20"></div>
+      </div>
+      <div class="hint" id="convHint">输入任一边自动换算（1 lb ≈ 0.4536 kg）。</div>
+    </div>
   </section>
 
   <!-- ============ 历史 ============ -->
@@ -974,6 +984,17 @@ function stopTimer(done){
 }
 $('timerStop').onclick=()=>stopTimer(false);
 $('timerPill').onclick=()=>stopTimer(false);
+
+/* ================= 磅 ⇄ 公斤 换算 ================= */
+const LB2KG=0.45359237;
+$('convLb').oninput=()=>{
+  const v=parseFloat($('convLb').value);
+  $('convKg').value = isNaN(v)?'' : Math.round(v*LB2KG*10)/10;
+};
+$('convKg').oninput=()=>{
+  const v=parseFloat($('convKg').value);
+  $('convLb').value = isNaN(v)?'' : Math.round(v/LB2KG*10)/10;
+};
 
 /* ================= 历史页 ================= */
 function prevLogOf(ex,beforeId){
