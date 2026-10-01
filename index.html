@@ -151,6 +151,13 @@
   .wk-bar .track{flex:1; background:var(--card2); border-radius:999px; height:14px; overflow:hidden}
   .wk-bar .fill{height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:999px}
   .wk-bar .val{flex:0 0 auto; color:var(--text); font-weight:600; text-align:right; white-space:nowrap; font-size:12px}
+  #floatTimer{position:fixed; left:50%; bottom:72px; transform:translateX(-50%); z-index:55; display:flex; flex-direction:column; align-items:center; gap:8px}
+  #ftBtn{background:var(--accent2); color:#04241d; font-weight:700; border:none; padding:11px 24px; border-radius:999px;
+    font-size:16px; box-shadow:0 6px 20px rgba(0,0,0,.4); cursor:pointer; font-variant-numeric:tabular-nums}
+  #ftBtn.run{background:var(--accent); color:#fff}
+  #ftPresets{display:none; flex-wrap:wrap; gap:6px; justify-content:center; background:rgba(25,29,46,.98);
+    border:1px solid var(--line); border-radius:14px; padding:10px; max-width:300px; box-shadow:0 6px 20px rgba(0,0,0,.4)}
+  #ftPresets.show{display:flex}
   .timer-pill{position:fixed; left:50%; bottom:96px; transform:translateX(-50%); z-index:55;
     background:var(--accent2); color:#04241d; font-weight:700; padding:10px 20px; border-radius:999px;
     font-size:16px; box-shadow:0 6px 20px rgba(0,0,0,.35); cursor:pointer; font-variant-numeric:tabular-nums}
@@ -175,7 +182,8 @@
 
 <main>
   <!-- ============ 记录 ============ -->
-  <section id="view-log" class="view active">
+  <section id="view-log" class="view">
+    <div class="banner" id="cycleBannerLog" style="display:none"></div>
     <div class="card">
       <h2>📝 本次训练</h2>
 
@@ -231,27 +239,6 @@
       <button class="btn green" id="saveBtn" type="button">✅ 保存本次训练</button>
     </div>
 
-    <div class="card" id="lastCard" style="display:none">
-      <h2>💡 上次同动作</h2>
-      <div id="lastInfo"></div>
-    </div>
-
-    <div class="card">
-      <h2>⏱️ 组间休息计时</h2>
-      <div class="chips" id="timerPresets"></div>
-      <div class="timer-display" id="timerDisplay">--:--</div>
-      <button class="btn ghost" id="timerStop" type="button">停止</button>
-    </div>
-
-    <div class="card">
-      <h2>⚖️ 磅 ⇄ 公斤 换算</h2>
-      <div class="row" style="align-items:flex-end; gap:8px">
-        <div><label>磅 (lb)</label><input type="number" inputmode="decimal" id="convLb" placeholder="如 45"></div>
-        <div style="flex:0 0 24px; text-align:center; color:var(--muted); font-size:20px; padding-bottom:10px">⇄</div>
-        <div><label>公斤 (kg)</label><input type="number" inputmode="decimal" id="convKg" placeholder="如 20"></div>
-      </div>
-      <div class="hint" id="convHint">输入任一边自动换算（1 lb ≈ 0.4536 kg）。</div>
-    </div>
   </section>
 
   <!-- ============ 历史 ============ -->
@@ -338,7 +325,8 @@
   </section>
 
   <!-- ============ 计划 ============ -->
-  <section id="view-plan" class="view">
+  <section id="view-plan" class="view active">
+    <div class="banner" id="cycleBannerPlan" style="display:none"></div>
     <div class="card">
       <h2>🎯 下次训练计划</h2>
       <div class="hint">训练时每完成一组就<b>轻点打勾 ✓</b>；<b>长按某一组</b>可修改重量/次数或删除该组；要加组点动作下方的<b>＋ 加一组</b>。练完可一键写入记录。</div>
@@ -394,6 +382,16 @@
 
       <button class="btn" id="planAdd" type="button">加入计划</button>
     </div>
+
+    <div class="card">
+      <h2>⚖️ 磅 ⇄ 公斤 换算</h2>
+      <div class="row" style="align-items:flex-end; gap:8px">
+        <div><label>磅 (lb)</label><input type="number" inputmode="decimal" id="convLb" placeholder="如 45"></div>
+        <div style="flex:0 0 24px; text-align:center; color:var(--muted); font-size:20px; padding-bottom:10px">⇄</div>
+        <div><label>公斤 (kg)</label><input type="number" inputmode="decimal" id="convKg" placeholder="如 20"></div>
+      </div>
+      <div class="hint" id="convHint">输入任一边自动换算（1 lb ≈ 0.4536 kg）。</div>
+    </div>
   </section>
 
   <!-- ============ 设置 ============ -->
@@ -406,6 +404,7 @@
       <input type="file" id="importFile" accept="application/json" style="display:none">
       <div style="border-top:1px solid var(--line); margin-top:14px; padding-top:12px">
         <label style="margin-top:0">按时间段导出</label>
+        <div class="hint" id="expLastInfo" style="margin:0 0 6px"></div>
         <div class="chips" id="expRangeChips"></div>
         <div class="row" id="expCustom" style="display:none; margin-top:8px">
           <input type="date" id="expFrom"><input type="date" id="expTo">
@@ -414,6 +413,12 @@
         <button class="btn ghost" id="exportRangeBtn" type="button" style="margin-top:8px">⬇️ 导出所选时间段</button>
       </div>
       <button class="btn ghost" id="clearBtn" type="button" style="color:var(--danger); margin-top:14px">🗑️ 清空所有记录</button>
+    </div>
+    <div class="card">
+      <h2>🔥 强度周期 (RIR)</h2>
+      <div class="hint" id="cycleInfoSet" style="margin-top:0"></div>
+      <button class="btn ghost" id="cycleReset" type="button">本周期从本周重新开始</button>
+      <div class="hint">5 周一轮:留3次→留2次→留1次→冲刺(器械力竭/大项留1)→减量砍半。顶部每周自动提示。</div>
     </div>
     <div class="card">
       <h2>ℹ️ 使用小贴士</h2>
@@ -427,17 +432,55 @@
       </p>
     </div>
   </section>
+
+  <!-- ============ 居家(拉伸/核心/矫正) ============ -->
+  <section id="view-home" class="view">
+    <div class="card">
+      <h2>🧘 居家训练</h2>
+      <div class="hint">针对圆肩驼背、骨盆前倾、X腿、上斜方紧张的居家内容。拉伸每天做；核心/矫正每周 2–3 次。动作要慢、找发力。<br>⚠️ 胸椎侧弯属结构性问题，请找康复科/物理治疗师专业评估，这里的训练只作辅助。</div>
+    </div>
+
+    <div class="card">
+      <h2>📏 每日拉伸 / 松动 <span style="font-size:12px;color:var(--muted);font-weight:400">每天 5–10 分钟</span></h2>
+      <div class="toprec"><span>胸大肌拉伸（门框/墙角）</span><span class="prdetail">每侧 30–45 秒 ×2 · 改善圆肩</span></div>
+      <div class="toprec"><span>胸小肌 / 前肩拉伸</span><span class="prdetail">30 秒 ×2 · 圆肩</span></div>
+      <div class="toprec"><span>髂腰肌（弓步髋屈肌）拉伸</span><span class="prdetail">每侧 30–45 秒 ×2 · 改善骨盆前倾</span></div>
+      <div class="toprec"><span>胸椎伸展（泡沫轴上背 / 靠椅背后仰）</span><span class="prdetail">8–10 次 · 驼背/胸椎</span></div>
+      <div class="toprec"><span>墙天使 Wall Angel</span><span class="prdetail">10–12 次 · 圆肩</span></div>
+      <div class="toprec"><span>上斜方 / 颈侧拉伸</span><span class="prdetail">每侧 30 秒 · 斜方紧张</span></div>
+    </div>
+
+    <div class="card">
+      <h2>🧱 核心 <span style="font-size:12px;color:var(--muted);font-weight:400">每周 2–3 次</span></h2>
+      <div class="toprec"><span>死虫 Dead Bug</span><span class="prdetail">每侧 10 次 ×3 · 腰贴地、骨盆后倒(治前倾)</span></div>
+      <div class="toprec"><span>平板支撑</span><span class="prdetail">30–45 秒 ×3 · 夹臀别塌腰</span></div>
+      <div class="toprec"><span>侧平板</span><span class="prdetail">每侧 20–30 秒 ×2 · 抗侧屈、稳脊柱</span></div>
+      <div class="toprec"><span>反向卷腹 / 悬垂举腿</span><span class="prdetail">12–15 次 ×3 · 下腹</span></div>
+    </div>
+
+    <div class="card">
+      <h2>🎯 体态矫正 <span style="font-size:12px;color:var(--muted);font-weight:400">每周 2–3 次</span></h2>
+      <div class="toprec"><span>蚌式 Clamshell（弹力带）</span><span class="prdetail">每侧 15 次 ×2 · 臀中肌,改善X腿</span></div>
+      <div class="toprec"><span>怪兽走 / 螃蟹走（弹力带）</span><span class="prdetail">10 步 ×3 · 膝外展、臀中</span></div>
+      <div class="toprec"><span>俯身 Y 字举（徒手/轻哑铃）</span><span class="prdetail">12–15 次 ×3 · 下斜方,改善圆肩+抑制上斜方</span></div>
+      <div class="toprec"><span>收下巴点头（深层颈屈肌）</span><span class="prdetail">10 次 ×2 · 改善探颈/圆肩</span></div>
+    </div>
+  </section>
 </main>
 
 <nav class="tabbar">
-  <button data-view="log" class="active"><span class="ico">📝</span>记录</button>
-  <button data-view="plan"><span class="ico">🎯</span>计划</button>
+  <button data-view="plan" class="active"><span class="ico">🎯</span>计划</button>
+  <button data-view="home"><span class="ico">🧘</span>居家</button>
   <button data-view="history"><span class="ico">📚</span>历史</button>
   <button data-view="progress"><span class="ico">📈</span>进步</button>
+  <button data-view="log"><span class="ico">📝</span>记录</button>
   <button data-view="settings"><span class="ico">⚙️</span>设置</button>
 </nav>
 
-<div class="timer-pill" id="timerPill" style="display:none"><span id="pillTime">00:00</span> ⏱️</div>
+<div id="floatTimer">
+  <div id="ftPresets"></div>
+  <button id="ftBtn" type="button">⏱️ 休息</button>
+</div>
 
 <div class="modal" id="editModal" style="display:none">
   <div class="modal-card">
@@ -750,6 +793,7 @@ function suggestText(prev){
 function showLast(){
   const c=currentAdd();
   const card=$('lastCard'), info=$('lastInfo');
+  if(!card) return;
   if(!c){card.style.display='none';return}
   const rows=DB.logs.filter(l=>l.exercise===c.exercise).sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
   const prev=rows[0];
@@ -943,7 +987,7 @@ const PRESETS=[60,90,120,150,180];
 let timerEnd=0, timerIv=null, audioCtx=null;
 function fmtSec(s){s=Math.max(0,Math.round(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
 function renderTimerPresets(){
-  const wrap=$('timerPresets'); wrap.innerHTML='';
+  const wrap=$('timerPresets'); if(!wrap)return; wrap.innerHTML='';
   PRESETS.forEach(sec=>{
     const c=document.createElement('div'); c.className='chip'; c.textContent=sec+'s';
     c.onclick=()=>startTimer(sec); wrap.appendChild(c);
@@ -963,27 +1007,33 @@ function beep(){
 }
 function tickTimer(){
   const left=(timerEnd-Date.now())/1000;
-  $('timerDisplay').textContent=fmtSec(left);
-  $('pillTime').textContent=fmtSec(left);
+  const t=fmtSec(left);
+  const td=$('timerDisplay'); if(td)td.textContent=t;
+  $('ftBtn').textContent=t;
   if(left<=0){ stopTimer(true); }
 }
 function startTimer(sec){
   try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended')audioCtx.resume(); }catch(e){}
   timerEnd=Date.now()+sec*1000;
-  $('timerDisplay').classList.add('run');
-  $('timerPill').style.display='block';
+  const td=$('timerDisplay'); if(td)td.classList.add('run');
+  $('ftBtn').classList.add('run'); hideFtPresets();
   if(timerIv)clearInterval(timerIv);
   tickTimer(); timerIv=setInterval(tickTimer,250);
 }
 function stopTimer(done){
   if(timerIv)clearInterval(timerIv); timerIv=null;
-  $('timerDisplay').classList.remove('run');
-  $('timerPill').style.display='none';
-  if(done){ $('timerDisplay').textContent='休息结束'; beep(); if(navigator.vibrate)navigator.vibrate([200,100,200]); toast('休息结束，开练 💪'); }
-  else { $('timerDisplay').textContent='--:--'; }
+  const td=$('timerDisplay'); if(td)td.classList.remove('run');
+  $('ftBtn').classList.remove('run'); $('ftBtn').textContent='⏱️ 休息';
+  if(done){ if(td)td.textContent='休息结束'; beep(); if(navigator.vibrate)navigator.vibrate([200,100,200]); toast('休息结束，开练 💪'); }
+  else { if(td)td.textContent='--:--'; }
 }
-$('timerStop').onclick=()=>stopTimer(false);
-$('timerPill').onclick=()=>stopTimer(false);
+function renderFtPresets(){
+  $('ftPresets').innerHTML=PRESETS.map(sec=>`<div class="chip" onclick="startTimer(${sec})">${sec}s</div>`).join('')+'<div class="chip" onclick="hideFtPresets()">✕</div>';
+}
+function hideFtPresets(){ $('ftPresets').classList.remove('show'); }
+$('ftBtn').onclick=()=>{ if(timerIv){ stopTimer(false); } else { $('ftPresets').classList.toggle('show'); } };
+window.startTimer=startTimer; window.hideFtPresets=hideFtPresets;
+renderFtPresets();
 
 /* ================= 磅 ⇄ 公斤 换算 ================= */
 const LB2KG=0.45359237;
@@ -1489,15 +1539,16 @@ $('exportBtn').onclick=()=>{
   a.download='训练记录备份_'+todayStr()+'.json'; a.click(); toast('已导出');
 };
 /* ---- 按时间段导出 ---- */
-let expRange='all';
-const EXP_RANGES=[['all','全部'],['1m','近1月'],['3m','近3月'],['6m','近6月'],['year','今年'],['custom','自定义']];
+let expRange=(DB.lastRangeExport&&DB.lastRangeExport.to)?'since':'all';
+const EXP_RANGES=[['since','接着上次'],['all','全部'],['1m','近1月'],['3m','近3月'],['year','今年'],['custom','自定义']];
+function lastExpTo(){ return (DB.lastRangeExport && DB.lastRangeExport.to) || null; }
 function expBounds(){
   const to=todayStr();
   if(expRange==='custom') return {from:($('expFrom').value||'0000-00-00'), to:($('expTo').value||to)};
+  if(expRange==='since') return {from:(lastExpTo()||'0000-00-00'), to};
   let from='0000-00-00';
   if(expRange==='1m')from=dstr(new Date(Date.now()-30*86400000));
   else if(expRange==='3m')from=dstr(new Date(Date.now()-90*86400000));
-  else if(expRange==='6m')from=dstr(new Date(Date.now()-180*86400000));
   else if(expRange==='year')from=to.slice(0,4)+'-01-01';
   return {from,to};
 }
@@ -1506,7 +1557,11 @@ function updateExpInfo(){
   const {from,to}=expBounds();
   const nlog=DB.logs.filter(l=>l.date>=from&&l.date<=to).length;
   const nm=(DB.measures||[]).filter(m=>m.date>=from&&m.date<=to).length;
-  $('expInfo').textContent=`范围 ${from==='0000-00-00'?'最早':from} ~ ${to}：${nlog} 条训练${nm?(' · '+nm+' 条身体数据'):''}`;
+  $('expInfo').textContent=`将导出 ${from==='0000-00-00'?'最早':from} ~ ${to}：${nlog} 条训练${nm?(' · '+nm+' 条身体数据'):''}`;
+  const li=$('expLastInfo');
+  if(li){ const le=lastExpTo();
+    li.textContent = le ? `上次已导出到 ${le}（${Math.floor((Date.now()-DB.lastRangeExport.at)/86400000)} 天前）· 用「接着上次」即可继续` : '还没按时间段导出过';
+  }
 }
 function renderExpRange(){
   const wrap=$('expRangeChips'); if(!wrap)return;
@@ -1516,7 +1571,7 @@ function renderExpRange(){
 }
 function setExpRange(k){
   expRange=k;
-  if(k==='custom'){ if(!$('expTo').value)$('expTo').value=todayStr(); if(!$('expFrom').value){ const first=DB.logs.length?sortedLogsAsc()[0].date:todayStr(); $('expFrom').value=first; } }
+  if(k==='custom'){ if(!$('expTo').value)$('expTo').value=todayStr(); if(!$('expFrom').value){ $('expFrom').value = lastExpTo() || (DB.logs.length?sortedLogsAsc()[0].date:todayStr()); } }
   renderExpRange();
 }
 function sortedLogsAsc(){ return DB.logs.slice().sort((a,b)=>a.date.localeCompare(b.date)); }
@@ -1531,7 +1586,8 @@ $('exportRangeBtn').onclick=()=>{
   const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='训练记录_'+(from==='0000-00-00'?'最早':from)+'_'+to+'.json'; a.click();
-  toast(`已导出 ${logs.length} 条`);
+  DB.lastRangeExport={to, at:Date.now()}; save(DB); renderExpRange();
+  toast(`已导出 ${logs.length} 条 · 下次用「接着上次」`);
 };
 $('importBtn').onclick=()=>$('importFile').click();
 $('importFile').onchange=e=>{
@@ -1550,8 +1606,8 @@ $('importFile').onchange=e=>{
         e.target.value=''; return;
       }
     }
-    DB=d; if(!('lastBackup' in DB))DB.lastBackup=null; if(!DB.plan)DB.plan={items:[]}; if(!DB.templates)DB.templates=[]; if(!DB.measures)DB.measures=[]; if(DB.weekStart==null)DB.weekStart=1;
-    save(DB); refreshAll(); renderTemplates(); renderPlan(); toast('导入成功');
+    DB=d; if(!('lastBackup' in DB))DB.lastBackup=null; if(!DB.plan)DB.plan={items:[]}; if(!DB.templates)DB.templates=[]; if(!DB.measures)DB.measures=[]; if(DB.weekStart==null)DB.weekStart=1; if(!DB.cycleStart)DB.cycleStart=weekStartStr();
+    save(DB); refreshAll(); renderTemplates(); renderPlan(); renderCycle(); toast('导入成功');
   }catch(err){toast('文件格式错误')}};
   r.readAsText(f); e.target.value='';
 };
@@ -1629,6 +1685,28 @@ function planResetSets(){ $('planSetsWrap').innerHTML=''; planAddSetRow(); planA
 function weekStartStr(){ const ws=(DB.weekStart==null?1:DB.weekStart); const d=new Date(); const diff=(d.getDay()-ws+7)%7; d.setDate(d.getDate()-diff); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); }
 function mdw(s){ const d=new Date(s+'T00:00'); const w=['周日','周一','周二','周三','周四','周五','周六'][d.getDay()]; return (d.getMonth()+1)+'/'+d.getDate()+' '+w; }
 function weekRangeText(){ const s=weekStartStr(); const e=new Date(s+'T00:00'); e.setDate(e.getDate()+6); return mdw(s)+' – '+mdw(dstr(e)); }
+/* ---- 强度周期 RIR ---- */
+const CYCLE=[
+ {name:'第1周·积累', rir:'每组留 3 次', rpe:'RPE7'},
+ {name:'第2周·加码', rir:'每组留 2 次', rpe:'RPE8'},
+ {name:'第3周·逼近', rir:'每组留 1 次', rpe:'RPE9'},
+ {name:'第4周·冲刺', rir:'器械/孤立练到力竭，硬拉深蹲留1次', rpe:'RPE9-10'},
+ {name:'第5周·减量', rir:'重量和组数砍一半，留 3-4 次', rpe:'RPE6-7'}
+];
+function cycleWeekIdx(){
+  const start=DB.cycleStart||weekStartStr();
+  const days=Math.floor((new Date(todayStr())-new Date(start))/86400000);
+  return ((Math.floor(days/7))%5+5)%5;
+}
+function cycleText(){ const i=cycleWeekIdx(); const c=CYCLE[i]; const tail=(i===4)?'':' · 大杠铃项多留1次'; return `🔥 ${c.name}：${c.rir}（${c.rpe}）${tail}`; }
+function renderCycle(){
+  const t=cycleText();
+  ['cycleBannerLog','cycleBannerPlan'].forEach(id=>{ const el=$(id); if(el){ el.textContent=t; el.style.display='flex'; } });
+}
+function renderCycleSet(){
+  const el=$('cycleInfoSet'); if(!el)return;
+  el.textContent='当前 '+cycleText().replace('🔥 ','')+' · 本周期起始 '+(DB.cycleStart||weekStartStr());
+}
 function renderTemplates(){
   const bar=$('tplBar'); if(!bar) return;
   const tpls=DB.templates||[];
@@ -1646,6 +1724,23 @@ function loadTemplate(i){
   save(DB); renderPlan(); toast(`已载入「${t.name}」，可修改或直接用`);
 }
 window.loadTemplate=loadTemplate;
+function sumSets(l){
+  if(l.type==='cardio') return `${l.cardio.min}分钟`+(l.cardio.km?` ${l.cardio.km}km`:'');
+  const sets=l.sets, f=s=>`${s.w||'自重'}${s.w?'kg':''}×${s.r}`;
+  const allSame=sets.every(s=>s.w===sets[0].w && s.r===sets[0].r);
+  if(allSame) return `${f(sets[0])} ×${sets.length}组`;
+  const top=sets.reduce((a,b)=>e1rm(b.w,b.r)>e1rm(a.w,a.r)?b:a);
+  return `最重 ${f(top)} · 共${sets.length}组`;
+}
+function planRefHtml(ex){
+  const last=lastLogOf(ex), best=bestRecordOf(ex);
+  if(!last && !best) return '';
+  let h='';
+  if(last) h+=`<div class="prdetail">上次(${last.date.slice(5)})：${sumSets(last)}</div>`;
+  if(best){ const ex1=best.type==='cardio'?'':` · 1RM${round1(scoreOf(best))}${unitOf(best)}`;
+    h+=`<div class="prdetail" style="color:var(--gold)">🏆 最佳：${bestSetText(best)}${ex1}（${best.date.slice(5)}）</div>`; }
+  return h?`<div style="margin-top:4px">${h}</div>`:'';
+}
 function planItemHtml(it,ii){
   let done,total,setsHtml;
   if(it.type==='cardio'){
@@ -1661,6 +1756,7 @@ function planItemHtml(it,ii){
     <div style="display:flex;gap:10px;align-items:center"><span style="color:var(--muted);font-size:12px">${done}/${total}</span>
     <span class="link danger" onclick="delPlanItem(${ii})">删除</span></div></div>
     <div class="sets" style="gap:8px">${setsHtml}</div>
+    ${planRefHtml(it.exercise)}
     ${it.tip?`<div class="note" style="font-style:normal;color:var(--muted)">💡 ${it.tip}</div>`:''}
     ${it.note?`<div class="note" style="font-style:normal">📝 ${it.note}</div>`:''}
     <div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap">
@@ -1872,8 +1968,9 @@ function switchView(name){
   $('view-'+name).classList.add('active');
   if(name==='progress'){renderMeasures();renderProgOverview();renderProgMode();renderProgSelect();renderRangeChips();drawChart();renderWeekVol();renderPRFilter();renderPRList();renderBalRange();renderBalance()}
   if(name==='history')renderHistory();
-  if(name==='settings'){ renderBackupInfo(); renderExpRange(); }
-  if(name==='plan'){renderPlanPartChips();renderPlanNewPart();renderPlanExercise();updatePlanForm();renderTemplates();renderPlan()}
+  if(name==='log')renderCycle();
+  if(name==='settings'){ renderBackupInfo(); renderExpRange(); renderCycleSet(); }
+  if(name==='plan'){renderPlanPartChips();renderPlanNewPart();renderPlanExercise();updatePlanForm();renderTemplates();renderPlan();renderCycle()}
   window.scrollTo(0,0);
 }
 document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>switchView(b.dataset.view); });
@@ -1892,9 +1989,11 @@ if(!DB.plan)DB.plan={items:[]};
 if(!DB.templates)DB.templates=[];
 if(!DB.measures)DB.measures=[];
 if(DB.weekStart==null)DB.weekStart=1;
+if(!DB.cycleStart)DB.cycleStart=weekStartStr();
 $('mAdd').onclick=addMeasure;
 $('expFrom').onchange=updateExpInfo; $('expTo').onchange=updateExpInfo;
-renderExpRange();
+$('cycleReset').onclick=()=>{ DB.cycleStart=weekStartStr(); save(DB); renderCycle(); renderCycleSet(); toast('已把本周设为第1周'); };
+renderExpRange(); renderCycle();
 $('date').value=todayStr();
 renderParts(); renderNewPart(); renderExerciseSelect();
 const restored=restoreDraft();
@@ -1915,6 +2014,7 @@ if(DB.logs.length){
   const stale=!DB.lastBackup || (Date.now()-DB.lastBackup)>7*86400000;
   if(stale) setTimeout(()=>toast('建议去设置页导出备份 💾'),1500);
 }
+switchView('plan'); // 默认打开"计划"tab(你的主入口)
 </script>
 </body>
 </html>
