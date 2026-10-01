@@ -172,6 +172,20 @@
   .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:70; display:flex; align-items:center; justify-content:center; padding:24px}
   .modal-card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px; width:100%; max-width:340px}
   .modal-title{font-size:16px; font-weight:600; margin-bottom:4px}
+  .cal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px}
+  .cal-nav{background:var(--card2); border:1px solid var(--line); color:var(--text); width:30px; height:30px; border-radius:8px; cursor:pointer; font-size:16px}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px}
+  .cal-dow{text-align:center; font-size:11px; color:var(--muted); padding:2px 0}
+  .cal-cell{aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:12px; color:var(--muted); background:var(--card2)}
+  .cal-cell.empty{background:transparent}
+  .cal-cell.trained{color:#04241d; font-weight:700}
+  .cal-cell.today{outline:2px solid var(--accent)}
+  .cal-legend{display:flex; align-items:center; gap:6px; justify-content:flex-end; margin-top:8px; font-size:11px; color:var(--muted)}
+  .cal-legend i{width:14px; height:14px; border-radius:4px; display:inline-block}
+  body.light{ --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --line:#dce1ee; --text:#1a1f33; --muted:#687090; --accent:#2f6bff; --accent2:#00b894; --danger:#e03e5c; --gold:#c98a00; }
+  body.light header{ background:rgba(255,255,255,.92) }
+  body.light .tabbar{ background:#ffffff }
+  body.light #ftPresets{ background:rgba(255,255,255,.98) }
 </style>
 </head>
 <body>
@@ -257,6 +271,15 @@
       <div class="stat"><div class="num" id="stTotalDays">0</div><div class="lbl">累计训练天数</div></div>
     </div>
     <div class="card">
+      <div class="cal-head">
+        <button class="cal-nav" id="calPrev" type="button">‹</button>
+        <h2 style="margin:0" id="calTitle">训练日历</h2>
+        <button class="cal-nav" id="calNext" type="button">›</button>
+      </div>
+      <div id="calWrap"></div>
+      <div class="cal-legend"><span>少</span><i style="background:var(--card2)"></i><i style="background:rgba(0,211,167,.45)"></i><i style="background:rgba(0,211,167,.75)"></i><i style="background:var(--accent2)"></i><span>多</span></div>
+    </div>
+    <div class="card">
       <h2>📅 本周各部位 <span id="weekPartsRange" style="font-size:12px;color:var(--muted);font-weight:400"></span></h2>
       <div id="weekStats"></div>
     </div>
@@ -278,13 +301,11 @@
         <div><label>体重 kg</label><input type="number" inputmode="decimal" id="mW" placeholder="如 52"></div>
       </div>
       <div class="row">
-        <div><label>体脂率 %</label><input type="number" inputmode="decimal" id="mBf" placeholder="如 30"></div>
-        <div><label>腰围 cm</label><input type="number" inputmode="decimal" id="mWaist" placeholder="选填"></div>
-      </div>
-      <div class="row">
+        <div><label>腰围 cm</label><input type="number" inputmode="decimal" id="mWaist" placeholder="肚脐处"></div>
         <div><label>臀围 cm（选填）</label><input type="number" inputmode="decimal" id="mHip" placeholder="选填"></div>
-        <div style="display:flex;align-items:flex-end"><button class="btn green" id="mAdd" type="button" style="margin-top:0">记录</button></div>
       </div>
+      <div class="hint" style="margin:2px 0 0">减脂看腰围最准：空腹、放松、量肚脐一圈，比体重更能反映脂肪变化。</div>
+      <button class="btn green" id="mAdd" type="button">记录</button>
       <div class="chips" id="measureMetricChips" style="margin-top:12px"></div>
       <canvas id="measureChart" style="height:180px"></canvas>
       <div id="measureList" style="margin-top:10px"></div>
@@ -393,6 +414,16 @@
       </div>
       <div class="hint" id="convHint">输入任一边自动换算（1 lb ≈ 0.4536 kg）。</div>
     </div>
+
+    <div class="card">
+      <h2>🔥 热身组计算</h2>
+      <div class="row" style="align-items:flex-end;gap:8px">
+        <div><label>今天的工作重量 kg</label><input type="number" inputmode="decimal" id="wuWeight" placeholder="如 40"></div>
+        <div style="flex:0 0 120px"><label>取整到</label><select id="wuRound"><option value="2.5">2.5kg</option><option value="1.25">1.25kg</option><option value="5">5kg</option><option value="1">1kg</option></select></div>
+      </div>
+      <div id="wuResult" style="margin-top:10px"></div>
+      <div class="hint">深蹲/硬拉/卧推等大项用得上；小重量孤立动作一般 1–2 组轻的带开即可。</div>
+    </div>
   </section>
 
   <!-- ============ 设置 ============ -->
@@ -420,6 +451,11 @@
       <div class="hint" id="cycleInfoSet" style="margin-top:0"></div>
       <button class="btn ghost" id="cycleReset" type="button">本周期从本周重新开始</button>
       <div class="hint">5 周一轮:留3次→留2次→留1次→冲刺(器械力竭/大项留1)→减量砍半。顶部每周自动提示。</div>
+    </div>
+    <div class="card">
+      <h2>🎨 外观</h2>
+      <button class="btn ghost" id="themeToggle" type="button">🌗 切换深色 / 浅色</button>
+      <div class="hint">浅色更适合白天户外，深色更省眼、更省电。</div>
     </div>
     <div class="card">
       <h2>ℹ️ 使用小贴士</h2>
@@ -480,7 +516,7 @@
 
 <div id="floatTimer">
   <div id="ftPresets"></div>
-  <button id="ftBtn" type="button">⏱️ 休息</button>
+  <button id="ftBtn" type="button">⏱️ 计时</button>
 </div>
 
 <div class="modal" id="editModal" style="display:none">
@@ -971,6 +1007,9 @@ $('saveBtn').onclick=()=>{
   // 处理编辑：先删掉被编辑的原记录
   const editIds=session.filter(it=>it._editId).map(it=>it._editId);
   if(editIds.length) DB.logs=DB.logs.filter(l=>!editIds.includes(l.id));
+  // 保存前记录各动作历史最好分，用于检测是否破纪录
+  const preBest={};
+  session.forEach(it=>{ if(it.type!=='cardio'){ const b=bestRecordOf(it.exercise); preBest[it.exercise]=b?scoreOf(b):0; } });
   session.forEach((it,idx)=>{
     const log={id:Date.now()+idx, date, part:it.part, exercise:it.exercise, type:it.type};
     if(it.type==='cardio') log.cardio=it.cardio; else log.sets=it.sets;
@@ -978,14 +1017,25 @@ $('saveBtn').onclick=()=>{
     DB.logs.push(log);
   });
   save(DB);
+  // 检测PR（仅对有历史记录的动作）
+  const prs=[];
+  session.forEach(it=>{ if(it.type==='cardio')return; const sc=scoreOf({type:it.type,sets:it.sets}); const old=preBest[it.exercise]||0; if(old>0 && sc>old+1e-6) prs.push(it.exercise); });
   const n=session.length; session=[]; resetAddForm(); renderSession(); clearDraft();
   toast(`已保存 ${n} 个动作 ✅`);
+  if(prs.length){ setTimeout(()=>{ toast(`🎉 新纪录！${prs.slice(0,3).join('、')}${prs.length>3?' 等':''}`); if(navigator.vibrate)navigator.vibrate([120,60,120]); },1800); }
   refreshAll();
 };
 
 /* ================= 组间休息计时 ================= */
 const PRESETS=[60,90,120,150,180];
-let timerEnd=0, timerIv=null, audioCtx=null;
+let timerEnd=0, timerIv=null, audioCtx=null, titleFlashIv=null, timerDoneHidden=false;
+const APP_TITLE='力量训练记录';
+function flashTitle(){
+  if(titleFlashIv)clearInterval(titleFlashIv);
+  let on=true,n=0;
+  titleFlashIv=setInterval(()=>{ document.title=on?'⏰ 休息结束！':APP_TITLE; on=!on; if(++n>=16)stopTitleFlash(); },600);
+}
+function stopTitleFlash(){ if(titleFlashIv){clearInterval(titleFlashIv);titleFlashIv=null;} document.title=APP_TITLE; }
 function fmtSec(s){s=Math.max(0,Math.round(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
 function renderTimerPresets(){
   const wrap=$('timerPresets'); if(!wrap)return; wrap.innerHTML='';
@@ -996,13 +1046,14 @@ function renderTimerPresets(){
 }
 function beep(){
   try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
-    for(let i=0;i<3;i++){
+    if(audioCtx.state==='suspended')audioCtx.resume();
+    for(let i=0;i<5;i++){
       const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-      o.connect(g); g.connect(audioCtx.destination); o.frequency.value=880;
-      const t=audioCtx.currentTime+i*0.25;
-      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.3,t+0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001,t+0.18);
-      o.start(t); o.stop(t+0.2);
+      o.connect(g); g.connect(audioCtx.destination); o.frequency.value=(i%2)?1047:880;
+      const t=audioCtx.currentTime+i*0.3;
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.4,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.24);
+      o.start(t); o.stop(t+0.28);
     }
   }catch(e){}
 }
@@ -1015,7 +1066,7 @@ function tickTimer(){
 }
 function startTimer(sec){
   try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended')audioCtx.resume(); }catch(e){}
-  timerEnd=Date.now()+sec*1000;
+  timerEnd=Date.now()+sec*1000; timerDoneHidden=false; stopTitleFlash();
   const td=$('timerDisplay'); if(td)td.classList.add('run');
   $('ftBtn').classList.add('run'); hideFtPresets();
   if(timerIv)clearInterval(timerIv);
@@ -1024,9 +1075,9 @@ function startTimer(sec){
 function stopTimer(done){
   if(timerIv)clearInterval(timerIv); timerIv=null;
   const td=$('timerDisplay'); if(td)td.classList.remove('run');
-  $('ftBtn').classList.remove('run'); $('ftBtn').textContent='⏱️ 休息';
-  if(done){ if(td)td.textContent='休息结束'; beep(); if(navigator.vibrate)navigator.vibrate([200,100,200]); toast('休息结束，开练 💪'); }
-  else { if(td)td.textContent='--:--'; }
+  $('ftBtn').classList.remove('run'); $('ftBtn').textContent='⏱️ 计时';
+  if(done){ if(td)td.textContent='时间到'; beep(); if(navigator.vibrate)navigator.vibrate([300,120,300,120,300]); toast('时间到，继续 💪'); flashTitle(); if(document.hidden)timerDoneHidden=true; }
+  else { if(td)td.textContent='--:--'; stopTitleFlash(); }
 }
 function renderFtPresets(){
   $('ftPresets').innerHTML=PRESETS.map(sec=>`<div class="chip" onclick="startTimer(${sec})">${sec}s</div>`).join('')+'<div class="chip" onclick="hideFtPresets()">✕</div>';
@@ -1046,6 +1097,27 @@ $('convKg').oninput=()=>{
   const v=parseFloat($('convKg').value);
   $('convLb').value = isNaN(v)?'' : Math.round(v/LB2KG*10)/10;
 };
+
+/* ================= 热身组计算 ================= */
+function roundTo(x,step){ return Math.round(x/step)*step; }
+function renderWarmup(){
+  const out=$('wuResult'); if(!out)return;
+  const w=parseFloat($('wuWeight').value), step=parseFloat($('wuRound').value)||2.5;
+  if(isNaN(w)||w<=0){ out.innerHTML='<div class="hint">填入工作重量，自动给出热身梯度。</div>'; return; }
+  // 梯度：空杆/很轻 → 50% → 70% → 85%，再上工作重量
+  const steps=[
+    {pct:0,   r:'8–10', tip:'空杆/很轻，找动作'},
+    {pct:.5,  r:'5',    tip:''},
+    {pct:.7,  r:'3',    tip:''},
+    {pct:.85, r:'2',    tip:'接近工作重量'},
+  ];
+  const rows=steps.map(s=>{
+    const wt = s.pct===0 ? '空杆' : roundTo(w*s.pct,step)+'kg';
+    return `<div class="toprec"><span>${wt} × ${s.r}</span><span class="prdetail">${s.pct?Math.round(s.pct*100)+'%':''} ${s.tip}</span></div>`;
+  }).join('');
+  out.innerHTML=rows+`<div class="toprec" style="border-top:1px dashed var(--line);margin-top:4px;padding-top:8px"><span style="color:var(--accent2);font-weight:600">${w}kg 开始正式组 💪</span><span class="prdetail">工作重量</span></div>`;
+}
+if($('wuWeight')){ $('wuWeight').oninput=renderWarmup; $('wuRound').onchange=renderWarmup; }
 
 /* ================= 历史页 ================= */
 function prevLogOf(ex,beforeId){
@@ -1108,8 +1180,45 @@ function renderNotes(){
     <div class="name" style="font-size:13px">${fmtDate(l.date)} · ${l.exercise}<span class="part">${l.part}</span></div></div>
     <div class="note" style="font-style:normal">📝 ${l.note}</div></div>`).join('');
 }
+/* ---- 训练日历热力图 ---- */
+let calYM = todayStr().slice(0,7); // YYYY-MM
+function calShift(d){
+  const [y,m]=calYM.split('-').map(Number);
+  const nd=new Date(y, m-1+d, 1);
+  calYM = nd.getFullYear()+'-'+String(nd.getMonth()+1).padStart(2,'0');
+  renderCalendar();
+}
+function renderCalendar(){
+  const wrap=$('calWrap'); if(!wrap) return;
+  const [y,m]=calYM.split('-').map(Number);
+  if($('calTitle')) $('calTitle').textContent=`${y}年${m}月 训练日历`;
+  // 每天训练强度（按当天不同动作数）
+  const perDay={};
+  DB.logs.forEach(l=>{ if(l.date.slice(0,7)===calYM){ (perDay[l.date]=perDay[l.date]||new Set()).add(l.exercise); } });
+  const first=new Date(y, m-1, 1);
+  const startDow=(first.getDay()+6)%7; // 周一=0
+  const daysInMonth=new Date(y, m, 0).getDate();
+  const dow=['一','二','三','四','五','六','日'];
+  let html='<div class="cal-grid">'+dow.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<startDow;i++) html+='<div class="cal-cell empty"></div>';
+  const today=todayStr();
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const n=perDay[ds]?perDay[ds].size:0;
+    let bg='';
+    if(n>0){ const op = n>=5?1 : n>=3?0.75 : n>=2?0.55 : 0.4; bg=`background:rgba(0,211,167,${op})`; }
+    const cls='cal-cell'+(n>0?' trained':'')+(ds===today?' today':'');
+    html+=`<div class="${cls}" style="${bg}" title="${ds}${n?'：'+n+'个动作':''}">${d}</div>`;
+  }
+  html+='</div>';
+  // 本月小结
+  const trainedDays=Object.keys(perDay).length;
+  html+=`<div class="hint" style="margin-top:8px">本月已训练 <b style="color:var(--accent2)">${trainedDays}</b> 天</div>`;
+  wrap.innerHTML=html;
+}
+if($('calPrev')){ $('calPrev').onclick=()=>calShift(-1); $('calNext').onclick=()=>calShift(1); }
 function renderHistory(){
-  renderWeekStats(); renderNotesFilter(); renderNotes();
+  renderWeekStats(); renderNotesFilter(); renderNotes(); renderCalendar();
   const list=$('historyList');
   if(!DB.logs.length){list.innerHTML='<div class="empty"><div class="big">📭</div>还没有记录，去「记录」页添加第一条吧！</div>';return}
   const byDate={};
@@ -1422,11 +1531,12 @@ function renderBalance(){
 let measureMetric='w';
 const M_META={w:['体重','kg'],bf:['体脂','%'],waist:['腰围','cm'],hip:['臀围','cm']};
 function measuresSorted(){ return (DB.measures||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)); }
+function daysSinceLastMeasure(){ const ms=measuresSorted(); if(!ms.length) return Infinity; return Math.floor((Date.now()-new Date(ms[ms.length-1].date+'T00:00'))/86400000); }
 function renderMeasures(){
   if($('mDate') && !$('mDate').value) $('mDate').value=todayStr();
   const ms=measuresSorted();
   const sum=$('measureSummary');
-  if(!ms.length){ sum.innerHTML='<div class="hint">还没有身体数据。记录体重/体脂/腰围，下面会画出趋势——增肌减脂看这里最直观（体重可能不动，但体脂、腰围会变）。</div>'; }
+  if(!ms.length){ sum.innerHTML='<div class="hint">还没有身体数据。记录体重/腰围，下面会画出趋势——增肌减脂看这里最直观（体重可能不动，但腰围会变小）。</div>'; }
   else{
     const last=ms[ms.length-1];
     const cutoff=dstr(new Date(Date.now()-30*86400000));
@@ -1440,7 +1550,9 @@ function renderMeasures(){
           delta=`<span style="color:${col};font-size:11px"> ${d>0?'+':''}${d}</span>`; } }
       return `<div class="stat"><div class="num">${cur}<span style="font-size:11px;color:var(--muted)">${unit}</span></div><div class="lbl">${nm}${delta}</div></div>`;
     }).join('');
-    sum.innerHTML=`<div class="stat-grid" style="flex-wrap:wrap">${cells}</div><div class="hint">大数=最新一次；小字=近30天变化（体脂/腰围↓为绿色=进步）。</div>`;
+    const md=daysSinceLastMeasure();
+    const remind = md>=7 ? `<div style="margin-bottom:10px;padding:9px 12px;background:var(--card2);border-radius:12px;border-left:3px solid var(--gold);font-size:13px">📏 距上次测量已 <b>${md}</b> 天，建议每 7–10 天量一次体重+腰围。</div>` : '';
+    sum.innerHTML=`${remind}<div class="stat-grid" style="flex-wrap:wrap">${cells}</div><div class="hint">大数=最新一次；小字=近30天变化（腰围↓为绿色=进步）。</div>${recompVerdict(ms)}`;
   }
   const avail=Object.keys(M_META).filter(k=>ms.some(m=>m[k]!=null));
   if(avail.length && !avail.includes(measureMetric)) measureMetric=avail[0];
@@ -1450,6 +1562,45 @@ function renderMeasures(){
     const parts=Object.keys(M_META).filter(k=>m[k]!=null).map(k=>`${M_META[k][0]} ${m[k]}${M_META[k][1]}`).join(' · ');
     return `<div class="toprec"><span>${m.date}</span><span style="text-align:right"><span class="v">${parts}</span> <span class="link danger" onclick="delMeasure(${m.id})">删</span></span></div>`;
   }).join('') : '';
+}
+// recomp 进度判定：看 体重 + 腰围 + 力量(训练量) 的综合趋势
+function strengthTrendPct(){
+  const strs=DB.logs.filter(l=>l.type==='strength');
+  if(!strs.length) return null;
+  const now=Date.now();
+  const recent=strs.filter(l=>new Date(l.date+'T00:00')>=new Date(now-28*86400000));
+  const prev=strs.filter(l=>{ const t=new Date(l.date+'T00:00').getTime(); return t<now-28*86400000 && t>=now-56*86400000; });
+  if(!recent.length||!prev.length) return null;
+  const vr=recent.reduce((s,l)=>s+volumeOf(l),0), vp=prev.reduce((s,l)=>s+volumeOf(l),0);
+  if(vp<=0) return null;
+  return Math.round((vr-vp)/vp*100);
+}
+function recompVerdict(ms){
+  // 需要跨时间的两次体重或腰围
+  const wPts=ms.filter(m=>m.w!=null), waistPts=ms.filter(m=>m.waist!=null);
+  const dW = wPts.length>=2 ? Math.round((wPts[wPts.length-1].w - wPts[0].w)*10)/10 : null;
+  const dWaist = waistPts.length>=2 ? Math.round((waistPts[waistPts.length-1].waist - waistPts[0].waist)*10)/10 : null;
+  const sp = strengthTrendPct();
+  if(dW===null && dWaist===null && sp===null) return '';
+  // 力量描述
+  let strTxt='';
+  if(sp!==null){ strTxt = sp>=5 ? `力量/训练量↑${sp}%` : sp<=-5 ? `训练量↓${Math.abs(sp)}%` : '力量基本持平'; }
+  // 判定（腰围优先，其次体重）
+  let verdict='', color='var(--muted)', emoji='📊';
+  const fatDown = (dWaist!=null && dWaist<=-0.5) || (dWaist==null && dW!=null && dW<=-0.5);
+  const fatUp   = (dWaist!=null && dWaist>=1) || (dWaist==null && dW!=null && dW>=1.5);
+  const strUp = sp!=null && sp>=5, strDown = sp!=null && sp<=-10;
+  if(fatDown && !strDown){ emoji='💪'; color='var(--accent2)'; verdict='典型 recomp，方向很对：围度/体重在降，力量没掉。继续保持。'; }
+  else if(dWaist!=null && Math.abs(dWaist)<0.5 && dW!=null && Math.abs(dW)<0.8 && strUp){ emoji='💪'; color='var(--accent2)'; verdict='体重腰围基本没变但力量在涨——这就是增肌减脂同时进行的样子，正常。'; }
+  else if(fatUp && !strUp){ emoji='⚠️'; color='var(--gold)'; verdict='围度/体重在往上走而力量没跟上，留意一下饮食量。'; }
+  else if(strDown && dW!=null && dW<=-1){ emoji='⚠️'; color='var(--gold)'; verdict='掉得偏快且力量下降，可能在掉肌肉，别把热量砍太狠、保证蛋白质。'; }
+  else { verdict='趋势还不明显，多记几次体重+腰围就能看清方向。'; }
+  const bits=[];
+  if(dW!=null) bits.push(`体重 ${dW>0?'+':''}${dW}kg`);
+  if(dWaist!=null) bits.push(`腰围 ${dWaist>0?'+':''}${dWaist}cm`);
+  if(strTxt) bits.push(strTxt);
+  const sub = bits.length? `<div class="hint" style="margin-top:2px">${bits.join(' · ')}</div>`:'';
+  return `<div style="margin-top:10px;padding:10px 12px;background:var(--card2);border-radius:12px;border-left:3px solid ${color}"><div style="font-size:13px;font-weight:600;color:${color}">${emoji} recomp 进度</div><div style="font-size:13px;margin-top:3px;line-height:1.5">${verdict}</div>${sub}</div>`;
 }
 function setMeasureMetric(k){ measureMetric=k; renderMeasures(); }
 function drawMeasureChart(){
@@ -1471,14 +1622,14 @@ function drawMeasureChart(){
 }
 function addMeasure(){
   const date=$('mDate').value||todayStr();
-  const w=parseFloat($('mW').value), bf=parseFloat($('mBf').value), waist=parseFloat($('mWaist').value), hip=parseFloat($('mHip').value);
-  if(isNaN(w)&&isNaN(bf)&&isNaN(waist)&&isNaN(hip)){ toast('至少填一项'); return; }
-  const m={date}; if(!isNaN(w))m.w=w; if(!isNaN(bf))m.bf=bf; if(!isNaN(waist))m.waist=waist; if(!isNaN(hip))m.hip=hip;
+  const w=parseFloat($('mW').value), waist=parseFloat($('mWaist').value), hip=parseFloat($('mHip').value);
+  if(isNaN(w)&&isNaN(waist)&&isNaN(hip)){ toast('至少填一项'); return; }
+  const m={date}; if(!isNaN(w))m.w=w; if(!isNaN(waist))m.waist=waist; if(!isNaN(hip))m.hip=hip;
   DB.measures=DB.measures||[];
   const i=DB.measures.findIndex(x=>x.date===date);
   if(i>=0){ DB.measures[i]={...DB.measures[i], ...m}; }
   else { m.id=Date.now(); DB.measures.push(m); }
-  save(DB); $('mW').value='';$('mBf').value='';$('mWaist').value='';$('mHip').value=''; renderMeasures(); toast('已记录 ✅');
+  save(DB); $('mW').value='';$('mWaist').value='';$('mHip').value=''; renderMeasures(); toast('已记录 ✅');
 }
 function delMeasure(id){ if(!confirm('删除这条身体数据？'))return; DB.measures=(DB.measures||[]).filter(m=>m.id!==id); save(DB); renderMeasures(); toast('已删除'); }
 window.setMeasureMetric=setMeasureMetric; window.delMeasure=delMeasure;
@@ -1721,10 +1872,16 @@ function renderTemplates(){
 function loadTemplate(i){
   const t=(DB.templates||[])[i]; if(!t) return;
   if(DB.plan.items.length && !confirm(`用「${t.name}」替换当前计划？（当前计划会被清掉）`)) return;
-  DB.plan.items = t.items.map(it=> it.type==='cardio'
-    ? {exercise:it.exercise, part:it.part, type:'cardio', cardio:{min:it.cardio.min, km:(it.cardio.km!=null?it.cardio.km:null), done:false}, note:it.note||'', tip:it.tip||'', must:it.must, day:t.name}
-    : {exercise:it.exercise, part:it.part, type:'strength', sets:(it.sets||[]).map(s=>({w:s.w, r:s.r, done:false})), note:it.note||'', tip:it.tip||'', must:it.must, day:t.name});
-  save(DB); renderPlan(); toast(`已载入「${t.name}」，可修改或直接用`);
+  let filled=0;
+  DB.plan.items = t.items.map(it=>{
+    if(it.type==='cardio') return {exercise:it.exercise, part:it.part, type:'cardio', cardio:{min:it.cardio.min, km:(it.cardio.km!=null?it.cardio.km:null), done:false}, note:it.note||'', tip:it.tip||'', must:it.must, day:t.name};
+    const last=lastLogOf(it.exercise);
+    let sets;
+    if(last && last.type==='strength' && last.sets && last.sets.length){ sets=last.sets.map(s=>({w:s.w, r:s.r, done:false})); filled++; }
+    else { sets=(it.sets||[]).map(s=>({w:s.w, r:s.r, done:false})); }
+    return {exercise:it.exercise, part:it.part, type:'strength', sets, note:it.note||'', tip:it.tip||'', must:it.must, day:t.name};
+  });
+  save(DB); renderPlan(); toast(filled?`已载入「${t.name}」，${filled}个动作带出上次重量`:`已载入「${t.name}」，可修改或直接用`);
 }
 window.loadTemplate=loadTemplate;
 function sumSets(l){
@@ -1744,6 +1901,15 @@ function planRefHtml(ex){
     h+=`<div class="prdetail" style="color:var(--gold)">🏆 最佳：${bestSetText(best)}${ex1}（${best.date.slice(5)}）</div>`; }
   return h?`<div style="margin-top:4px">${h}</div>`:'';
 }
+// 按动作类型推断建议休息秒数（优先读 tip 里的"歇X分/秒"）
+function suggestRest(it){
+  const t=(it&&it.tip)||'';
+  if(t.includes('2-3分')||t.includes('2–3分')||t.includes('3分')) return 180;
+  if(t.includes('1.5-2分')||t.includes('1.5–2分')||t.includes('2分')) return 120;
+  if(t.includes('秒')||t.includes('1分')) return 45;
+  return it&&it.must===true?150:90;
+}
+function restLabel(sec){ return sec>=60 ? (sec%60? (sec/60).toFixed(1).replace('.0','') : sec/60)+'分' : sec+'秒'; }
 function planItemHtml(it,ii){
   let done,total,setsHtml;
   if(it.type==='cardio'){
@@ -1763,6 +1929,7 @@ function planItemHtml(it,ii){
     ${it.tip?`<div class="note" style="font-style:normal;color:var(--muted)">💡 ${it.tip}</div>`:''}
     ${it.note?`<div class="note" style="font-style:normal">📝 ${it.note}</div>`:''}
     <div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap">
+      ${it.type==='strength'?`<span class="link" style="color:var(--accent2)" onclick="startTimer(${suggestRest(it)})">⏱️ 歇 ${restLabel(suggestRest(it))}</span>`:''}
       <span class="link" onclick="planRenameItem(${ii})">✎ 改动作</span>
       ${it.type==='strength'?`<span class="link" onclick="planAddSetToItem(${ii})">＋ 加一组</span>`:''}
       ${it.type==='strength'&&it.sets.length>1?`<span class="link danger" onclick="planRemoveSetFromItem(${ii})">－ 删一组</span>`:''}
@@ -1974,6 +2141,8 @@ function switchView(name){
   if(name==='log')renderCycle();
   if(name==='settings'){ renderBackupInfo(); renderExpRange(); renderCycleSet(); }
   if(name==='plan'){renderPlanPartChips();renderPlanNewPart();renderPlanExercise();updatePlanForm();renderTemplates();renderPlan();renderCycle()}
+  const ft=$('floatTimer');
+  if(ft){ const showTimer=(name==='plan'||name==='home'); ft.style.display=showTimer?'flex':'none'; if(!showTimer)hideFtPresets(); }
   window.scrollTo(0,0);
 }
 document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>switchView(b.dataset.view); });
@@ -2006,17 +2175,33 @@ renderPlanPartChips(); renderPlanNewPart(); renderPlanExercise(); planResetSets(
 
 // 草稿自动保存（防丢）
 setInterval(saveDraft,3000);
-document.addEventListener('visibilitychange',()=>{ if(document.hidden)saveDraft() });
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){ saveDraft(); }
+  else { stopTitleFlash(); if(timerDoneHidden){ timerDoneHidden=false; if(navigator.vibrate)navigator.vibrate([300,120,300]); toast('⏰ 休息已结束，开练 💪'); } }
+});
 window.addEventListener('pagehide',saveDraft);
 document.querySelector('#view-log .subcard').addEventListener('input',saveDraft);
 $('date').addEventListener('change',saveDraft);
 if(restored) setTimeout(()=>toast('已恢复上次未保存的内容 📝'),700);
 
+// 开屏提醒（错开时间，避免两个 toast 叠在一起）
+let _remindAt=1500;
+// 测量提醒：距上次量体重/腰围 ≥7 天（或从没量过）
+if(DB.logs.length){
+  const md=daysSinceLastMeasure();
+  if(md===Infinity) { setTimeout(()=>toast('📏 记一下体重/腰围，方便看减脂进度'),_remindAt); _remindAt+=2300; }
+  else if(md>=7) { setTimeout(()=>toast(`📏 距上次测量已 ${md} 天，量一下体重/腰围吧`),_remindAt); _remindAt+=2300; }
+}
 // 备份提醒
 if(DB.logs.length){
   const _bk=bkTime(DB.lastBackup); const stale=!_bk || (Date.now()-_bk)>7*86400000;
-  if(stale) setTimeout(()=>toast('建议去设置页导出备份 💾'),1500);
+  if(stale) setTimeout(()=>toast('建议去设置页导出备份 💾'),_remindAt);
 }
+// 主题（深色/浅色）
+function applyTheme(t){ document.body.classList.toggle('light', t==='light'); const mt=document.querySelector('meta[name=theme-color]'); if(mt)mt.content=(t==='light'?'#ffffff':'#2f6bff'); }
+let theme=localStorage.getItem('theme')||'dark';
+applyTheme(theme);
+if($('themeToggle')) $('themeToggle').onclick=()=>{ theme=theme==='light'?'dark':'light'; localStorage.setItem('theme',theme); applyTheme(theme); toast(theme==='light'?'已切换浅色 ☀️':'已切换深色 🌙'); };
 switchView('plan'); // 默认打开"计划"tab(你的主入口)
 </script>
 </body>
