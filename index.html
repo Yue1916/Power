@@ -477,31 +477,7 @@
       <div class="hint">针对圆肩驼背、骨盆前倾、X腿、上斜方紧张的居家内容。拉伸每天做；核心/矫正每周 2–3 次。动作要慢、找发力。<br>⚠️ 胸椎侧弯属结构性问题，请找康复科/物理治疗师专业评估，这里的训练只作辅助。</div>
     </div>
 
-    <div class="card">
-      <h2>📏 每日拉伸 / 松动 <span style="font-size:12px;color:var(--muted);font-weight:400">每天 5–10 分钟</span></h2>
-      <div class="toprec"><span>胸大肌拉伸（门框/墙角）</span><span class="prdetail">每侧 30–45 秒 ×2 · 改善圆肩</span></div>
-      <div class="toprec"><span>胸小肌 / 前肩拉伸</span><span class="prdetail">30 秒 ×2 · 圆肩</span></div>
-      <div class="toprec"><span>髂腰肌（弓步髋屈肌）拉伸</span><span class="prdetail">每侧 30–45 秒 ×2 · 改善骨盆前倾</span></div>
-      <div class="toprec"><span>胸椎伸展（泡沫轴上背 / 靠椅背后仰）</span><span class="prdetail">8–10 次 · 驼背/胸椎</span></div>
-      <div class="toprec"><span>墙天使 Wall Angel</span><span class="prdetail">10–12 次 · 圆肩</span></div>
-      <div class="toprec"><span>上斜方 / 颈侧拉伸</span><span class="prdetail">每侧 30 秒 · 斜方紧张</span></div>
-    </div>
-
-    <div class="card">
-      <h2>🧱 核心 <span style="font-size:12px;color:var(--muted);font-weight:400">每周 2–3 次</span></h2>
-      <div class="toprec"><span>死虫 Dead Bug</span><span class="prdetail">每侧 10 次 ×3 · 腰贴地、骨盆后倒(治前倾)</span></div>
-      <div class="toprec"><span>平板支撑</span><span class="prdetail">30–45 秒 ×3 · 夹臀别塌腰</span></div>
-      <div class="toprec"><span>侧平板</span><span class="prdetail">每侧 20–30 秒 ×2 · 抗侧屈、稳脊柱</span></div>
-      <div class="toprec"><span>反向卷腹 / 悬垂举腿</span><span class="prdetail">12–15 次 ×3 · 下腹</span></div>
-    </div>
-
-    <div class="card">
-      <h2>🎯 体态矫正 <span style="font-size:12px;color:var(--muted);font-weight:400">每周 2–3 次</span></h2>
-      <div class="toprec"><span>蚌式 Clamshell（弹力带）</span><span class="prdetail">每侧 15 次 ×2 · 臀中肌,改善X腿</span></div>
-      <div class="toprec"><span>怪兽走 / 螃蟹走（弹力带）</span><span class="prdetail">10 步 ×3 · 膝外展、臀中</span></div>
-      <div class="toprec"><span>俯身 Y 字举（徒手/轻哑铃）</span><span class="prdetail">12–15 次 ×3 · 下斜方,改善圆肩+抑制上斜方</span></div>
-      <div class="toprec"><span>收下巴点头（深层颈屈肌）</span><span class="prdetail">10 次 ×2 · 改善探颈/圆肩</span></div>
-    </div>
+    <div id="homeList"></div>
   </section>
 </main>
 
@@ -517,6 +493,20 @@
 <div id="floatTimer">
   <div id="ftPresets"></div>
   <button id="ftBtn" type="button">⏱️ 计时</button>
+</div>
+
+<div class="modal" id="homeModal" style="display:none">
+  <div class="modal-card">
+    <div class="modal-title" id="homeModalTitle">编辑</div>
+    <label id="homeF1Label">名称</label>
+    <input type="text" id="homeF1" placeholder="如：收下巴 Chin Tuck">
+    <label id="homeF2Label">数量 / 时长 / 说明</label>
+    <input type="text" id="homeF2" placeholder="如：保持 5 秒 ×10 · 探颈核心">
+    <div class="row" style="margin-top:16px">
+      <button class="btn ghost" id="homeCancel" type="button" style="margin-top:0">取消</button>
+      <button class="btn green" id="homeSave" type="button" style="margin-top:0">保存</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal" id="editModal" style="display:none">
@@ -718,6 +708,7 @@ function doMv(btn){
   if(act==='session') moveSession(parseInt(btn.dataset.i),dir);
   else if(act==='plan') movePlan(parseInt(btn.dataset.i),dir);
   else if(act==='log') moveDayLog(parseInt(btn.dataset.id),dir);
+  else if(act==='home') moveHome(parseInt(btn.dataset.g),parseInt(btn.dataset.i),dir);
 }
 // ▲▼ 需长按约 0.4 秒才生效，避免误触
 function enableHoldButtons(root){
@@ -735,6 +726,104 @@ function enableHoldButtons(root){
     btn.addEventListener('pointercancel',cancel);
   });
 }
+
+/* ================= 居家(可编辑) ================= */
+function defaultHome(){
+  return {groups:[
+    {title:'📏 每日拉伸 / 松动', freq:'每天 5–10 分钟', items:[
+      {name:'胸大肌拉伸（门框/墙角）', detail:'每侧 30–45 秒 ×2 · 改善圆肩'},
+      {name:'胸小肌 / 前肩拉伸', detail:'30 秒 ×2 · 圆肩'},
+      {name:'髂腰肌（弓步髋屈肌）拉伸', detail:'每侧 30–45 秒 ×2 · 改善骨盆前倾'},
+      {name:'胸椎伸展（泡沫轴上背 / 靠椅背后仰）', detail:'8–10 次 · 驼背/胸椎'},
+      {name:'墙天使 Wall Angel', detail:'10–12 次 · 圆肩'},
+      {name:'上斜方 / 颈侧拉伸', detail:'每侧 30 秒 · 斜方紧张'}
+    ]},
+    {title:'🧱 核心', freq:'每周 2–3 次', items:[
+      {name:'死虫 Dead Bug', detail:'每侧 10 次 ×3 · 腰贴地、骨盆后倒(治前倾)'},
+      {name:'平板支撑', detail:'30–45 秒 ×3 · 夹臀别塌腰'},
+      {name:'侧平板', detail:'每侧 20–30 秒 ×2 · 抗侧屈、稳脊柱'},
+      {name:'反向卷腹 / 悬垂举腿', detail:'12–15 次 ×3 · 下腹'}
+    ]},
+    {title:'🎯 体态矫正', freq:'每周 2–3 次', items:[
+      {name:'蚌式 Clamshell（弹力带）', detail:'每侧 15 次 ×2 · 臀中肌,改善X腿'},
+      {name:'怪兽走 / 螃蟹走（弹力带）', detail:'10 步 ×3 · 膝外展、臀中'},
+      {name:'俯身 Y 字举（徒手/轻哑铃）', detail:'12–15 次 ×3 · 下斜方,改善圆肩+抑制上斜方'}
+    ]},
+    {title:'🦢 颈部 · 探颈/双下巴', freq:'每天 2–3 次，动作要轻', items:[
+      {name:'收下巴 Chin Tuck（靠墙/仰卧）', detail:'保持 5 秒 ×10 · 探颈核心，想象后脑勺贴墙、下巴水平后收'},
+      {name:'收下巴 + 点头（颈深屈肌）', detail:'10 次 ×2 · 只用深层小肌肉，别使劲低头'},
+      {name:'胸锁乳突肌(SCM)拉伸', detail:'头侧转再微仰，每侧 20–30 秒 · 松探颈'},
+      {name:'肩胛提肌 / 上斜方拉伸', detail:'看向同侧腋下、手轻压后脑，每侧 30 秒 · 松脖子两侧'},
+      {name:'枕下肌松解（后脑勺下沿）', detail:'轻按/小幅点头 1–2 分钟 · 缓解探颈紧张'},
+      {name:'仰头舌抵上颚（紧下巴线条）', detail:'仰头、舌顶上颚做吞咽感 10 次 · 练颈前/双下巴'}
+    ]}
+  ]};
+}
+function ensureHome(){ if(!DB.home||!DB.home.groups||!DB.home.groups.length){ DB.home=defaultHome(); save(DB); } }
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function renderHome(){
+  const box=$('homeList'); if(!box) return;
+  ensureHome();
+  box.innerHTML = DB.home.groups.map((g,gi)=>`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <h2 style="margin:0">${esc(g.title)}${g.freq?` <span style="font-size:12px;color:var(--muted);font-weight:400">${esc(g.freq)}</span>`:''}</h2>
+        <span class="link" onclick="editHomeGroup(${gi})" style="white-space:nowrap">✎ 分组</span>
+      </div>
+      <div style="margin-top:10px">
+      ${g.items.map((it,ii)=>`
+        <div class="log-item" style="padding:10px 12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="mvwrap"><button class="mv" type="button" data-act="home" data-g="${gi}" data-i="${ii}" data-dir="-1" title="长按上移">▲</button><button class="mv" type="button" data-act="home" data-g="${gi}" data-i="${ii}" data-dir="1" title="长按下移">▼</button></span>
+            <div style="flex:1;min-width:0">
+              <div class="name">${esc(it.name)}</div>
+              ${it.detail?`<div class="prdetail">${esc(it.detail)}</div>`:''}
+            </div>
+            <span class="link" onclick="editHomeItem(${gi},${ii})">✎</span>
+            <span class="link danger" onclick="delHomeItem(${gi},${ii})">删</span>
+          </div>
+        </div>`).join('')}
+      </div>
+      <div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
+        <span class="link" onclick="addHomeItem(${gi})">＋ 添加动作</span>
+        <span class="link danger" onclick="delHomeGroup(${gi})">删除此分组</span>
+      </div>
+    </div>`).join('') + `<button class="btn ghost" type="button" onclick="addHomeGroup()">＋ 新增分组</button>`;
+  enableHoldButtons(box);
+}
+let homeEdit=null; // {mode:'group'|'item', gi, ii}
+function openHomeModal(mode,gi,ii,title,l1,v1,l2,v2){
+  homeEdit={mode,gi,ii};
+  $('homeModalTitle').textContent=title;
+  $('homeF1Label').textContent=l1; $('homeF1').value=v1||'';
+  $('homeF2Label').textContent=l2; $('homeF2').value=v2||'';
+  $('homeModal').style.display='flex';
+  setTimeout(()=>$('homeF1').focus(),60);
+}
+function closeHomeModal(){ $('homeModal').style.display='none'; homeEdit=null; }
+function addHomeItem(gi){ openHomeModal('item',gi,-1,'添加动作','动作名称','','数量 / 时长 / 说明',''); }
+function editHomeItem(gi,ii){ const it=DB.home.groups[gi].items[ii]; if(!it)return; openHomeModal('item',gi,ii,'编辑动作','动作名称',it.name,'数量 / 时长 / 说明',it.detail); }
+function addHomeGroup(){ openHomeModal('group',-1,-1,'新增分组','分组名称（可加 emoji）','','频率副标题（选填）',''); }
+function editHomeGroup(gi){ const g=DB.home.groups[gi]; if(!g)return; openHomeModal('group',gi,-1,'编辑分组','分组名称（可加 emoji）',g.title,'频率副标题（选填）',g.freq); }
+function delHomeItem(gi,ii){ if(!confirm('删除这个动作？'))return; DB.home.groups[gi].items.splice(ii,1); save(DB); renderHome(); toast('已删除'); }
+function delHomeGroup(gi){ if(!confirm('删除整个分组及其所有动作？'))return; DB.home.groups.splice(gi,1); save(DB); renderHome(); toast('已删除分组'); }
+function moveHome(gi,ii,dir){ const items=DB.home.groups[gi]&&DB.home.groups[gi].items; if(!items)return; const j=ii+dir; if(j<0||j>=items.length)return; const t=items[ii]; items[ii]=items[j]; items[j]=t; save(DB); renderHome(); }
+function saveHomeModal(){
+  if(!homeEdit){ closeHomeModal(); return; }
+  const v1=$('homeF1').value.trim(), v2=$('homeF2').value.trim();
+  if(homeEdit.mode==='item'){
+    if(!v1){ toast('请填动作名称'); return; }
+    if(homeEdit.ii<0) DB.home.groups[homeEdit.gi].items.push({name:v1,detail:v2});
+    else DB.home.groups[homeEdit.gi].items[homeEdit.ii]={name:v1,detail:v2};
+  }else{
+    if(!v1){ toast('请填分组名称'); return; }
+    if(homeEdit.gi<0) DB.home.groups.push({title:v1,freq:v2,items:[]});
+    else { DB.home.groups[homeEdit.gi].title=v1; DB.home.groups[homeEdit.gi].freq=v2; }
+  }
+  save(DB); closeHomeModal(); renderHome(); toast('已保存 ✅');
+}
+window.addHomeItem=addHomeItem; window.editHomeItem=editHomeItem; window.addHomeGroup=addHomeGroup;
+window.editHomeGroup=editHomeGroup; window.delHomeItem=delHomeItem; window.delHomeGroup=delHomeGroup; window.moveHome=moveHome;
 
 /* ================= 记录页 ================= */
 let selectedParts=new Set(['胸']);
@@ -1760,8 +1849,8 @@ $('importFile').onchange=e=>{
         e.target.value=''; return;
       }
     }
-    DB=d; if(!('lastBackup' in DB))DB.lastBackup=null; if(!DB.plan)DB.plan={items:[]}; if(!DB.templates)DB.templates=[]; if(!DB.measures)DB.measures=[]; if(DB.weekStart==null)DB.weekStart=1; if(!DB.cycleStart)DB.cycleStart=weekStartStr();
-    save(DB); refreshAll(); renderTemplates(); renderPlan(); renderCycle(); toast('导入成功');
+    DB=d; if(!('lastBackup' in DB))DB.lastBackup=null; if(!DB.plan)DB.plan={items:[]}; if(!DB.templates)DB.templates=[]; if(!DB.measures)DB.measures=[]; if(DB.weekStart==null)DB.weekStart=1; if(!DB.cycleStart)DB.cycleStart=weekStartStr(); ensureHome();
+    save(DB); refreshAll(); renderTemplates(); renderPlan(); renderCycle(); renderHome(); toast('导入成功');
   }catch(err){toast('文件格式错误')}};
   r.readAsText(f); e.target.value='';
 };
@@ -2037,6 +2126,7 @@ function editPlanSet(ii,si){
 function closeEditModal(){ $('editModal').style.display='none'; editTarget=null; }
 $('editCancel').onclick=closeEditModal;
 $('editModal').addEventListener('click',e=>{ if(e.target===$('editModal'))closeEditModal(); });
+if($('homeSave')){ $('homeSave').onclick=saveHomeModal; $('homeCancel').onclick=closeHomeModal; $('homeModal').addEventListener('click',e=>{ if(e.target===$('homeModal'))closeHomeModal(); }); }
 $('editSave').onclick=()=>{
   if(!editTarget){closeEditModal();return}
   const it=DB.plan.items[editTarget.ii]; if(!it){closeEditModal();return}
@@ -2141,6 +2231,7 @@ function switchView(name){
   if(name==='log')renderCycle();
   if(name==='settings'){ renderBackupInfo(); renderExpRange(); renderCycleSet(); }
   if(name==='plan'){renderPlanPartChips();renderPlanNewPart();renderPlanExercise();updatePlanForm();renderTemplates();renderPlan();renderCycle()}
+  if(name==='home')renderHome();
   const ft=$('floatTimer');
   if(ft){ const showTimer=(name==='plan'||name==='home'); ft.style.display=showTimer?'flex':'none'; if(!showTimer)hideFtPresets(); }
   window.scrollTo(0,0);
@@ -2162,6 +2253,7 @@ if(!DB.templates)DB.templates=[];
 if(!DB.measures)DB.measures=[];
 if(DB.weekStart==null)DB.weekStart=1;
 if(!DB.cycleStart)DB.cycleStart=weekStartStr();
+ensureHome();
 $('mAdd').onclick=addMeasure;
 $('expFrom').onchange=updateExpInfo; $('expTo').onchange=updateExpInfo;
 $('cycleReset').onclick=()=>{ DB.cycleStart=weekStartStr(); save(DB); renderCycle(); renderCycleSet(); toast('已把本周设为第1周'); };
