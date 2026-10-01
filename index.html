@@ -70,7 +70,8 @@
     font-size:20px; cursor:pointer; padding:0}
   .tabbar{
     position:fixed; bottom:0; left:0; right:0; z-index:30; display:flex;
-    background:rgba(25,29,46,.96); backdrop-filter:blur(10px); border-top:1px solid var(--line);
+    transform:translateZ(0); will-change:transform;
+    background:#191d2e; border-top:1px solid var(--line);
   }
   .tabbar button{
     flex:1; background:none; border:none; color:var(--muted); padding:10px 0 max(10px,env(safe-area-inset-bottom));
