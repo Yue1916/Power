@@ -325,21 +325,16 @@
     <div class="card">
       <h2>🩸 生理周期</h2>
       <div id="periodBox"></div>
-      <label style="margin-top:10px">经期开始日（可选过去的日期）</label>
-      <div class="row" style="align-items:flex-end;gap:8px">
-        <input type="date" id="periodDate">
-        <button class="btn ghost" id="periodLogBtn" type="button" style="margin-top:0;flex:0 0 auto">记录开始</button>
-      </div>
-      <label style="margin-top:10px">经期结束日（选填，帮更准判断）</label>
-      <div class="row" style="align-items:flex-end;gap:8px">
-        <input type="date" id="periodEndDate">
-        <button class="btn ghost" id="periodEndBtn" type="button" style="margin-top:0;flex:0 0 auto">记录结束</button>
-      </div>
-      <div class="row" style="margin-top:10px;align-items:flex-end;gap:8px">
-        <div style="flex:1"><label style="margin-top:0">平均周期天数（选填，默认28）</label><input type="number" inputmode="numeric" id="periodLen" placeholder="28"></div>
-        <button class="btn ghost" id="periodLenSave" type="button" style="margin-top:0;flex:0 0 auto">保存</button>
-      </div>
-      <div id="periodHistory" class="hint" style="margin-top:8px"></div>
+      <label style="margin-top:12px">经期开始日（可选过去的日期）</label>
+      <input type="date" id="periodDate">
+      <button class="btn ghost" id="periodLogBtn" type="button" style="margin-top:8px">🩸 记录经期开始</button>
+      <label style="margin-top:14px">经期结束日（选填，帮更准判断）</label>
+      <input type="date" id="periodEndDate">
+      <button class="btn ghost" id="periodEndBtn" type="button" style="margin-top:8px">记录经期结束</button>
+      <label style="margin-top:14px">平均周期天数（选填，默认28）</label>
+      <input type="number" inputmode="numeric" id="periodLen" placeholder="28">
+      <button class="btn ghost" id="periodLenSave" type="button" style="margin-top:8px">保存周期天数</button>
+      <div id="periodHistory" class="hint" style="margin-top:10px"></div>
     </div>
     <div class="card">
       <h2>🚀 进步概览</h2>
