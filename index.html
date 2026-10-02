@@ -17,7 +17,7 @@
     --danger:#ff5470; --gold:#ffcf5c; --radius:16px;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0}
+  html,body{margin:0;padding:0; overflow-x:hidden; max-width:100%}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
     background:var(--bg); color:var(--text); padding-bottom:88px; line-height:1.5;
@@ -325,10 +325,19 @@
     <div class="card">
       <h2>🩸 生理周期</h2>
       <div id="periodBox"></div>
-      <button class="btn ghost" id="periodLogBtn" type="button">📅 今天来月经了</button>
-      <div class="row" style="margin-top:8px;align-items:flex-end">
-        <div><label>平均周期天数（选填，默认28）</label><input type="number" inputmode="numeric" id="periodLen" placeholder="28"></div>
-        <div style="flex:0 0 auto"><button class="btn ghost" id="periodLenSave" type="button" style="margin-top:0">保存</button></div>
+      <label style="margin-top:10px">经期开始日（可选过去的日期）</label>
+      <div class="row" style="align-items:flex-end;gap:8px">
+        <input type="date" id="periodDate">
+        <button class="btn ghost" id="periodLogBtn" type="button" style="margin-top:0;flex:0 0 auto">记录开始</button>
+      </div>
+      <label style="margin-top:10px">经期结束日（选填，帮更准判断）</label>
+      <div class="row" style="align-items:flex-end;gap:8px">
+        <input type="date" id="periodEndDate">
+        <button class="btn ghost" id="periodEndBtn" type="button" style="margin-top:0;flex:0 0 auto">记录结束</button>
+      </div>
+      <div class="row" style="margin-top:10px;align-items:flex-end;gap:8px">
+        <div style="flex:1"><label style="margin-top:0">平均周期天数（选填，默认28）</label><input type="number" inputmode="numeric" id="periodLen" placeholder="28"></div>
+        <button class="btn ghost" id="periodLenSave" type="button" style="margin-top:0;flex:0 0 auto">保存</button>
       </div>
       <div id="periodHistory" class="hint" style="margin-top:8px"></div>
     </div>
@@ -1757,16 +1766,22 @@ function periodCycleLen(){
   if(s.length>=2){ let sum=0,n=0; for(let i=1;i<s.length;i++){ const d=Math.round((new Date(s[i]+'T00:00')-new Date(s[i-1]+'T00:00'))/86400000); if(d>=18&&d<=45){sum+=d;n++;} } if(n) return Math.round(sum/n); }
   return (DB.period&&DB.period.len)||28;
 }
+function periodMensesLen(){
+  const ends=(DB.period&&DB.period.ends)||{}; let sum=0,n=0;
+  Object.keys(ends).forEach(st=>{ const d=Math.round((new Date(ends[st]+'T00:00')-new Date(st+'T00:00'))/86400000)+1; if(d>=1&&d<=12){sum+=d;n++;} });
+  return n? Math.round(sum/n) : 5;
+}
 function periodInfo(){
   const s=periodStarts(); if(!s.length) return null;
   const L=periodCycleLen();
+  const mLen=periodMensesLen();
   const last=s[s.length-1];
   const daysSince=Math.floor((new Date(todayStr()+'T00:00')-new Date(last+'T00:00'))/86400000);
   const day=daysSince+1;
   const ov=L-14;
   let phase,tip,color,emoji;
-  if(day>L+3){ phase='可能已超期'; emoji='⏰'; color='var(--gold)'; tip='距上次已 '+daysSince+' 天，超过平均周期。来了记得点下面「今天来月经了」。'; }
-  else if(day<=5){ phase='月经期'; emoji='🩸'; color='var(--danger)'; tip='顺着身体来：累或痛经就做轻的、或只做居家拉伸，别勉强冲重量。'; }
+  if(day>L+3){ phase='可能已超期'; emoji='⏰'; color='var(--gold)'; tip='距上次已 '+daysSince+' 天，超过平均周期。来了在下面选日期点「记录开始」。'; }
+  else if(day<=mLen){ phase='月经期'; emoji='🩸'; color='var(--danger)'; tip='顺着身体来：累或痛经就做轻的、或只做居家拉伸，别勉强冲重量。'; }
   else if(day<ov-1){ phase='卵泡期'; emoji='🌱'; color='var(--accent2)'; tip='状态和恢复最好的阶段，适合冲大重量、尝试破 PR。'; }
   else if(day<=ov+1){ phase='排卵期'; emoji='⚡'; color='var(--accent)'; tip='力量峰值期，但关节更松，大重量务必充分热身、姿势稳。'; }
   else { const toEnd=L-day; if(toEnd<=4){ phase='黄体期·经前'; emoji='🌙'; color='var(--gold)'; tip='容易疲劳、水肿、没力，降点强度、多做技术和居家，别跟自己较劲。'; } else { phase='黄体期'; emoji='🌙'; color='var(--muted)'; tip='正常训练，可能略感吃力，按 RIR 多留一点余量就好。'; } }
@@ -1784,8 +1799,18 @@ function renderPeriod(){
     </div>`;
   }
   if($('periodLen')) $('periodLen').value=(DB.period&&DB.period.len)||'';
+  if($('periodDate')&&!$('periodDate').value) $('periodDate').value=todayStr();
+  if($('periodEndDate')&&!$('periodEndDate').value) $('periodEndDate').value=todayStr();
   const s=periodStarts();
-  if($('periodHistory')) $('periodHistory').innerHTML = s.length? ('最近记录：'+s.slice(-4).map(d=>d.slice(5)).join('、')+` · <span class="link danger" onclick="clearLastPeriod()">删最近一次</span>`):'';
+  const ends=(DB.period&&DB.period.ends)||{};
+  if($('periodHistory')){
+    let h='';
+    if(s.length){
+      h='最近记录：'+s.slice(-4).map(d=>d.slice(5)+(ends[d]?`~${ends[d].slice(5)}`:'')).join('、')+` · <span class="link danger" onclick="clearLastPeriod()">删最近一次</span>`;
+      h+=`<br>平均经期 ${periodMensesLen()} 天${s.length>=2?` · 平均周期 ${periodCycleLen()} 天`:''}`;
+    }
+    $('periodHistory').innerHTML=h;
+  }
 }
 function renderPeriodBanner(){
   const b=$('periodBannerPlan'); if(!b) return;
@@ -1795,14 +1820,27 @@ function renderPeriodBanner(){
   b.style.background='var(--card2)'; b.style.borderColor=info.color; b.style.color=info.color;
   b.innerHTML=`<span style="color:var(--text);font-size:13px"><b style="color:${info.color}">${info.emoji} 第${info.day}天·${info.phase}</b> ${info.tip}</span>`;
 }
-function logPeriodToday(){
+function logPeriodStart(){
   DB.period=DB.period||{starts:[]}; DB.period.starts=DB.period.starts||[];
-  const t=todayStr();
-  if(DB.period.starts.includes(t)){ toast('今天已记录'); return; }
-  DB.period.starts.push(t); DB.period.starts.sort();
+  const d=($('periodDate')&&$('periodDate').value)||todayStr();
+  if(d>todayStr()){ toast('不能选未来日期'); return; }
+  if(DB.period.starts.includes(d)){ toast('该日期已记录'); return; }
+  DB.period.starts.push(d); DB.period.starts.sort();
   save(DB); renderPeriod(); renderPeriodBanner(); toast('已记录经期开始 🩸');
 }
-function clearLastPeriod(){ const s=periodStarts(); if(!s.length)return; if(!confirm('删除最近一次经期记录？'))return; const last=s[s.length-1]; DB.period.starts=DB.period.starts.filter(d=>d!==last); save(DB); renderPeriod(); renderPeriodBanner(); toast('已删除'); }
+function logPeriodEnd(){
+  const s=periodStarts(); if(!s.length){ toast('请先记录经期开始日'); return; }
+  const end=($('periodEndDate')&&$('periodEndDate').value)||todayStr();
+  // 找 <= 结束日 的最近一次开始
+  const start=s.filter(d=>d<=end).pop();
+  if(!start){ toast('结束日早于所有开始日，请检查'); return; }
+  const gap=Math.round((new Date(end+'T00:00')-new Date(start+'T00:00'))/86400000);
+  if(gap<0){ toast('结束日不能早于开始日'); return; }
+  if(gap>12){ toast('经期超过12天，请检查日期'); return; }
+  DB.period.ends=DB.period.ends||{}; DB.period.ends[start]=end;
+  save(DB); renderPeriod(); renderPeriodBanner(); toast(`已记录经期结束（本次 ${gap+1} 天）`);
+}
+function clearLastPeriod(){ const s=periodStarts(); if(!s.length)return; if(!confirm('删除最近一次经期记录？'))return; const last=s[s.length-1]; DB.period.starts=DB.period.starts.filter(d=>d!==last); if(DB.period.ends)delete DB.period.ends[last]; save(DB); renderPeriod(); renderPeriodBanner(); toast('已删除'); }
 function savePeriodLen(){ const v=parseInt($('periodLen').value); DB.period=DB.period||{starts:[]}; if(!isNaN(v)&&v>=18&&v<=45) DB.period.len=v; else delete DB.period.len; save(DB); renderPeriod(); renderPeriodBanner(); toast('已保存'); }
 window.clearLastPeriod=clearLastPeriod;
 function daysSinceLastMeasure(){ const ms=measuresSorted(); if(!ms.length) return Infinity; return Math.floor((Date.now()-new Date(ms[ms.length-1].date+'T00:00'))/86400000); }
@@ -2466,7 +2504,7 @@ if(DB.weekStart==null)DB.weekStart=1;
 if(!DB.cycleStart)DB.cycleStart=weekStartStr();
 ensureHome();
 $('mAdd').onclick=addMeasure;
-if($('periodLogBtn')){ $('periodLogBtn').onclick=logPeriodToday; $('periodLenSave').onclick=savePeriodLen; }
+if($('periodLogBtn')){ $('periodLogBtn').onclick=logPeriodStart; $('periodEndBtn').onclick=logPeriodEnd; $('periodLenSave').onclick=savePeriodLen; }
 $('expFrom').onchange=updateExpInfo; $('expTo').onchange=updateExpInfo;
 $('cycleReset').onclick=()=>{ DB.cycleStart=weekStartStr(); save(DB); renderCycle(); renderCycleSet(); toast('已把本周设为第1周'); };
 renderExpRange(); renderCycle();
