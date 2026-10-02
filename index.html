@@ -509,11 +509,11 @@
 </main>
 
 <nav class="tabbar">
-  <button data-view="plan" class="active"><span class="ico">🎯</span>计划</button>
+  <button data-view="plan" class="active"><span class="ico">🏋️</span>力训</button>
   <button data-view="home"><span class="ico">🧘</span>居家</button>
-  <button data-view="history"><span class="ico">📚</span>历史</button>
-  <button data-view="progress"><span class="ico">📈</span>进步</button>
-  <button data-view="log"><span class="ico">📝</span>记录</button>
+  <button data-view="history"><span class="ico">📒</span>流水</button>
+  <button data-view="progress"><span class="ico">📈</span>趋势</button>
+  <button data-view="log"><span class="ico">✍️</span>补录</button>
   <button data-view="settings"><span class="ico">⚙️</span>设置</button>
 </nav>
 
@@ -1415,7 +1415,7 @@ if($('calPrev')){ $('calPrev').onclick=()=>calShift(-1); $('calNext').onclick=()
 function renderHistory(){
   renderWeekStats(); renderNotesFilter(); renderNotes(); renderCalendar();
   const list=$('historyList');
-  if(!DB.logs.length){list.innerHTML='<div class="empty"><div class="big">📭</div>还没有记录，去「记录」页添加第一条吧！</div>';return}
+  if(!DB.logs.length){list.innerHTML='<div class="empty"><div class="big">📭</div>还没有记录，去「力训」打勾写入、或「补录」手动添加第一条吧！</div>';return}
   const byDate={};
   DB.logs.forEach(l=>{(byDate[l.date]=byDate[l.date]||[]).push(l)});
   const allDates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
