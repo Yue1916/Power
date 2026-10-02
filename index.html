@@ -502,6 +502,10 @@
     <input type="text" id="homeF1" placeholder="如：收下巴 Chin Tuck">
     <label id="homeF2Label">数量 / 时长 / 说明</label>
     <input type="text" id="homeF2" placeholder="如：保持 5 秒 ×10 · 探颈核心">
+    <div id="homeF3Wrap">
+      <label>倒计时时长（秒，选填）</label>
+      <input type="number" inputmode="numeric" id="homeF3" placeholder="如 30，填了就有倒计时按钮">
+    </div>
     <div class="row" style="margin-top:16px">
       <button class="btn ghost" id="homeCancel" type="button" style="margin-top:0">取消</button>
       <button class="btn green" id="homeSave" type="button" style="margin-top:0">保存</button>
@@ -709,6 +713,7 @@ function doMv(btn){
   else if(act==='plan') movePlan(parseInt(btn.dataset.i),dir);
   else if(act==='log') moveDayLog(parseInt(btn.dataset.id),dir);
   else if(act==='home') moveHome(parseInt(btn.dataset.g),parseInt(btn.dataset.i),dir);
+  else if(act==='homegrp') moveHomeGroup(parseInt(btn.dataset.g),dir);
 }
 // ▲▼ 需长按约 0.4 秒才生效，避免误触
 function enableHoldButtons(root){
@@ -728,93 +733,166 @@ function enableHoldButtons(root){
 }
 
 /* ================= 居家(可编辑) ================= */
+let _hidc=0;
+function hid(){ return 'h'+Date.now().toString(36)+(_hidc++).toString(36); }
 function defaultHome(){
-  return {groups:[
-    {title:'📏 每日拉伸 / 松动', freq:'每天 5–10 分钟', items:[
-      {name:'胸大肌拉伸（门框/墙角）', detail:'每侧 30–45 秒 ×2 · 改善圆肩'},
-      {name:'胸小肌 / 前肩拉伸', detail:'30 秒 ×2 · 圆肩'},
-      {name:'髂腰肌（弓步髋屈肌）拉伸', detail:'每侧 30–45 秒 ×2 · 改善骨盆前倾'},
-      {name:'胸椎伸展（泡沫轴上背 / 靠椅背后仰）', detail:'8–10 次 · 驼背/胸椎'},
-      {name:'墙天使 Wall Angel', detail:'10–12 次 · 圆肩'},
-      {name:'上斜方 / 颈侧拉伸', detail:'每侧 30 秒 · 斜方紧张'}
-    ]},
-    {title:'🧱 核心', freq:'每周 2–3 次', items:[
-      {name:'死虫 Dead Bug', detail:'每侧 10 次 ×3 · 腰贴地、骨盆后倒(治前倾)'},
-      {name:'平板支撑', detail:'30–45 秒 ×3 · 夹臀别塌腰'},
-      {name:'侧平板', detail:'每侧 20–30 秒 ×2 · 抗侧屈、稳脊柱'},
-      {name:'反向卷腹 / 悬垂举腿', detail:'12–15 次 ×3 · 下腹'}
-    ]},
-    {title:'🎯 体态矫正', freq:'每周 2–3 次', items:[
-      {name:'蚌式 Clamshell（弹力带）', detail:'每侧 15 次 ×2 · 臀中肌,改善X腿'},
-      {name:'怪兽走 / 螃蟹走（弹力带）', detail:'10 步 ×3 · 膝外展、臀中'},
-      {name:'俯身 Y 字举（徒手/轻哑铃）', detail:'12–15 次 ×3 · 下斜方,改善圆肩+抑制上斜方'}
-    ]},
+  const groups=[
     {title:'🦢 颈部 · 探颈/双下巴', freq:'每天 2–3 次，动作要轻', items:[
       {name:'收下巴 Chin Tuck（靠墙/仰卧）', detail:'保持 5 秒 ×10 · 探颈核心，想象后脑勺贴墙、下巴水平后收'},
       {name:'收下巴 + 点头（颈深屈肌）', detail:'10 次 ×2 · 只用深层小肌肉，别使劲低头'},
-      {name:'胸锁乳突肌(SCM)拉伸', detail:'头侧转再微仰，每侧 20–30 秒 · 松探颈'},
-      {name:'肩胛提肌 / 上斜方拉伸', detail:'看向同侧腋下、手轻压后脑，每侧 30 秒 · 松脖子两侧'},
-      {name:'枕下肌松解（后脑勺下沿）', detail:'轻按/小幅点头 1–2 分钟 · 缓解探颈紧张'},
+      {name:'胸锁乳突肌(SCM)拉伸', detail:'头侧转再微仰，每侧 20–30 秒 · 松探颈', sec:25},
+      {name:'肩胛提肌 / 上斜方拉伸', detail:'看向同侧腋下、手轻压后脑，每侧 30 秒 · 松脖子两侧', sec:30},
+      {name:'枕下肌松解（后脑勺下沿）', detail:'轻按/小幅点头 1–2 分钟 · 缓解探颈紧张', sec:60},
       {name:'仰头舌抵上颚（紧下巴线条）', detail:'仰头、舌顶上颚做吞咽感 10 次 · 练颈前/双下巴'}
+    ]},
+    {title:'📏 每日拉伸 / 松动', freq:'每天 5–10 分钟', items:[
+      {name:'胸大肌拉伸（门框/墙角）', detail:'每侧 30–45 秒 ×2 · 改善圆肩', sec:40},
+      {name:'胸小肌 / 前肩拉伸', detail:'30 秒 ×2 · 圆肩', sec:30},
+      {name:'髂腰肌（弓步髋屈肌）拉伸', detail:'每侧 30–45 秒 ×2 · 改善骨盆前倾', sec:40},
+      {name:'胸椎伸展（泡沫轴上背 / 靠椅背后仰）', detail:'8–10 次 · 驼背/胸椎'},
+      {name:'墙天使 Wall Angel', detail:'10–12 次 · 圆肩'},
+      {name:'上斜方 / 颈侧拉伸', detail:'每侧 30 秒 · 斜方紧张', sec:30}
+    ]},
+    {title:'🧱 核心', freq:'可每天 / 每周 3–5 次', items:[
+      {name:'死虫 Dead Bug', detail:'每侧 10 次 ×3 · 腰贴地、骨盆后倒(治前倾)'},
+      {name:'平板支撑', detail:'30–45 秒 ×3 · 夹臀别塌腰', sec:40},
+      {name:'侧平板', detail:'每侧 20–30 秒 ×2 · 抗侧屈、稳脊柱', sec:30},
+      {name:'反向卷腹 / 悬垂举腿', detail:'12–15 次 ×3 · 下腹'}
+    ]},
+    {title:'🎯 体态矫正', freq:'每周 3–5 次', items:[
+      {name:'蚌式 Clamshell（弹力带）', detail:'每侧 15 次 ×2 · 臀中肌,改善X腿'},
+      {name:'怪兽走 / 螃蟹走（弹力带）', detail:'10 步 ×3 · 膝外展、臀中'},
+      {name:'俯身 Y 字举（徒手/轻哑铃）', detail:'12–15 次 ×3 · 下斜方,改善圆肩+抑制上斜方'}
     ]}
-  ]};
+  ];
+  groups.forEach(g=>g.items.forEach(it=>it.id=hid()));
+  return {groups, done:{}};
 }
-function ensureHome(){ if(!DB.home||!DB.home.groups||!DB.home.groups.length){ DB.home=defaultHome(); save(DB); } }
+function ensureHome(){
+  if(!DB.home||!DB.home.groups||!DB.home.groups.length){ DB.home=defaultHome(); }
+  DB.home.done=DB.home.done||{};
+  DB.home.groups.forEach(g=>{ g.items=g.items||[]; g.items.forEach(it=>{ if(!it.id)it.id=hid(); }); });
+  save(DB);
+}
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function homeDoneCount(id){ const d=DB.home.done&&DB.home.done[todayStr()]; return (d&&d[id])||0; }
+function homeStatsHtml(){
+  const done=DB.home.done||{};
+  const today=todayStr();
+  const dayActive=ds=>{ const o=done[ds]; return !!(o && Object.keys(o).length); };
+  const days=[];
+  for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); days.push(dstr(d)); }
+  const weekCount=days.filter(dayActive).length;
+  // 连续天数：从今天往回数（今天没做则从昨天起算）
+  let streak=0, c=new Date();
+  if(!dayActive(dstr(c))) c.setDate(c.getDate()-1);
+  while(dayActive(dstr(c))){ streak++; c.setDate(c.getDate()-1); }
+  const todayItems = done[today]?Object.keys(done[today]).length:0;
+  const dots=days.map(ds=>{
+    const on=dayActive(ds), isToday=ds===today;
+    return `<div style="text-align:center;flex:1">
+      <div style="width:20px;height:20px;margin:0 auto;border-radius:50%;background:${on?'var(--accent2)':'var(--card2)'};${isToday?'outline:2px solid var(--accent)':''}" title="${ds}"></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:3px">${parseInt(ds.slice(8))}</div>
+    </div>`;
+  }).join('');
+  return `<div class="card">
+    <h2>🔥 居家坚持</h2>
+    <div class="stat-grid">
+      <div class="stat"><div class="num">${todayItems}</div><div class="lbl">今日动作</div></div>
+      <div class="stat"><div class="num">${weekCount}</div><div class="lbl">近7天天数</div></div>
+      <div class="stat"><div class="num">${streak}</div><div class="lbl">连续天数</div></div>
+    </div>
+    <div style="display:flex;gap:4px;margin-top:12px">${dots}</div>
+    <div class="hint">绿点=当天有完成记录；蓝圈=今天。坚持才是关键，哪怕每天只做几个。</div>
+  </div>`;
+}
+function homeMark(id,delta){
+  DB.home.done=DB.home.done||{}; const t=todayStr();
+  const day=DB.home.done[t]=DB.home.done[t]||{};
+  day[id]=Math.max(0,(day[id]||0)+delta); if(!day[id])delete day[id];
+  save(DB); renderHome();
+  if(delta>0) toast(`✓ 已完成，今日第 ${day[id]||homeDoneCount(id)} 次`);
+}
+function homeCountdown(gi,ii){
+  const it=DB.home.groups[gi]&&DB.home.groups[gi].items[ii]; if(!it||!it.sec)return;
+  const id=it.id;
+  startTimer(it.sec, ()=>{ homeMark(id,1); });
+  toast(`⏱️ ${restLabel(it.sec)} 倒计时开始`);
+}
 function renderHome(){
   const box=$('homeList'); if(!box) return;
   ensureHome();
-  box.innerHTML = DB.home.groups.map((g,gi)=>`
+  box.innerHTML = homeStatsHtml() + DB.home.groups.map((g,gi)=>{
+    const groupDone=g.items.reduce((s,it)=>s+(homeDoneCount(it.id)>0?1:0),0);
+    return `
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <h2 style="margin:0">${esc(g.title)}${g.freq?` <span style="font-size:12px;color:var(--muted);font-weight:400">${esc(g.freq)}</span>`:''}</h2>
+        <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
+          <span class="mvwrap"><button class="mv" type="button" data-act="homegrp" data-g="${gi}" data-dir="-1" title="长按上移">▲</button><button class="mv" type="button" data-act="homegrp" data-g="${gi}" data-dir="1" title="长按下移">▼</button></span>
+          <h2 style="margin:0">${esc(g.title)}${g.freq?` <span style="font-size:12px;color:var(--muted);font-weight:400">${esc(g.freq)}</span>`:''}</h2>
+        </div>
         <span class="link" onclick="editHomeGroup(${gi})" style="white-space:nowrap">✎ 分组</span>
       </div>
+      ${groupDone?`<div class="hint" style="margin-top:4px;color:var(--accent2)">今日已完成 ${groupDone}/${g.items.length} 个动作</div>`:''}
       <div style="margin-top:10px">
-      ${g.items.map((it,ii)=>`
+      ${g.items.map((it,ii)=>{
+        const cnt=homeDoneCount(it.id);
+        return `
         <div class="log-item" style="padding:10px 12px">
           <div style="display:flex;align-items:center;gap:8px">
             <span class="mvwrap"><button class="mv" type="button" data-act="home" data-g="${gi}" data-i="${ii}" data-dir="-1" title="长按上移">▲</button><button class="mv" type="button" data-act="home" data-g="${gi}" data-i="${ii}" data-dir="1" title="长按下移">▼</button></span>
             <div style="flex:1;min-width:0">
-              <div class="name">${esc(it.name)}</div>
+              <div class="name">${esc(it.name)}${cnt?` <span style="color:var(--accent2);font-size:12px">✓×${cnt}</span>`:''}</div>
               ${it.detail?`<div class="prdetail">${esc(it.detail)}</div>`:''}
             </div>
             <span class="link" onclick="editHomeItem(${gi},${ii})">✎</span>
             <span class="link danger" onclick="delHomeItem(${gi},${ii})">删</span>
           </div>
-        </div>`).join('')}
+          <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding-left:36px">
+            ${it.sec?`<span class="link" style="color:var(--accent2)" onclick="homeCountdown(${gi},${ii})">▶ 倒计时 ${restLabel(it.sec)}</span>`:''}
+            <span class="link" onclick="homeMark('${it.id}',1)">✓ 记一次</span>
+            ${cnt?`<span class="link danger" onclick="homeMark('${it.id}',-1)">撤销</span>`:''}
+          </div>
+        </div>`;}).join('')}
       </div>
       <div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
         <span class="link" onclick="addHomeItem(${gi})">＋ 添加动作</span>
         <span class="link danger" onclick="delHomeGroup(${gi})">删除此分组</span>
       </div>
-    </div>`).join('') + `<button class="btn ghost" type="button" onclick="addHomeGroup()">＋ 新增分组</button>`;
+    </div>`;}).join('')
+    + `<div style="display:flex;gap:10px"><button class="btn ghost" type="button" onclick="addHomeGroup()" style="flex:1">＋ 新增分组</button><button class="btn ghost" type="button" onclick="resetHome()" style="flex:0 0 auto;color:var(--muted)">↺ 恢复默认</button></div>`;
   enableHoldButtons(box);
 }
 let homeEdit=null; // {mode:'group'|'item', gi, ii}
-function openHomeModal(mode,gi,ii,title,l1,v1,l2,v2){
+function openHomeModal(mode,gi,ii,title,l1,v1,l2,v2,v3){
   homeEdit={mode,gi,ii};
   $('homeModalTitle').textContent=title;
   $('homeF1Label').textContent=l1; $('homeF1').value=v1||'';
   $('homeF2Label').textContent=l2; $('homeF2').value=v2||'';
+  $('homeF3Wrap').style.display = mode==='item'?'block':'none';
+  $('homeF3').value = (v3!=null?v3:'');
   $('homeModal').style.display='flex';
   setTimeout(()=>$('homeF1').focus(),60);
 }
 function closeHomeModal(){ $('homeModal').style.display='none'; homeEdit=null; }
-function addHomeItem(gi){ openHomeModal('item',gi,-1,'添加动作','动作名称','','数量 / 时长 / 说明',''); }
-function editHomeItem(gi,ii){ const it=DB.home.groups[gi].items[ii]; if(!it)return; openHomeModal('item',gi,ii,'编辑动作','动作名称',it.name,'数量 / 时长 / 说明',it.detail); }
+function addHomeItem(gi){ openHomeModal('item',gi,-1,'添加动作','动作名称','','数量 / 时长 / 说明','',''); }
+function editHomeItem(gi,ii){ const it=DB.home.groups[gi].items[ii]; if(!it)return; openHomeModal('item',gi,ii,'编辑动作','动作名称',it.name,'数量 / 时长 / 说明',it.detail,(it.sec!=null?it.sec:'')); }
 function addHomeGroup(){ openHomeModal('group',-1,-1,'新增分组','分组名称（可加 emoji）','','频率副标题（选填）',''); }
 function editHomeGroup(gi){ const g=DB.home.groups[gi]; if(!g)return; openHomeModal('group',gi,-1,'编辑分组','分组名称（可加 emoji）',g.title,'频率副标题（选填）',g.freq); }
 function delHomeItem(gi,ii){ if(!confirm('删除这个动作？'))return; DB.home.groups[gi].items.splice(ii,1); save(DB); renderHome(); toast('已删除'); }
 function delHomeGroup(gi){ if(!confirm('删除整个分组及其所有动作？'))return; DB.home.groups.splice(gi,1); save(DB); renderHome(); toast('已删除分组'); }
 function moveHome(gi,ii,dir){ const items=DB.home.groups[gi]&&DB.home.groups[gi].items; if(!items)return; const j=ii+dir; if(j<0||j>=items.length)return; const t=items[ii]; items[ii]=items[j]; items[j]=t; save(DB); renderHome(); }
+function moveHomeGroup(gi,dir){ const g=DB.home.groups; const j=gi+dir; if(j<0||j>=g.length)return; const t=g[gi]; g[gi]=g[j]; g[j]=t; save(DB); renderHome(); }
+function resetHome(){ if(!confirm('恢复默认居家内容？你的自定义分组/动作会被覆盖（历史完成记录保留）。'))return; const done=DB.home&&DB.home.done; DB.home=defaultHome(); DB.home.done=done||{}; save(DB); renderHome(); toast('已恢复默认内容'); }
 function saveHomeModal(){
   if(!homeEdit){ closeHomeModal(); return; }
   const v1=$('homeF1').value.trim(), v2=$('homeF2').value.trim();
   if(homeEdit.mode==='item'){
     if(!v1){ toast('请填动作名称'); return; }
-    if(homeEdit.ii<0) DB.home.groups[homeEdit.gi].items.push({name:v1,detail:v2});
-    else DB.home.groups[homeEdit.gi].items[homeEdit.ii]={name:v1,detail:v2};
+    const secRaw=parseInt($('homeF3').value); const sec=(!isNaN(secRaw)&&secRaw>0)?secRaw:null;
+    const items=DB.home.groups[homeEdit.gi].items;
+    if(homeEdit.ii<0){ const o={id:hid(),name:v1,detail:v2}; if(sec)o.sec=sec; items.push(o); }
+    else { const it=items[homeEdit.ii]; it.name=v1; it.detail=v2; if(sec)it.sec=sec; else delete it.sec; }
   }else{
     if(!v1){ toast('请填分组名称'); return; }
     if(homeEdit.gi<0) DB.home.groups.push({title:v1,freq:v2,items:[]});
@@ -823,7 +901,8 @@ function saveHomeModal(){
   save(DB); closeHomeModal(); renderHome(); toast('已保存 ✅');
 }
 window.addHomeItem=addHomeItem; window.editHomeItem=editHomeItem; window.addHomeGroup=addHomeGroup;
-window.editHomeGroup=editHomeGroup; window.delHomeItem=delHomeItem; window.delHomeGroup=delHomeGroup; window.moveHome=moveHome;
+window.editHomeGroup=editHomeGroup; window.delHomeItem=delHomeItem; window.delHomeGroup=delHomeGroup;
+window.moveHome=moveHome; window.moveHomeGroup=moveHomeGroup; window.homeMark=homeMark; window.homeCountdown=homeCountdown; window.resetHome=resetHome;
 
 /* ================= 记录页 ================= */
 let selectedParts=new Set(['胸']);
@@ -1117,7 +1196,7 @@ $('saveBtn').onclick=()=>{
 
 /* ================= 组间休息计时 ================= */
 const PRESETS=[60,90,120,150,180];
-let timerEnd=0, timerIv=null, audioCtx=null, titleFlashIv=null, timerDoneHidden=false;
+let timerEnd=0, timerIv=null, audioCtx=null, titleFlashIv=null, timerDoneHidden=false, timerOnDone=null;
 const APP_TITLE='力量训练记录';
 function flashTitle(){
   if(titleFlashIv)clearInterval(titleFlashIv);
@@ -1153,9 +1232,9 @@ function tickTimer(){
   $('ftBtn').textContent=t;
   if(left<=0){ stopTimer(true); }
 }
-function startTimer(sec){
+function startTimer(sec,onDone){
   try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended')audioCtx.resume(); }catch(e){}
-  timerEnd=Date.now()+sec*1000; timerDoneHidden=false; stopTitleFlash();
+  timerEnd=Date.now()+sec*1000; timerDoneHidden=false; timerOnDone=onDone||null; stopTitleFlash();
   const td=$('timerDisplay'); if(td)td.classList.add('run');
   $('ftBtn').classList.add('run'); hideFtPresets();
   if(timerIv)clearInterval(timerIv);
@@ -1165,8 +1244,8 @@ function stopTimer(done){
   if(timerIv)clearInterval(timerIv); timerIv=null;
   const td=$('timerDisplay'); if(td)td.classList.remove('run');
   $('ftBtn').classList.remove('run'); $('ftBtn').textContent='⏱️ 计时';
-  if(done){ if(td)td.textContent='时间到'; beep(); if(navigator.vibrate)navigator.vibrate([300,120,300,120,300]); toast('时间到，继续 💪'); flashTitle(); if(document.hidden)timerDoneHidden=true; }
-  else { if(td)td.textContent='--:--'; stopTitleFlash(); }
+  if(done){ if(td)td.textContent='时间到'; beep(); if(navigator.vibrate)navigator.vibrate([300,120,300,120,300]); toast('时间到，继续 💪'); flashTitle(); if(document.hidden)timerDoneHidden=true; const cb=timerOnDone; timerOnDone=null; if(cb){ try{cb();}catch(e){} } }
+  else { if(td)td.textContent='--:--'; stopTitleFlash(); timerOnDone=null; }
 }
 function renderFtPresets(){
   $('ftPresets').innerHTML=PRESETS.map(sec=>`<div class="chip" onclick="startTimer(${sec})">${sec}s</div>`).join('')+'<div class="chip" onclick="hideFtPresets()">✕</div>';
