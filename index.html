@@ -532,6 +532,9 @@
     <div id="homeF3Wrap">
       <label>倒计时时长（秒，选填）</label>
       <input type="number" inputmode="numeric" id="homeF3" placeholder="如 30，填了就有倒计时按钮">
+      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer">
+        <input type="checkbox" id="homeF4" style="width:auto;flex:0 0 auto"> 左右两侧（分别计时，两侧都做完才算一次）
+      </label>
     </div>
     <div class="row" style="margin-top:16px">
       <button class="btn ghost" id="homeCancel" type="button" style="margin-top:0">取消</button>
@@ -767,23 +770,23 @@ function defaultHome(){
     {title:'🦢 颈部 · 探颈/双下巴', freq:'每天 2–3 次，动作要轻', items:[
       {name:'收下巴 Chin Tuck（靠墙/仰卧）', detail:'保持 5 秒 ×10 · 探颈核心，想象后脑勺贴墙、下巴水平后收'},
       {name:'收下巴 + 点头（颈深屈肌）', detail:'10 次 ×2 · 只用深层小肌肉，别使劲低头'},
-      {name:'胸锁乳突肌(SCM)拉伸', detail:'头侧转再微仰，每侧 20–30 秒 · 松探颈', sec:25},
-      {name:'肩胛提肌 / 上斜方拉伸', detail:'看向同侧腋下、手轻压后脑，每侧 30 秒 · 松脖子两侧', sec:30},
+      {name:'胸锁乳突肌(SCM)拉伸', detail:'头侧转再微仰，每侧 20–30 秒 · 松探颈', sec:25, sides:2},
+      {name:'肩胛提肌 / 上斜方拉伸', detail:'看向同侧腋下、手轻压后脑，每侧 30 秒 · 松脖子两侧', sec:30, sides:2},
       {name:'枕下肌松解（后脑勺下沿）', detail:'轻按/小幅点头 1–2 分钟 · 缓解探颈紧张', sec:60},
       {name:'仰头舌抵上颚（紧下巴线条）', detail:'仰头、舌顶上颚做吞咽感 10 次 · 练颈前/双下巴'}
     ]},
     {title:'📏 每日拉伸 / 松动', freq:'每天 5–10 分钟', items:[
-      {name:'胸大肌拉伸（门框/墙角）', detail:'每侧 30–45 秒 ×2 · 改善圆肩', sec:40},
+      {name:'胸大肌拉伸（门框/墙角）', detail:'每侧 30–45 秒 ×2 · 改善圆肩', sec:40, sides:2},
       {name:'胸小肌 / 前肩拉伸', detail:'30 秒 ×2 · 圆肩', sec:30},
-      {name:'髂腰肌（弓步髋屈肌）拉伸', detail:'每侧 30–45 秒 ×2 · 改善骨盆前倾', sec:40},
+      {name:'髂腰肌（弓步髋屈肌）拉伸', detail:'每侧 30–45 秒 ×2 · 改善骨盆前倾', sec:40, sides:2},
       {name:'胸椎伸展（泡沫轴上背 / 靠椅背后仰）', detail:'8–10 次 · 驼背/胸椎'},
       {name:'墙天使 Wall Angel', detail:'10–12 次 · 圆肩'},
-      {name:'上斜方 / 颈侧拉伸', detail:'每侧 30 秒 · 斜方紧张', sec:30}
+      {name:'上斜方 / 颈侧拉伸', detail:'每侧 30 秒 · 斜方紧张', sec:30, sides:2}
     ]},
     {title:'🧱 核心', freq:'可每天 / 每周 3–5 次', items:[
       {name:'死虫 Dead Bug', detail:'每侧 10 次 ×3 · 腰贴地、骨盆后倒(治前倾)'},
       {name:'平板支撑', detail:'30–45 秒 ×3 · 夹臀别塌腰', sec:40},
-      {name:'侧平板', detail:'每侧 20–30 秒 ×2 · 抗侧屈、稳脊柱', sec:30},
+      {name:'侧平板', detail:'每侧 20–30 秒 ×2 · 抗侧屈、稳脊柱', sec:30, sides:2},
       {name:'反向卷腹 / 悬垂举腿', detail:'12–15 次 ×3 · 下腹'}
     ]},
     {title:'🎯 体态矫正', freq:'每周 3–5 次', items:[
@@ -840,11 +843,22 @@ function homeMark(id,delta){
   save(DB); renderHome();
   if(delta>0) toast(`✓ 已完成，今日第 ${day[id]||homeDoneCount(id)} 次`);
 }
+let homeSide={}; // 双侧动作的进度：id -> 'L'(左侧已完成，待右侧)
 function homeCountdown(gi,ii){
   const it=DB.home.groups[gi]&&DB.home.groups[gi].items[ii]; if(!it||!it.sec)return;
   const id=it.id;
-  startTimer(it.sec, ()=>{ homeMark(id,1); });
-  toast(`⏱️ ${restLabel(it.sec)} 倒计时开始`);
+  if(it.sides===2){
+    if(homeSide[id]==='L'){ // 正在做右侧
+      startTimer(it.sec, ()=>{ delete homeSide[id]; homeMark(id,1); });
+      toast(`右侧 ${restLabel(it.sec)} 倒计时`);
+    }else{ // 做左侧
+      startTimer(it.sec, ()=>{ homeSide[id]='L'; renderHome(); toast('左侧完成，点 ▶ 右侧 继续'); });
+      toast(`左侧 ${restLabel(it.sec)} 倒计时`);
+    }
+  }else{
+    startTimer(it.sec, ()=>{ homeMark(id,1); });
+    toast(`${restLabel(it.sec)} 倒计时开始`);
+  }
 }
 function renderHome(){
   const box=$('homeList'); if(!box) return;
@@ -876,7 +890,8 @@ function renderHome(){
             <span class="link danger" onclick="delHomeItem(${gi},${ii})">删</span>
           </div>
           <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding-left:36px">
-            ${it.sec?`<span class="link" style="color:var(--accent2)" onclick="homeCountdown(${gi},${ii})">▶ 倒计时 ${restLabel(it.sec)}</span>`:''}
+            ${it.sec?`<span class="link" style="color:var(--accent2)" onclick="homeCountdown(${gi},${ii})">▶ ${it.sides===2?(homeSide[it.id]==='L'?'右侧 ':'左侧 '):''}倒计时 ${restLabel(it.sec)}</span>`:''}
+            ${it.sides===2?`<span style="font-size:11px;color:var(--muted)">左右各一次</span>`:''}
             <span class="link" onclick="homeMark('${it.id}',1)">✓ 记一次</span>
             ${cnt?`<span class="link danger" onclick="homeMark('${it.id}',-1)">撤销</span>`:''}
           </div>
@@ -891,19 +906,20 @@ function renderHome(){
   enableHoldButtons(box);
 }
 let homeEdit=null; // {mode:'group'|'item', gi, ii}
-function openHomeModal(mode,gi,ii,title,l1,v1,l2,v2,v3){
+function openHomeModal(mode,gi,ii,title,l1,v1,l2,v2,v3,v4){
   homeEdit={mode,gi,ii};
   $('homeModalTitle').textContent=title;
   $('homeF1Label').textContent=l1; $('homeF1').value=v1||'';
   $('homeF2Label').textContent=l2; $('homeF2').value=v2||'';
   $('homeF3Wrap').style.display = mode==='item'?'block':'none';
   $('homeF3').value = (v3!=null?v3:'');
+  $('homeF4').checked = !!v4;
   $('homeModal').style.display='flex';
   setTimeout(()=>$('homeF1').focus(),60);
 }
 function closeHomeModal(){ $('homeModal').style.display='none'; homeEdit=null; }
-function addHomeItem(gi){ openHomeModal('item',gi,-1,'添加动作','动作名称','','数量 / 时长 / 说明','',''); }
-function editHomeItem(gi,ii){ const it=DB.home.groups[gi].items[ii]; if(!it)return; openHomeModal('item',gi,ii,'编辑动作','动作名称',it.name,'数量 / 时长 / 说明',it.detail,(it.sec!=null?it.sec:'')); }
+function addHomeItem(gi){ openHomeModal('item',gi,-1,'添加动作','动作名称','','数量 / 时长 / 说明','','',false); }
+function editHomeItem(gi,ii){ const it=DB.home.groups[gi].items[ii]; if(!it)return; openHomeModal('item',gi,ii,'编辑动作','动作名称',it.name,'数量 / 时长 / 说明',it.detail,(it.sec!=null?it.sec:''),it.sides===2); }
 function addHomeGroup(){ openHomeModal('group',-1,-1,'新增分组','分组名称（可加 emoji）','','频率副标题（选填）',''); }
 function editHomeGroup(gi){ const g=DB.home.groups[gi]; if(!g)return; openHomeModal('group',gi,-1,'编辑分组','分组名称（可加 emoji）',g.title,'频率副标题（选填）',g.freq); }
 function delHomeItem(gi,ii){ if(!confirm('删除这个动作？'))return; DB.home.groups[gi].items.splice(ii,1); save(DB); renderHome(); toast('已删除'); }
@@ -917,9 +933,10 @@ function saveHomeModal(){
   if(homeEdit.mode==='item'){
     if(!v1){ toast('请填动作名称'); return; }
     const secRaw=parseInt($('homeF3').value); const sec=(!isNaN(secRaw)&&secRaw>0)?secRaw:null;
+    const two=$('homeF4').checked;
     const items=DB.home.groups[homeEdit.gi].items;
-    if(homeEdit.ii<0){ const o={id:hid(),name:v1,detail:v2}; if(sec)o.sec=sec; items.push(o); }
-    else { const it=items[homeEdit.ii]; it.name=v1; it.detail=v2; if(sec)it.sec=sec; else delete it.sec; }
+    if(homeEdit.ii<0){ const o={id:hid(),name:v1,detail:v2}; if(sec)o.sec=sec; if(two)o.sides=2; items.push(o); }
+    else { const it=items[homeEdit.ii]; it.name=v1; it.detail=v2; if(sec)it.sec=sec; else delete it.sec; if(two)it.sides=2; else delete it.sides; }
   }else{
     if(!v1){ toast('请填分组名称'); return; }
     if(homeEdit.gi<0) DB.home.groups.push({title:v1,freq:v2,items:[]});
