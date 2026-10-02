@@ -294,6 +294,10 @@
   <!-- ============ 进步 ============ -->
   <section id="view-progress" class="view">
     <div class="card">
+      <h2>📊 本周小结</h2>
+      <div id="weekReport"></div>
+    </div>
+    <div class="card">
       <h2>📊 身体数据</h2>
       <div id="measureSummary"></div>
       <div class="row" style="margin-top:8px">
@@ -304,11 +308,29 @@
         <div><label>腰围 cm</label><input type="number" inputmode="decimal" id="mWaist" placeholder="肚脐处"></div>
         <div><label>臀围 cm（选填）</label><input type="number" inputmode="decimal" id="mHip" placeholder="选填"></div>
       </div>
-      <div class="hint" style="margin:2px 0 0">减脂看腰围最准：空腹、放松、量肚脐一圈，比体重更能反映脂肪变化。</div>
+      <div class="row">
+        <div><label>大腿 cm（选填）</label><input type="number" inputmode="decimal" id="mThigh" placeholder="最粗处"></div>
+        <div><label>手臂 cm（选填）</label><input type="number" inputmode="decimal" id="mArm" placeholder="放松/最粗"></div>
+      </div>
+      <div class="row">
+        <div><label>小腿 cm（选填）</label><input type="number" inputmode="decimal" id="mCalf" placeholder="最粗处"></div>
+        <div><label>胸围 cm（选填）</label><input type="number" inputmode="decimal" id="mChest" placeholder="选填"></div>
+      </div>
+      <div class="hint" style="margin:2px 0 0">减脂看腰围最准：空腹、放松、量肚脐一圈，比体重更能反映脂肪变化。围度每 1–2 周量一次就够。</div>
       <button class="btn green" id="mAdd" type="button">记录</button>
       <div class="chips" id="measureMetricChips" style="margin-top:12px"></div>
       <canvas id="measureChart" style="height:180px"></canvas>
       <div id="measureList" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <h2>🩸 生理周期</h2>
+      <div id="periodBox"></div>
+      <button class="btn ghost" id="periodLogBtn" type="button">📅 今天来月经了</button>
+      <div class="row" style="margin-top:8px;align-items:flex-end">
+        <div><label>平均周期天数（选填，默认28）</label><input type="number" inputmode="numeric" id="periodLen" placeholder="28"></div>
+        <div style="flex:0 0 auto"><button class="btn ghost" id="periodLenSave" type="button" style="margin-top:0">保存</button></div>
+      </div>
+      <div id="periodHistory" class="hint" style="margin-top:8px"></div>
     </div>
     <div class="card">
       <h2>🚀 进步概览</h2>
@@ -349,6 +371,7 @@
   <!-- ============ 计划 ============ -->
   <section id="view-plan" class="view active">
     <div class="banner" id="cycleBannerPlan" style="display:none"></div>
+    <div class="banner" id="periodBannerPlan" style="display:none"></div>
     <div class="card">
       <h2>🎯 下次训练计划</h2>
       <div class="hint">训练时每完成一组就<b>轻点打勾 ✓</b>；<b>长按某一组</b>可修改重量/次数或删除该组；要加组点动作下方的<b>＋ 加一组</b>。练完可一键写入记录。</div>
@@ -1697,8 +1720,91 @@ function renderBalance(){
 
 /* ================= 身体数据 ================= */
 let measureMetric='w';
-const M_META={w:['体重','kg'],bf:['体脂','%'],waist:['腰围','cm'],hip:['臀围','cm']};
+const M_META={w:['体重','kg'],bf:['体脂','%'],waist:['腰围','cm'],hip:['臀围','cm'],thigh:['大腿','cm'],arm:['手臂','cm'],calf:['小腿','cm'],chest:['胸围','cm']};
 function measuresSorted(){ return (DB.measures||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)); }
+function renderWeekReport(){
+  const box=$('weekReport'); if(!box) return;
+  const ws=weekStartStr();
+  const lastWs=dstr(new Date(new Date(ws+'T00:00').getTime()-7*86400000));
+  let volT=0,volL=0; const daysT=new Set(),daysL=new Set();
+  DB.logs.forEach(l=>{ const w=weekStartOf(l.date); if(w===ws){ volT+=volumeOf(l); daysT.add(l.date);} else if(w===lastWs){ volL+=volumeOf(l); daysL.add(l.date);} });
+  let prCount=0; const exSet=new Set(DB.logs.map(l=>l.exercise));
+  exSet.forEach(ex=>{ const b=bestRecordOf(ex); if(b && b.date>=ws) prCount++; });
+  let homeDays=0; const done=(DB.home&&DB.home.done)||{};
+  Object.keys(done).forEach(d=>{ if(weekStartOf(d)===ws && Object.keys(done[d]).length) homeDays++; });
+  const wm=measuresSorted().filter(m=>m.waist!=null);
+  let waistTxt='';
+  if(wm.length>=2){ const latest=wm[wm.length-1]; const before=wm.filter(m=>m.date<latest.date);
+    if(before.length){ const prev=before[before.length-1]; const d=Math.round((latest.waist-prev.waist)*10)/10; waistTxt=d===0?'腰围持平':`腰围 ${d>0?'+':''}${d}cm`; } }
+  const dVol = volL>0? Math.round((volT-volL)/volL*100) : null;
+  const stats=`<div class="stat-grid" style="flex-wrap:wrap">
+    <div class="stat"><div class="num">${daysT.size}</div><div class="lbl">本周训练天</div></div>
+    <div class="stat"><div class="num">${Math.round(volT)}</div><div class="lbl">本周容量kg</div></div>
+    <div class="stat"><div class="num">${prCount}</div><div class="lbl">本周新PR</div></div>
+    <div class="stat"><div class="num">${homeDays}</div><div class="lbl">居家天数</div></div>
+  </div>`;
+  const bits=[];
+  if(dVol!=null) bits.push(`训练量较上周 ${dVol>=0?'+':''}${dVol}%`);
+  if(prCount>0) bits.push(`破了 ${prCount} 个动作新高 🎉`);
+  if(waistTxt) bits.push(waistTxt);
+  if(homeDays>0) bits.push(`居家坚持 ${homeDays} 天`);
+  box.innerHTML = stats + (bits.length? `<div class="hint" style="margin-top:8px">${bits.join(' · ')}。</div>` : `<div class="hint" style="margin-top:8px">本周数据还在积累，练起来就有对比了。</div>`);
+}
+/* ---- 生理周期 + 强度联动 ---- */
+function periodStarts(){ return (((DB.period&&DB.period.starts)||[]).slice()).sort(); }
+function periodCycleLen(){
+  const s=periodStarts();
+  if(s.length>=2){ let sum=0,n=0; for(let i=1;i<s.length;i++){ const d=Math.round((new Date(s[i]+'T00:00')-new Date(s[i-1]+'T00:00'))/86400000); if(d>=18&&d<=45){sum+=d;n++;} } if(n) return Math.round(sum/n); }
+  return (DB.period&&DB.period.len)||28;
+}
+function periodInfo(){
+  const s=periodStarts(); if(!s.length) return null;
+  const L=periodCycleLen();
+  const last=s[s.length-1];
+  const daysSince=Math.floor((new Date(todayStr()+'T00:00')-new Date(last+'T00:00'))/86400000);
+  const day=daysSince+1;
+  const ov=L-14;
+  let phase,tip,color,emoji;
+  if(day>L+3){ phase='可能已超期'; emoji='⏰'; color='var(--gold)'; tip='距上次已 '+daysSince+' 天，超过平均周期。来了记得点下面「今天来月经了」。'; }
+  else if(day<=5){ phase='月经期'; emoji='🩸'; color='var(--danger)'; tip='顺着身体来：累或痛经就做轻的、或只做居家拉伸，别勉强冲重量。'; }
+  else if(day<ov-1){ phase='卵泡期'; emoji='🌱'; color='var(--accent2)'; tip='状态和恢复最好的阶段，适合冲大重量、尝试破 PR。'; }
+  else if(day<=ov+1){ phase='排卵期'; emoji='⚡'; color='var(--accent)'; tip='力量峰值期，但关节更松，大重量务必充分热身、姿势稳。'; }
+  else { const toEnd=L-day; if(toEnd<=4){ phase='黄体期·经前'; emoji='🌙'; color='var(--gold)'; tip='容易疲劳、水肿、没力，降点强度、多做技术和居家，别跟自己较劲。'; } else { phase='黄体期'; emoji='🌙'; color='var(--muted)'; tip='正常训练，可能略感吃力，按 RIR 多留一点余量就好。'; } }
+  return {day,L,phase,tip,color,emoji,last,daysSince};
+}
+function renderPeriod(){
+  const box=$('periodBox'); if(!box) return;
+  const info=periodInfo();
+  if(!info){ box.innerHTML='<div class="hint">记录经期开始日，App 会推算你处在周期哪个阶段，给训练强度建议（和 RIR 周期配合用）。点下面按钮开始。</div>'; }
+  else{
+    box.innerHTML=`<div style="padding:10px 12px;background:var(--card2);border-radius:12px;border-left:3px solid ${info.color}">
+      <div style="font-weight:600;color:${info.color}">${info.emoji} 周期第 ${info.day} 天 · ${info.phase}</div>
+      <div style="font-size:13px;margin-top:3px;line-height:1.5">${info.tip}</div>
+      <div class="hint" style="margin-top:4px">上次开始 ${info.last} · 平均周期 ${info.L} 天</div>
+    </div>`;
+  }
+  if($('periodLen')) $('periodLen').value=(DB.period&&DB.period.len)||'';
+  const s=periodStarts();
+  if($('periodHistory')) $('periodHistory').innerHTML = s.length? ('最近记录：'+s.slice(-4).map(d=>d.slice(5)).join('、')+` · <span class="link danger" onclick="clearLastPeriod()">删最近一次</span>`):'';
+}
+function renderPeriodBanner(){
+  const b=$('periodBannerPlan'); if(!b) return;
+  const info=periodInfo();
+  if(!info){ b.style.display='none'; return; }
+  b.style.display='flex';
+  b.style.background='var(--card2)'; b.style.borderColor=info.color; b.style.color=info.color;
+  b.innerHTML=`<span style="color:var(--text);font-size:13px"><b style="color:${info.color}">${info.emoji} 第${info.day}天·${info.phase}</b> ${info.tip}</span>`;
+}
+function logPeriodToday(){
+  DB.period=DB.period||{starts:[]}; DB.period.starts=DB.period.starts||[];
+  const t=todayStr();
+  if(DB.period.starts.includes(t)){ toast('今天已记录'); return; }
+  DB.period.starts.push(t); DB.period.starts.sort();
+  save(DB); renderPeriod(); renderPeriodBanner(); toast('已记录经期开始 🩸');
+}
+function clearLastPeriod(){ const s=periodStarts(); if(!s.length)return; if(!confirm('删除最近一次经期记录？'))return; const last=s[s.length-1]; DB.period.starts=DB.period.starts.filter(d=>d!==last); save(DB); renderPeriod(); renderPeriodBanner(); toast('已删除'); }
+function savePeriodLen(){ const v=parseInt($('periodLen').value); DB.period=DB.period||{starts:[]}; if(!isNaN(v)&&v>=18&&v<=45) DB.period.len=v; else delete DB.period.len; save(DB); renderPeriod(); renderPeriodBanner(); toast('已保存'); }
+window.clearLastPeriod=clearLastPeriod;
 function daysSinceLastMeasure(){ const ms=measuresSorted(); if(!ms.length) return Infinity; return Math.floor((Date.now()-new Date(ms[ms.length-1].date+'T00:00'))/86400000); }
 function renderMeasures(){
   if($('mDate') && !$('mDate').value) $('mDate').value=todayStr();
@@ -1790,14 +1896,16 @@ function drawMeasureChart(){
 }
 function addMeasure(){
   const date=$('mDate').value||todayStr();
-  const w=parseFloat($('mW').value), waist=parseFloat($('mWaist').value), hip=parseFloat($('mHip').value);
-  if(isNaN(w)&&isNaN(waist)&&isNaN(hip)){ toast('至少填一项'); return; }
+  const w=parseFloat($('mW').value), waist=parseFloat($('mWaist').value), hip=parseFloat($('mHip').value),
+        thigh=parseFloat($('mThigh').value), arm=parseFloat($('mArm').value), calf=parseFloat($('mCalf').value), chest=parseFloat($('mChest').value);
+  if(isNaN(w)&&isNaN(waist)&&isNaN(hip)&&isNaN(thigh)&&isNaN(arm)&&isNaN(calf)&&isNaN(chest)){ toast('至少填一项'); return; }
   const m={date}; if(!isNaN(w))m.w=w; if(!isNaN(waist))m.waist=waist; if(!isNaN(hip))m.hip=hip;
+  if(!isNaN(thigh))m.thigh=thigh; if(!isNaN(arm))m.arm=arm; if(!isNaN(calf))m.calf=calf; if(!isNaN(chest))m.chest=chest;
   DB.measures=DB.measures||[];
   const i=DB.measures.findIndex(x=>x.date===date);
   if(i>=0){ DB.measures[i]={...DB.measures[i], ...m}; }
   else { m.id=Date.now(); DB.measures.push(m); }
-  save(DB); $('mW').value='';$('mWaist').value='';$('mHip').value=''; renderMeasures(); toast('已记录 ✅');
+  save(DB); ['mW','mWaist','mHip','mThigh','mArm','mCalf','mChest'].forEach(id=>{ if($(id))$(id).value=''; }); renderMeasures(); toast('已记录 ✅');
 }
 function delMeasure(id){ if(!confirm('删除这条身体数据？'))return; DB.measures=(DB.measures||[]).filter(m=>m.id!==id); save(DB); renderMeasures(); toast('已删除'); }
 window.setMeasureMetric=setMeasureMetric; window.delMeasure=delMeasure;
@@ -2078,6 +2186,29 @@ function suggestRest(it){
   return it&&it.must===true?150:90;
 }
 function restLabel(sec){ return sec>=60 ? (sec%60? (sec/60).toFixed(1).replace('.0','') : sec/60)+'分' : sec+'秒'; }
+// 从 tip 里解析目标次数上限（如 "6-10次"→10, "15次"→15）
+function parseRepTarget(tip){
+  if(!tip) return null;
+  let m=(''+tip).match(/(\d+)\s*[-–]\s*(\d+)\s*次/); if(m) return parseInt(m[2]);
+  m=(''+tip).match(/(\d+)\s*次/); if(m) return parseInt(m[1]);
+  return null;
+}
+// 双渐进:上次最重那档各组都做到次数上限 → 建议加重
+function addWeightHint(it){
+  if(!it||it.type!=='strength') return '';
+  const upper=parseRepTarget(it.tip); if(!upper) return '';
+  const last=lastLogOf(it.exercise);
+  if(!last||last.type!=='strength'||!last.sets||!last.sets.length) return '';
+  const topW=Math.max(...last.sets.map(s=>s.w||0));
+  const topSets=last.sets.filter(s=>(s.w||0)===topW);
+  if(!topSets.length) return '';
+  const minReps=Math.min(...topSets.map(s=>s.r));
+  if(minReps<upper) return '';
+  const txt = topW>0
+    ? `💪 上次 ${topW}kg 各组都做满 ${minReps} 次（上限 ${upper}）· 这次加重 2.5kg 试试`
+    : `💪 上次自重做满 ${minReps} 次（上限 ${upper}）· 可加次数或换更难的变式`;
+  return `<div class="pr-badge" style="background:rgba(0,211,167,.14);color:var(--accent2)">${txt}</div>`;
+}
 function planItemHtml(it,ii){
   let done,total,setsHtml;
   if(it.type==='cardio'){
@@ -2094,6 +2225,7 @@ function planItemHtml(it,ii){
     <span class="link danger" onclick="delPlanItem(${ii})">删除</span></div></div>
     <div class="sets" style="gap:8px">${setsHtml}</div>
     ${planRefHtml(it.exercise)}
+    ${addWeightHint(it)}
     ${it.tip?`<div class="note" style="font-style:normal;color:var(--muted)">💡 ${it.tip}</div>`:''}
     ${it.note?`<div class="note" style="font-style:normal">📝 ${it.note}</div>`:''}
     <div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap">
@@ -2305,11 +2437,11 @@ function switchView(name){
   document.querySelectorAll('.tabbar button').forEach(x=>x.classList.toggle('active',x.dataset.view===name));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   $('view-'+name).classList.add('active');
-  if(name==='progress'){renderMeasures();renderProgOverview();renderProgMode();renderProgSelect();renderRangeChips();drawChart();renderWeekVol();renderPRFilter();renderPRList();renderBalRange();renderBalance()}
+  if(name==='progress'){renderWeekReport();renderMeasures();renderPeriod();renderProgOverview();renderProgMode();renderProgSelect();renderRangeChips();drawChart();renderWeekVol();renderPRFilter();renderPRList();renderBalRange();renderBalance()}
   if(name==='history')renderHistory();
   if(name==='log')renderCycle();
   if(name==='settings'){ renderBackupInfo(); renderExpRange(); renderCycleSet(); }
-  if(name==='plan'){renderPlanPartChips();renderPlanNewPart();renderPlanExercise();updatePlanForm();renderTemplates();renderPlan();renderCycle()}
+  if(name==='plan'){renderPlanPartChips();renderPlanNewPart();renderPlanExercise();updatePlanForm();renderTemplates();renderPlan();renderCycle();renderPeriodBanner()}
   if(name==='home')renderHome();
   const ft=$('floatTimer');
   if(ft){ const showTimer=(name==='plan'||name==='home'); ft.style.display=showTimer?'flex':'none'; if(!showTimer)hideFtPresets(); }
@@ -2319,7 +2451,7 @@ document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>switchVie
 
 /* ================= 刷新 ================= */
 function refreshAll(){renderExerciseSelect();renderHistory();renderProgSelect();renderPRFilter();renderPRList();renderBackupInfo();
-  if($('view-progress').classList.contains('active')){renderMeasures();renderProgOverview();renderRangeChips();drawChart();renderWeekVol();renderBalRange();renderBalance();}}
+  if($('view-progress').classList.contains('active')){renderWeekReport();renderMeasures();renderProgOverview();renderRangeChips();drawChart();renderWeekVol();renderBalRange();renderBalance();}}
 window.delLog=delLog; window.rmSession=rmSession; window.editSession=editSession; window.editHistory=editHistory;
 window.togglePlanSet=togglePlanSet; window.delPlanItem=delPlanItem; window.editPlanNote=editPlanNote;
 window.restorePlanItem=restorePlanItem; window.showMoreHistory=showMoreHistory;
@@ -2334,6 +2466,7 @@ if(DB.weekStart==null)DB.weekStart=1;
 if(!DB.cycleStart)DB.cycleStart=weekStartStr();
 ensureHome();
 $('mAdd').onclick=addMeasure;
+if($('periodLogBtn')){ $('periodLogBtn').onclick=logPeriodToday; $('periodLenSave').onclick=savePeriodLen; }
 $('expFrom').onchange=updateExpInfo; $('expTo').onchange=updateExpInfo;
 $('cycleReset').onclick=()=>{ DB.cycleStart=weekStartStr(); save(DB); renderCycle(); renderCycleSet(); toast('已把本周设为第1周'); };
 renderExpRange(); renderCycle();
