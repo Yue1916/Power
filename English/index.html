@@ -110,32 +110,51 @@ main{max-width:860px;margin:0 auto;padding:20px 16px 80px;}
 .logitem{padding:4px 0;border-bottom:1px solid #f0ecf7;font-size:14px;}
 .logitem .ld{color:#1a7f37;font-weight:600;margin-right:8px;}
 /* ===== iPad / 平板适配（10.9" 两种方向都舒适）===== */
-@media (min-width:768px) and (max-width:1400px){
-  body{font-size:18px;}
-  main{max-width:92%;padding:22px 20px 90px;}
-  header h1{font-size:22px;}
-  .progtext{font-size:15px;}
-  .tabs button{font-size:17px;padding:10px 20px;}
-  .util{font-size:15px;padding:8px 15px;}
-  .day{padding:20px 24px;}
-  .day-h h2{font-size:20px;}
-  .daynum{font-size:15px;padding:3px 12px;}
-  .sec h3{font-size:17.5px;}
-  .passage .en-p{font-size:18.5px;line-height:2;}
-  .passage .zh-p{font-size:16px;}
-  .vcard .w{font-size:18px;}
-  .vcard .vz{font-size:16.5px;}
-  .vcard .vex{font-size:15px;}
-  .en,.zh{font-size:17px;}
-  .ex{font-size:15.5px;}
-  .quiz,.trans{font-size:17px;}
-  .tans{font-size:17px;}
-  .spk{font-size:15px;padding:4px 12px;}
-  .fav{font-size:22px;}
-  .chk{transform:scale(1.6);}
-  .flashcard .fw{font-size:36px;}
-  .flashcard .fz{font-size:26px;}
-  .daysel-bar select,.daysel-bar button{font-size:17px;}
+@media (pointer:coarse) and (min-width:768px){
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+  body{font-size:32px;line-height:1.9;}
+  main{width:90%;max-width:none;margin:0 auto;padding:16px 0 72px;}   /* 两边各约 5% 留白，去掉宽度上限 */
+  header{padding:12px 16px 0;}
+  header h1{font-size:30px;}
+  .progtext{font-size:24px;}
+  .progwrap{height:22px;}
+  .tabs button{font-size:30px;padding:14px 24px;}
+  .util{font-size:24px;padding:12px 20px;}
+  .hint{font-size:24px;}
+  .day{padding:26px 28px;}
+  .day-h h2{font-size:34px;}
+  .daynum{font-size:26px;padding:4px 16px;}
+  .sec h3{font-size:30px;}
+  .passage .en-p{font-size:32px;line-height:2;}
+  .passage .zh-p{font-size:29px;}
+  .ptools button{font-size:24px;padding:6px 16px;}
+  .vcard .w{font-size:32px;}
+  .vcard .pos{font-size:22px;}
+  .vcard .vz{font-size:30px;}
+  .vcard .vex{font-size:27px;}
+  .vsearch{font-size:29px;}
+  .en,.zh{font-size:30px;}
+  .ex{font-size:27px;}
+  .song .t{font-size:30px;}
+  .song a,.song .hint{font-size:24px;}
+  .quiz,.trans{font-size:30px;}
+  .qbtn,.qexp,.tref summary{font-size:27px;}
+  .tans{font-size:29px;min-height:80px;}
+  .spk{font-size:24px;padding:6px 16px;}
+  .fav{font-size:34px;}
+  .mchk,.chk{transform:scale(2);margin:0 6px;}
+  .flashcard{max-width:none;padding:48px 24px;}
+  .flashcard .fw{font-size:56px;}
+  .flashcard .fpos{font-size:26px;}
+  .flashcard .fz{font-size:40px;}
+  .flashcard .fex{font-size:28px;}
+  .ftbtns button{font-size:27px;padding:14px 26px;}
+  .ftscore{font-size:26px;}
+  .daysel-bar select,.daysel-bar button{font-size:29px;padding:12px 18px;}
+  .favadd input,.favrow{font-size:29px;}
+  .favrow .fdel{font-size:24px;padding:6px 14px;}
+  .logitem{font-size:27px;}
+  .studylog summary{font-size:28px;}
 }
 @media(max-width:640px){main{padding:16px 8px 60px;}}
 </style>
