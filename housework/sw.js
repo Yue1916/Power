@@ -1,6 +1,6 @@
 /* 家务打卡 Service Worker —— 离线可用
    更新工具后，把下面的版本号 +1（如 hw-v2），用户下次联网打开即会自动更新缓存。*/
-const CACHE = 'hw-v1';
+const CACHE = 'hw-v2';
 const CORE = ['./', './index.html', './manifest.json', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

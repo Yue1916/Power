@@ -104,6 +104,15 @@
   .plan-item .ph .nm{font-weight:600}
   .plan-item .row{margin-top:8px}
   .plan-item label{margin:6px 0 3px}
+  .plan-item .ph .nm{flex:1; min-width:0}
+  .plan-item .drag{flex:0 0 auto; cursor:grab; color:var(--muted); font-size:19px; line-height:1;
+    padding:4px 4px; touch-action:none; user-select:none; -webkit-user-select:none}
+  .plan-item .ptool{flex:0 0 auto; background:var(--card); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; width:30px; height:30px; font-size:12px; cursor:pointer; padding:0}
+  .plan-item .ptool:active{transform:scale(.94)}
+  .plan-item.dragging{opacity:.65; border-color:var(--accent); box-shadow:0 6px 18px rgba(0,0,0,.45)}
+  .plan-group{min-height:4px}
+  .plan-group.dragover{outline:1px dashed var(--line); border-radius:12px}
   .mini{font-size:12px; color:var(--muted)}
   .link{color:var(--accent); cursor:pointer; font-size:13px}
   .link.danger{color:var(--danger)}
@@ -672,6 +681,52 @@ function drawDonut(cv,done,total){
   ctx.fillStyle='#9aa3c7'; ctx.font='12px -apple-system,sans-serif'; ctx.fillText('已完成/共',cx,cy+18);
 }
 
+/* ---- 计划页：同大类内排序（上下键 / 长按拖动） ---- */
+function moveChoreInGroup(id,dir){
+  const c=DB.chores[id]; if(!c)return;
+  const g=c.group||'other';
+  const arr=choreArr().filter(x=>(x.group||'other')===g);
+  const i=arr.findIndex(x=>x.id===id); const j=i+dir;
+  if(i<0||j<0||j>=arr.length)return;
+  const a=DB.chores[arr[i].id], b=DB.chores[arr[j].id];
+  const t=a.order; a.order=b.order; b.order=t;
+  persistLocal(); renderAll();
+}
+// 按当前 DOM 顺序，把该组占用的 order 槽位重新升序分配（不影响其它组）
+function commitGroupOrder(box){
+  const ids=[...box.querySelectorAll('.plan-item')].map(it=>it.dataset.id).filter(id=>DB.chores[id]);
+  const slots=ids.map(id=>DB.chores[id].order??0).sort((x,y)=>x-y);
+  ids.forEach((id,i)=>{ DB.chores[id].order=slots[i]; });
+  persistLocal(); renderAll();
+}
+function enableReorder(box){
+  box.querySelectorAll('.plan-item').forEach(item=>{
+    const handle=item.querySelector('[data-drag]'); if(!handle)return;
+    handle.addEventListener('pointerdown',e=>{
+      e.preventDefault();
+      const startY=e.clientY; let dragging=false;
+      const timer=setTimeout(()=>{ dragging=true; item.classList.add('dragging');
+        if(navigator.vibrate) try{navigator.vibrate(15)}catch(_){}
+      },280);
+      const move=ev=>{
+        if(!dragging){ if(Math.abs(ev.clientY-startY)>10){ clearTimeout(timer); cleanup(); } return; }
+        ev.preventDefault();
+        const others=[...box.querySelectorAll('.plan-item:not(.dragging)')];
+        const after=others.find(it=>{ const r=it.getBoundingClientRect(); return ev.clientY < r.top + r.height/2; });
+        if(after){ if(after!==item.nextSibling) box.insertBefore(item,after); }
+        else { if(item!==box.lastElementChild) box.appendChild(item); }
+      };
+      const cleanup=()=>{ document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up); document.removeEventListener('pointercancel',up); };
+      const up=()=>{ clearTimeout(timer); cleanup();
+        if(dragging){ item.classList.remove('dragging'); commitGroupOrder(box); }
+      };
+      document.addEventListener('pointermove',move,{passive:false});
+      document.addEventListener('pointerup',up);
+      document.addEventListener('pointercancel',up);
+    });
+  });
+}
+
 function renderPlan(){
   const exp=choreArr().reduce((s,c)=>s+c.price*(c.target||0),0);
   const budget=DB.config.budget||0;
@@ -681,10 +736,14 @@ function renderPlan(){
   GROUPS.forEach(([g,label])=>{
     const arr=choreArr().filter(c=>(c.group||'other')===g); if(!arr.length)return;
     const h=document.createElement('div'); h.className='cat-title'; h.textContent=label; list.appendChild(h);
+    const box=document.createElement('div'); box.className='plan-group'; box.dataset.group=g;
     arr.forEach(c=>{
-      const el=document.createElement('div'); el.className='plan-item';
+      const el=document.createElement('div'); el.className='plan-item'; el.dataset.id=c.id;
       const opts=GROUPS.map(([gk,gl])=>`<option value="${gk}"${(c.group||'other')===gk?' selected':''}>${gl.replace(/^\S+\s/,'')}</option>`).join('');
-      el.innerHTML=`<div class="ph"><input class="nm" data-f="name" value="${esc(c.name)}" style="border:none;background:transparent;padding:4px 0;font-weight:600">
+      el.innerHTML=`<div class="ph"><span class="drag" data-drag title="长按拖动排序">⠿</span>
+        <input class="nm" data-f="name" value="${esc(c.name)}" style="border:none;background:transparent;padding:4px 0;font-weight:600">
+        <button class="ptool" data-up title="上移" type="button">▲</button>
+        <button class="ptool" data-down title="下移" type="button">▼</button>
         <span class="link danger" data-del>删除</span></div>
         <div class="row"><div><label>单价(元)</label><input type="number" inputmode="decimal" data-f="price" value="${c.price}"></div>
         <div><label>目标月次数</label><input type="number" inputmode="decimal" data-f="target" value="${c.target}"></div>
@@ -709,8 +768,12 @@ function renderPlan(){
       };
       el.querySelector('[data-save]').onclick=()=>{commit(); toast('已保存修改');};
       el.querySelector('[data-del]').onclick=()=>{if(confirm('删除「'+c.name+'」？')){logHistory('删除',c.name,`单价${fmt$(c.price)}`);delChore(c.id)}};
-      list.appendChild(el);
+      el.querySelector('[data-up]').onclick=()=>moveChoreInGroup(c.id,-1);
+      el.querySelector('[data-down]').onclick=()=>moveChoreInGroup(c.id,1);
+      box.appendChild(el);
     });
+    list.appendChild(box);
+    enableReorder(box);
   });
   const ng=$('naGroup');
   if(ng && !ng._filled){ ng.innerHTML=GROUPS.map(([gk,gl])=>`<option value="${gk}">${gl.replace(/^\S+\s/,'')}</option>`).join(''); ng._filled=true; }
