@@ -236,82 +236,85 @@
 <script>
 /* ================= 默认行程数据 ================= */
 const DEFAULT_DAYS=[
-  {date:'11/28',dow:'周六',title:'抵达 · 普吉镇',hotel:'普吉镇（待定 · ①段 3 晚）',budget:280,
-   routes:'机场 → 普吉镇：约32km，车40–50分钟\n酒店 → 老城/Lard Yai 夜市：约1.5km，步行20分钟 / 车5分钟',
-   cb:{stay:120,food:100,fun:0,transport:40,other:20},
-   meals:{b:'（航班上/落地简餐）',l:'（航班上）',d:'老城 One Chun / Kopitiam by Wilai（地道老普吉菜）'},
-   plan:'17:40 普吉机场落地，取行李、办电话卡/换钱\n19:00 Grab 前往普吉镇酒店入住\n20:00 老城晚餐、随意夜逛'},
-  {date:'11/29',dow:'周日',title:'大象营 + 购物 + 老城夜市',hotel:'普吉镇（待定）',budget:800,
+  {date:'11/28',dow:'周六',title:'抵达 · 普吉镇',hotel:'普吉镇 贝萨瓦纳酒店 Besavana',budget:341,
+   routes:'机场 → 普吉镇贝萨瓦纳酒店：约32km，车40–50分钟\n酒店 → 老城/Lard Yai 夜市：约1.3km，步行18分钟 / 车5分钟（酒店在老城 Krabi 路）',
+   cb:{stay:181,food:100,fun:0,transport:40,other:20},
+   meals:{b:'（航班上/落地简餐）',l:'（航班上）',d:'巴拉巴拉（老街面店·火山排骨/脆皮猪肉）/ One Chun'},
+   plan:'14:40 成都天府 T1 起飞（3U3931）\n17:40 普吉国际机场落地，取行李、办电话卡/换钱\n19:00 Grab 前往普吉镇贝萨瓦纳酒店入住\n20:00 老城晚餐、随意夜逛'},
+  {date:'11/29',dow:'周日',title:'大象营 + 购物 + 老城夜市',hotel:'普吉镇 贝萨瓦纳酒店 Besavana',budget:861,
    routes:'普吉镇 → 大象营(Paklok)：约20km，车35–40分钟(含接送)\n普吉镇 → Central 商场：约3km，车10分钟\n商场 → 老城夜市：约3km，车10分钟 / 步行30分钟',
-   cb:{stay:120,food:120,fun:500,transport:40,other:20},
+   cb:{stay:181,food:120,fun:500,transport:40,other:20},
    meals:{b:'酒店早餐',l:'大象营含餐 / 回程简餐',d:'老城 Lard Yai 周日夜市小吃'},
    plan:'08:30 大象营接送（不骑象观察型，Paklok，普吉镇出发约35分钟）\n喂象/观察/泥浴，约14:00送回\n下午 Central Phuket 商场逛街 + Big C/Lotus 超市囤手信\n傍晚 老城 walk + Lard Yai 周日夜市（Thalang 路 16:00–22:00）'},
-  {date:'11/30',dow:'周一',title:'皇帝岛跳岛一日游（浮潜）· 当天往返',hotel:'普吉镇（待定）',budget:730,
+  {date:'11/30',dow:'周一',title:'皇帝岛跳岛一日游（浮潜）· 当天往返',hotel:'普吉镇 贝萨瓦纳酒店 Besavana',budget:791,
    routes:'普吉镇 → 查龙码头：约12km，车20–25分钟\n查龙码头 → 皇帝岛：速度艇约40–50分钟（当天往返）',
-   cb:{stay:120,food:100,fun:450,transport:40,other:20},
-   meals:{b:'酒店早餐',l:'团餐 / 岛上简餐',d:'普吉镇老城晚餐'},
+   cb:{stay:181,food:100,fun:450,transport:40,other:20},
+   meals:{b:'酒店早餐',l:'团餐 / 岛上简餐',d:'老城三选：Khai Waan（面店，位置待确认）/ 粥铺（64 music shop 旁·粥+排骨·17:00后）/ 老城小吃'},
    plan:'上午 查龙码头 → 速度艇往皇帝岛(拉查岛)跳岛\n浮潜 / 白沙滩（可选深潜体验，4人）\n(可串珊瑚岛)\n下午 返回查龙 → 回普吉镇\n傍晚 普吉镇休息 / 老城随逛'},
-  {date:'12/1',dow:'周二',title:'搬去 Kata/Karon + 悬崖咖啡',hotel:'卡塔/卡伦 Kata/Karon（②段 4 晚）',budget:430,
-   routes:'普吉镇 → Kata/Karon：约20km，车35–45分钟\nKata → Karon On the Hill：约2km，车7分钟\nKata → 悬崖咖啡(卡伦观景台)：约3km，车10分钟',
-   cb:{stay:130,food:120,fun:60,transport:80,other:40},
-   meals:{b:'普吉镇酒店早餐（退房）',l:'Karon On the Hill（山景午餐/咖啡打卡）',d:'Kata：Red Duck / Kata Mama'},
-   plan:'上午 普吉镇退房 → Grab 到 Kata/Karon 入住\n中午 休整、Karon On the Hill 咖啡\n傍晚 悬崖咖啡 After Beach Bar（卡伦观景台旁）看日落\n晚上 Kata 晚餐'},
-  {date:'12/2',dow:'周三',title:'丛林飞跃 + Kata 休闲',hotel:'卡塔/卡伦 Kata/Karon',budget:600,
-   routes:'Kata → 丛林飞跃(Kathu 一带)：约12–15km，车25–30分钟(含接送)',
-   cb:{stay:130,food:120,fun:300,transport:30,other:20},
-   meals:{b:'Kata 酒店早餐 / Bonus Coffee',l:'午餐（丛林飞跃附近 / Kata）',d:'Kata：Red Duck / Kata Mama'},
-   plan:'09:00 丛林飞跃（Hanuman World / Flying Hanuman，Kathu 一带）\n13:00 午餐\n下午 返回 Kata，海滩 / 泳池自由休闲\n晚上 Kata 晚餐'},
-  {date:'12/3',dow:'周四',title:'跳岛二选一：斯米兰 / 皮皮岛（待定）',hotel:'卡塔/卡伦 Kata/Karon',budget:910,
-   routes:'【斯米兰】Kata → 考拉/塔朗码头(接送)：约1.5–2h；码头 → 斯米兰 快艇约1–1.5h\n【皮皮岛】Kata → 码头(接送)：约40–50分钟；码头 → 皮皮 速度艇约45分钟',
-   cb:{stay:130,food:100,fun:650,transport:20,other:10},
-   meals:{b:'酒店早餐（早班 / 打包）',l:'团餐（多含）',d:'Kata：晚餐（回程较晚，就近简餐）'},
-   plan:'二选一（定了哪个就提前订对应团）：\n【斯米兰】约06:00出发，车1.5–2h到考拉码头 → 快艇1–1.5h → 浮潜/白沙滩/8号岛观景台（水质更顶级，跨海更长）\n【皮皮岛】约07:30出发，速度艇约45分钟 → 玛雅湾/浮潜 + 蛋岛喂鱼（更近省时，开阔海约45分钟较颠）\n两者都要提前吃晕船药'},
-  {date:'12/4',dow:'周五',title:'SPA + 射击 + 神仙半岛日落',hotel:'卡塔/卡伦 Kata/Karon',budget:820,
-   routes:'Kata → Phumontra SPA：视预约门店，约10–20分钟\nKata → Rawai：约8km，车15–20分钟\nKata/Rawai → 神仙半岛(Promthep)：约13km，车25–35分钟',
-   cb:{stay:130,food:120,fun:500,transport:50,other:20},
-   meals:{b:'Kata 酒店早餐 / Bonus Coffee',l:'Rawai / 神仙半岛一带午餐',d:'Rawai 海鲜市场 / Kata 晚餐'},
-   plan:'上午 睡到自然醒，Phumontra SPA 按摩放松\n下午 南下 Gold Shooter Club 打靶（神仙半岛附近）\n17:30 神仙半岛 Promthep Cape 看日落\n晚上 Rawai / Kata 晚餐'},
-  {date:'12/5',dow:'周六',title:'搬机场旁 + Bangtao日落 + 躺平',hotel:'奈扬/迈考 Nai Yang/Mai Khao（③段 1 晚）',budget:510,
-   routes:'Kata → Bangtao 海滩俱乐部：约25km，车40–50分钟\nBangtao → 机场旁(奈扬/迈考)：约20km，车25–35分钟\n(直达 Kata → 机场旁约40km，车50–60分钟)',
-   cb:{stay:150,food:120,fun:150,transport:70,other:20},
-   meals:{b:'Kata 酒店早餐',l:'Bangtao 海滩俱乐部（Cafe del Mar / Catch）',d:'奈扬沙滩海鲜排档'},
-   plan:'上午 Kata 退房，Grab 出发\n途中 Bangtao 海滩俱乐部午后 + 日落一杯（有最低消费）\n傍晚 机场旁酒店入住、收拾行李'},
+  {date:'12/1',dow:'周二',title:'搬入兰花温泉度假村 + 酒店休闲',hotel:'普吉岛兰花温泉度假酒店（卡伦 Karon）',budget:537,
+   routes:'普吉镇 → 兰花温泉度假村(卡伦 Luang Phor Chuan Rd)：约20km，车35–45分钟\n酒店 → 悬崖咖啡(卡伦观景台)：约3km，车10分钟',
+   cb:{stay:237,food:120,fun:60,transport:80,other:40},
+   meals:{b:'普吉镇酒店早餐（退房）',l:'Karon On the Hill（山景午餐/咖啡打卡）',d:'red chair（泰菜·炸排骨/芒果糯米饭）/ V Steaks Karon（冬阴功/辣蟹/炒面，434/14）'},
+   plan:'上午 普吉镇退房 → Grab 到 兰花温泉度假村(卡伦)入住\n下午 酒店泳池(3个) / SPA / 卡伦海滩 休闲\n傍晚（可选）悬崖咖啡 After Beach Bar 看日落\n晚上 就近晚餐'},
+  {date:'12/2',dow:'周三',title:'兰花温泉度假村 休闲（泳池 / SPA / 卡伦海滩）',hotel:'普吉岛兰花温泉度假酒店（卡伦 Karon）',budget:467,
+   routes:'主要在酒店 / 卡伦海滩（约200m），步行可达\n（丛林飞跃如安排：Kata → Kathu 约12–15km，车25–30分钟含接送）',
+   cb:{stay:237,food:120,fun:80,transport:10,other:20},
+   meals:{b:'酒店早餐',l:'卡伦海滩餐厅 / 酒店 · 小吃：Woraburi 旁 711 门口香蕉饼',d:'Baan Bang-La（Patak Rd·黄咖喱蟹/菠萝海鲜炒饭/胡椒虾/炒面/牛肉米粉/天妇罗炸虾，人均~¥40）'},
+   plan:'全天酒店度假：睡到自然醒\n酒店泳池 / SPA / 卡伦海滩 躺平、游泳\n下午茶 / 按摩\n傍晚 卡伦海滩看日落、就近晚餐\n（机动：丛林飞跃保留，想动一动可挑半天去 Hanuman / Flying Hanuman，含接送，你按实际情况自调）'},
+  {date:'12/3',dow:'周四',title:'换酒店 + 卡塔/卡伦海滩 冲浪 / SUP 体验',hotel:'卡伦生活客房酒店（卡伦 Karon）',budget:495,
+   routes:'兰花温泉 → 卡伦生活客房酒店(Patak Rd)：就近，约10–20分钟\n酒店 → 卡伦海滩：步行可达',
+   cb:{stay:135,food:120,fun:200,transport:20,other:20},
+   meals:{b:'兰花温泉早餐（退房）',l:'Yai Toi 古法牛肉面（539 Patak Rd·牛肉面）/ 海滩餐厅',d:'hallehallo（卡伦大排档）/ The pad thai shop（卡伦二街·鸡爪/混合汤面/噶包饭）'},
+   plan:'上午 兰花温泉退房 → 搬到 卡伦生活客房酒店(Patak Rd)入住\n下午 卡塔 / 卡伦海滩 冲浪体验（Kata Surf School 一对二 1h、两人 1600฿；⚠️ 12月旱季浪小，多半冲不了，可改 SUP 桨板 / 浮潜 / 玩水）\n傍晚 海滩看日落\n晚上 就近晚餐'},
+  {date:'12/4',dow:'周五',title:'皮皮岛 + 蛋岛 一日游',hotel:'卡伦生活客房酒店（卡伦 Karon）',budget:615,
+   routes:'Kata → 皮皮岛码头(酒店接送)：约40–50分钟到码头\n码头 → 皮皮岛：速度艇约45分钟',
+   cb:{stay:135,food:100,fun:350,transport:20,other:10},
+   meals:{b:'酒店早餐（早班 / 打包）',l:'团餐（多含）',d:'JOI BBQ at Karon Beach（烧烤/炒饭，建议错峰）'},
+   plan:'07:30 酒店接送前往码头\n速度艇往皮皮岛（约45分钟开阔海，晕船提前吃药、坐船中后）\n玛雅湾/浮潜 + 蛋岛浅水浮潜、喂鱼\n16:30 返回，Kata 海滩看日落'},
+  {date:'12/5',dow:'周六',title:'Phumontra SPA + 休闲',hotel:'卡伦生活客房酒店（卡伦 Karon）',budget:545,
+   routes:'Kata → Phumontra SPA：视预约门店，约10–20分钟\n酒店 / Kata 海滩，步行可达',
+   cb:{stay:135,food:120,fun:250,transport:20,other:20},
+   meals:{b:'酒店早餐',l:'Kata 自由午餐',d:'Kata on fire（Kata·咖喱蟹/菠萝饭，评价一般·可选）'},
+   plan:'上午 睡到自然醒\n下午 Phumontra SPA 按摩放松\n其余时间 Kata 海滩 / 泳池躺平，为明早返程养足精神\n晚上 Kata 晚餐'},
   {date:'12/6',dow:'周日',title:'返程',hotel:'—',budget:60,
-   routes:'机场旁酒店 → 普吉机场：约5–10km，车10–15分钟',
+   routes:'Kata/Karon → 普吉机场：约40km，车50–60分钟',
    cb:{stay:0,food:20,fun:0,transport:40,other:0},
-   meals:{b:'机场早餐',l:'（航班上）',d:'—'},
-   plan:'06:30 退房去机场（5–15分钟）\n08:35 起飞回程'},
+   meals:{b:'打包早餐 / 机场',l:'（航班上）',d:'—'},
+   plan:'约05:30 退房 → 直奔普吉国际机场（约50–60分钟）\n08:35 普吉起飞（3U3930）\n13:25 抵达成都天府 T1'},
 ];
 const DCATS=[['stay','🏨 住宿'],['food','🍽️ 吃喝'],['fun','🎡 娱乐'],['transport','🚕 交通'],['other','🛍️ 其他']];
 const REC_MEALS={}; DEFAULT_DAYS.forEach(d=>REC_MEALS[d.date]={...d.meals});
 const REC_TIPS={
- '11/28':'机场→普吉镇 Grab/出租约 600–700฿；电话卡 AIS/True(7–15天) 约 200–350฿（机场柜台或 Klook 预订）。价格为大致参考。',
+ '11/28':'🏨 普吉镇贝萨瓦纳酒店 Besavana（已订 11/28–11/30，3晚2间，共 ¥2167.31）。地址：63/3 Krabi, Tambon Talat Nuea, 普吉直辖县（老城区，步行可达 Lard Yai 夜市）。机场→酒店 Grab/出租约 600–700฿；电话卡 AIS/True(7–15天) 约 200–350฿（机场柜台或 Klook 预订）。',
  '11/29':'大象营（不骑象观察型，如 Phuket Elephant Sanctuary）约 2500–3000฿/人（含接送+午餐），官网/Klook 早订，热门需提前。Central Phuket 商场就在普吉镇，逛街+吃饭+超市一站式；Big C/Lotus 超市适合囤零食干货手信；周日夜市免费逛。',
  '11/30':'皇帝岛(拉查岛)跳岛一日游约 1200–1800฿/人（含接送+浮潜+午餐），当天往返、宿普吉镇。想潜水可加深潜体验约 1500–2500฿/人（无需执照，含装备+教练，需签健康声明）。查龙码头出发，带够现金。',
- '12/1':'普吉镇退房搬去 Kata/Karon（约 35–45 分钟）。到了先休整，下午 Karon On the Hill 看海景，傍晚悬崖咖啡 After Beach Bar（卡伦观景台旁）有低消、日落前占位。',
- '12/2':'丛林飞跃 Hanuman World / Flying Hanuman 约 1000–1800฿/人（含接送），Klook/官网；下午返回 Kata 海滩/泳池躺平，轻松半天。',
- '12/3':'12/3 跳岛二选一，定了再订对应团：• 斯米兰 约 2500–3500฿/人(+门票约500฿)，开放季约10/15–5/15，全程约12h、约6点出发，水质顶级但跨海长；• 皮皮岛 约 1200–1800฿/人，约7:30出发、离普吉近省时，开阔海约45分钟较颠。两者都要提前吃晕船药、坐船中后。',
- '12/4':'南部一日：SPA、射击、神仙半岛都在南边，Kata↔Rawai↔神仙半岛车程都很近。Phumontra SPA 按项目 800–1500฿/人，官网或 LINE 提前预约；Gold Shooter Club 按子弹 800–1500฿/人（别被推销加子弹）；神仙半岛免费，日落人多提前到占位。',
- '12/5':'Kata→机场旁 Grab 约 600–800฿；途中 Bangtao 海滩俱乐部（Cafe del Mar / Catch）有低消、人均约 500–1000฿；奈扬海鲜排档人均 300–600฿。',
- '12/6':'酒店→机场 Grab 约 150–250฿（很近）；国际航班建议提前 2 小时，约 06:30 出发。',
+ '12/1':'🏨 普吉岛兰花温泉度假酒店 Phuket Orchid Resort & Spa（已订 12/1–12/2，2间2晚，共 ¥1896）。地址：34 Luang Phor Chuan Rd（卡伦 Karon，距卡伦海滩约 200m，含 3 个泳池 + SPA）。普吉镇退房搬过来约 35–45 分钟；这两天主要在酒店度假，傍晚可就近去悬崖咖啡看日落。',
+ '12/2':'全天在兰花温泉度假村休闲：3 个泳池、SPA、卡伦海滩（约 200m）、下午茶。丛林飞跃保留为机动项——想动一动可挑半天去 Hanuman / Flying Hanuman（约 1000–1800฿/人含接送），你按实际情况自行安排。',
+ '12/3':'🏨 卡伦生活客房酒店（已订 12/3–12/5，2间3晚，共 ¥1625）。地址：481 Patak Rd, Karon 83100（卡伦中心，近卡伦海滩）。上午兰花温泉退房搬过来；下午卡塔/卡伦海滩玩水。⚠️ 冲浪季是 5–10 月雨季，12 月旱季海面平、基本没浪，冲浪多半冲不了——建议改 SUP 桨板 / 浮潜 / 游泳，海滩步行可达。想试冲浪可约 Kata Surf School（一对二 1h、两人 1600฿），但旱季多半没浪。',
+ '12/4':'皮皮岛 + 蛋岛拼团一日游约 1200–1800฿/人（含接送+午餐+浮潜），Klook / KKday 提前订；约7:30出发，开阔海约45分钟较颠，晕船务必提前吃药、坐船中后。',
+ '12/5':'Phumontra SPA 按项目 800–1500฿/人，官网或 LINE 提前预约；其余时间 Kata 海滩/泳池躺平，为明早返程养足精神。',
+ '12/6':'注意：这晚住 Kata/Karon(没搬机场旁)，到机场约 40km、车 50–60 分钟。08:35 航班建议约 05:30 退房出发（提前2小时+留足路程），早车最好前一晚跟酒店/Grab 约好。',
 };
 const DEFAULT_CFG={budget:5000,people:4,currency:'¥',rate:5,title:'普吉岛 11/28–12/6',
   catBudget:{stay:1050,food:1200,fun:1500,transport:400,other:300}};
 // 备忘/待办 预置项（首次打开时生成，之后随你增删，更新不会覆盖）
 // group: 具体日期(挂到对应 Day) 或 'prep'(出发前准备)
 const NOTE_SEED=[
- {k:'townhotel', g:'11/28', t:'🏨 普吉镇酒店（11/28–11/30 共 3 晚）待定，尽快订好'},
+ {k:'townhotel', g:'11/28', t:'✅ 普吉镇贝萨瓦纳酒店 Besavana 已订（11/28–11/30，3晚2间，¥2167.31）'},
  {k:'elephant',  g:'11/29', t:'🐘 大象营（观察型）官网 / Klook 提前订，热门日期要早订'},
  {k:'racha',     g:'11/30', t:'🚤 皇帝岛跳岛一日游提前订（当天往返，查龙码头出发）'},
  {k:'dive',      g:'11/30', t:'🤿 皇帝岛想潜水可加深潜体验，需签健康声明；无需执照'},
- {k:'zip',       g:'12/2',  t:'🌿 丛林飞跃（Hanuman World / Flying Hanuman）提前订、含接送'},
- {k:'island',    g:'12/3',  t:'🚤 12/3 跳岛二选一（斯米兰 / 皮皮岛）——定了哪个就提前订对应团、备晕船药'},
- {k:'spa',       g:'12/4',  t:'💆 Phumontra SPA 官网或 LINE 提前预约'},
- {k:'shoot',     g:'12/4',  t:'🔫 Gold Shooter Club 可提前问价 / 预约'},
- {k:'back',      g:'12/6',  t:'✈️ 回程 08:35，提前 2 小时到机场；确认行李额'},
+ {k:'bamgo',     g:'12/1',  t:'✅ 普吉岛兰花温泉度假酒店 已订（12/1–12/2，2间2晚，¥1896）'},
+ {k:'kthotel',   g:'12/3',  t:'✅ 卡伦生活客房酒店 已订（12/3–12/5，2间3晚，¥1625）'},
+ {k:'zip',       g:'12/2',  t:'🌿 丛林飞跃（Hanuman / Flying Hanuman）机动项，想去就提前订、含接送'},
+ {k:'island',    g:'12/4',  t:'🚤 皮皮岛 + 蛋岛一日游提前订（Klook / KKday）、备晕船药'},
+ {k:'spa',       g:'12/5',  t:'💆 Phumontra SPA 官网或 LINE 提前预约'},
+ {k:'surf',      g:'12/3',  t:'🏄 卡塔/卡伦海滩 玩水 / SUP（12月旱季浪小，冲浪一般冲不了）'},
+ {k:'back',      g:'12/6',  t:'✈️ 回程 08:35（住 Kata，到机场约1h），约05:30出发、提前2小时；确认行李额'},
+ {k:'flights',   g:'prep',  t:'✈️ 航班：去 11/28 3U3931 成都天府T1 14:40→普吉 17:40；回 12/6 3U3930 普吉 08:35→成都天府T1 13:25'},
  {k:'passport',  g:'prep',  t:'🛂 护照有效期 ≥6 个月，确认签证 / 落地签材料'},
  {k:'sim',       g:'prep',  t:'📱 电话卡 AIS / True 机场柜台或 Klook 预订'},
- {k:'cash',      g:'prep',  t:'💵 备好现金 / 换钱，皇帝岛 ATM 少、物价偏高'},
+ {k:'cash',      g:'prep',  t:'💵 备好现金 / 换钱，岛上 / 景点 ATM 少、物价偏高'},
  {k:'card',      g:'prep',  t:'💳 通知银行开通境外用卡，备一张境外可用的卡'},
  {k:'seasick',   g:'prep',  t:'💊 备晕船药（跳岛开阔海较颠）、常用药'},
  {k:'plug',      g:'prep',  t:'🔌 转换插头（泰式插座）、防晒、驱蚊'},
@@ -339,7 +342,7 @@ function money(n){n=Math.round((+n||0)*100)/100; const s=Number.isInteger(n)?n:n
 
 /* ================= 状态 ================= */
 const KEY='travel_phuket_v1';
-const PLAN_VER=15; // 行程结构版本，变动时自动刷新行程（保留已记的实际支出）
+const PLAN_VER=27; // 行程结构版本，变动时自动刷新行程（保留已记的实际支出）
 let DB={config:{...DEFAULT_CFG},days:[]};
 function newAB(){return {stay:0,food:0,fun:0,transport:0,other:0}}
 function newAC(){return {stay:'¥',food:'¥',fun:'¥',transport:'¥',other:'¥'}}
@@ -362,6 +365,24 @@ function load(){
       seedDays();
       DB.days.forEach(x=>{ if(kAb[x.date]) x.ab={...x.ab,...kAb[x.date]}; if(kAc[x.date]) x.ac={...x.ac,...kAc[x.date]}; });
       DB.planVer=PLAN_VER;
+    }
+    // 一次性：普吉镇贝萨瓦纳酒店已确认(3晚2间 ¥2167.31，三晚均摊)，写入实际住宿花费（之后你再改不会被覆盖）
+    if(!DB.besavanaStay){
+      const sv={'11/28':722.44,'11/29':722.44,'11/30':722.43};
+      DB.days.forEach(x=>{ if(sv[x.date]!=null){ if(!x.ab)x.ab=newAB(); if(!x.ac)x.ac=newAC(); x.ab.stay=sv[x.date]; x.ac.stay='¥'; } });
+      DB.besavanaStay=true;
+    }
+    // 一次性：12/1–12/2 住宿改为兰花温泉度假村(2间2晚共 ¥1896，两晚均摊)，写入实际住宿花费
+    if(!DB.orchidStay){
+      const sv={'12/1':948,'12/2':948};
+      DB.days.forEach(x=>{ if(sv[x.date]!=null){ if(!x.ab)x.ab=newAB(); if(!x.ac)x.ac=newAC(); x.ab.stay=sv[x.date]; x.ac.stay='¥'; } });
+      DB.orchidStay=true;
+    }
+    // 一次性：12/3–12/5 卡伦生活客房酒店(2间3晚共 ¥1625，三晚均摊)，写入实际住宿花费
+    if(!DB.karonLivingStay){
+      const sv={'12/3':541.67,'12/4':541.67,'12/5':541.66};
+      DB.days.forEach(x=>{ if(sv[x.date]!=null){ if(!x.ab)x.ab=newAB(); if(!x.ac)x.ac=newAC(); x.ab.stay=sv[x.date]; x.ac.stay='¥'; } });
+      DB.karonLivingStay=true;
     }
     persist();
     return;}}catch(e){}
