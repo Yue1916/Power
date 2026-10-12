@@ -120,6 +120,8 @@
   .catrow .track{flex:1; background:var(--card2); border-radius:999px; height:14px; overflow:hidden}
   .catrow .fill{height:100%; border-radius:999px}
   .catrow .val{flex:0 0 auto; text-align:right; white-space:nowrap; font-size:12px; font-variant-numeric:tabular-nums}
+  .catmonths{display:flex; flex-wrap:wrap; gap:3px 12px; font-size:11px; color:var(--muted); margin:-4px 0 10px 24px}
+  .catmonths span{white-space:nowrap; font-variant-numeric:tabular-nums}
   .hint{font-size:12px; color:var(--muted); margin-top:6px; line-height:1.7}
   .toast{
     position:fixed; left:50%; bottom:92px; transform:translateX(-50%) translateY(20px);
@@ -187,7 +189,12 @@
   <!-- ============ 统计 ============ -->
   <section id="view-stats" class="view">
     <div class="card">
-      <h2>📅 本月汇总</h2>
+      <h2>🗓️ 选择月份</h2>
+      <div class="chips" id="statMonthChips"></div>
+      <div class="hint" style="margin-bottom:0">可多选；多选时下方「支出分类」会把每个类目拆分到各月显示。</div>
+    </div>
+    <div class="card">
+      <h2 id="statSumTitle">📅 本月汇总</h2>
       <div class="stat-grid">
         <div class="stat"><div class="num out" id="stOut">0</div><div class="lbl">支出</div></div>
         <div class="stat"><div class="num in" id="stIn">0</div><div class="lbl">收入</div></div>
@@ -196,7 +203,7 @@
       <div class="hint" id="statHint"></div>
     </div>
     <div class="card">
-      <h2>🥧 本月支出分类</h2>
+      <h2 id="statCatTitle">🥧 本月支出分类</h2>
       <div id="catBreak"></div>
     </div>
     <div class="card">
@@ -300,9 +307,9 @@
 const APP_VERSION='v1.0';
 const KEY='daily_ledger_v1';
 const CAT_ICON={餐饮:'🍜',服装:'👗',健身:'🏋️',零食:'🍫',护肤:'💧',美妆:'💄',麻将:'🀄',交通:'🚗',购物:'🛍️',日用:'🧴',娱乐:'🎮',居家:'🏠',医疗:'💊',学习:'📚',通讯:'📱',人情:'🎁',旅行:'✈️',其他:'📌',
-  工资:'💰',存款:'🏦',兼职:'💼',红包:'🧧',理财:'📈',报销:'🧾',其他收入:'➕',转账:'🔁',理财收益:'📈',回撤:'📉'};
+  工资:'💰',存款:'🏦',兼职:'💼',红包:'🧧',理财:'📈',家务:'🧹',报销:'🧾',其他收入:'➕',转账:'🔁',理财收益:'📈',回撤:'📉'};
 const CATS_OUT=['餐饮','服装','健身','零食','护肤','美妆','麻将','交通','购物','日用','娱乐','居家','医疗','学习','通讯','人情','旅行','其他'];
-const CATS_IN=['工资','存款','兼职','红包','理财','报销','其他收入'];
+const CATS_IN=['工资','存款','兼职','红包','理财','麻将','家务','报销','其他收入'];
 const CAT_COLORS=['#7c5cff','#3ddc97','#ff5f7a','#ffcf5c','#4fd1c5','#c58cff','#ff9f68','#5c9cff','#f871a0','#8ee063','#e0b0ff','#66d9e8'];
 
 function load(){ try{const d=JSON.parse(localStorage.getItem(KEY)); if(d&&d.records)return d}catch(e){} return null }
@@ -513,30 +520,57 @@ function restoreTrash(){ if(!trash)return; DB.records.push(trash); trash=null; s
 window.restoreTrash=restoreTrash; window.openEdit=openEdit;
 
 /* ================= 统计页 ================= */
+let statMonths=null; // Set of 'YYYY-MM'
+function availMonths(){ return [...new Set(DB.records.map(r=>r.date.slice(0,7)))].sort((a,b)=>b.localeCompare(a)); }
+function renderStatMonthChips(){
+  const wrap=$('statMonthChips'); if(!wrap)return;
+  const cur=todayStr().slice(0,7);
+  const months=availMonths(); if(!months.includes(cur)) months.unshift(cur);
+  if(!statMonths) statMonths=new Set([cur]);
+  // 清掉已不存在的月份
+  [...statMonths].forEach(m=>{ if(!months.includes(m)) statMonths.delete(m); });
+  if(!statMonths.size) statMonths.add(cur);
+  wrap.innerHTML=months.map(m=>`<div class="chip${statMonths.has(m)?' active':''}" onclick="toggleStatMonth('${m}')">${m}</div>`).join('');
+}
+function toggleStatMonth(m){
+  if(!statMonths)statMonths=new Set();
+  if(statMonths.has(m)){ if(statMonths.size>1) statMonths.delete(m); }
+  else statMonths.add(m);
+  renderStats();
+}
+window.toggleStatMonth=toggleStatMonth;
 function renderStats(){
-  const ym=todayStr().slice(0,7);
-  const mo=DB.records.filter(r=>r.date.slice(0,7)===ym);
-  const out=mo.filter(cashSpend).reduce((s,r)=>s+r.amount,0);
-  const inc=mo.filter(cashIncome).reduce((s,r)=>s+r.amount,0);
+  renderStatMonthChips();
+  const months=[...statMonths].sort();
+  const sel=DB.records.filter(r=>statMonths.has(r.date.slice(0,7)));
+  const out=sel.filter(cashSpend).reduce((s,r)=>s+r.amount,0);
+  const inc=sel.filter(cashIncome).reduce((s,r)=>s+r.amount,0);
   $('stOut').textContent=fmt(out); $('stIn').textContent=fmt(inc); $('stNet').textContent=fmt(inc-out);
+  const label = months.length===1 ? months[0] : `${months.length} 个月合计`;
+  if($('statSumTitle')) $('statSumTitle').textContent=`📅 ${label}`;
+  if($('statCatTitle')) $('statCatTitle').textContent=`🥧 ${label}支出分类`;
   $('statHint').textContent=`现金 ${money(balanceAcct('现金'))} · 基金理财 ${money(investBalance())} · 总资产 ${money(balance())}（共 ${DB.records.length} 笔）。`;
-  renderCatBreak(ym);
+  renderCatBreak(months);
   renderMonthlyList();
   drawChart();
 }
-function renderCatBreak(ym){
-  const mo=DB.records.filter(r=>r.date.slice(0,7)===ym && cashSpend(r));
-  const map={}; mo.forEach(r=>{ map[r.cat]=(map[r.cat]||0)+r.amount; });
-  const cats=Object.keys(map).sort((a,b)=>map[b]-map[a]);
-  const total=cats.reduce((s,c)=>s+map[c],0);
-  if(!cats.length){ $('catBreak').innerHTML='<div class="hint">本月还没有支出记录。</div>'; return; }
+function renderCatBreak(months){
+  const set=new Set(months);
+  const rows=DB.records.filter(r=>set.has(r.date.slice(0,7)) && cashSpend(r));
+  const map={}; // cat -> {total, by:{m:amt}}
+  rows.forEach(r=>{ const m=r.date.slice(0,7); map[r.cat]=map[r.cat]||{total:0,by:{}}; map[r.cat].total+=r.amount; map[r.cat].by[m]=(map[r.cat].by[m]||0)+r.amount; });
+  const cats=Object.keys(map).sort((a,b)=>map[b].total-map[a].total);
+  const total=cats.reduce((s,c)=>s+map[c].total,0);
+  if(!cats.length){ $('catBreak').innerHTML='<div class="hint">所选月份没有支出记录。</div>'; return; }
+  const multi=months.length>1;
   $('catBreak').innerHTML=cats.map((c,i)=>{
-    const v=map[c], pct=Math.round(v/total*100);
+    const v=map[c].total, pct=total?Math.round(v/total*100):0;
     const color=CAT_COLORS[i%CAT_COLORS.length];
+    const sub = multi ? `<div class="catmonths">${months.map(m=>`<span>${(+m.slice(5))}月 ¥${fmt(map[c].by[m]||0)}</span>`).join('')}</div>` : '';
     return `<div class="catrow">
       <span class="nm"><span>${iconOf(c)}</span>${c}</span>
       <span class="track"><span class="fill" style="width:${pct}%;background:${color}"></span></span>
-      <span class="val">¥${fmt(v)} · ${pct}%</span></div>`;
+      <span class="val">¥${fmt(v)} · ${pct}%</span></div>${sub}`;
   }).join('');
 }
 function renderMonthlyList(){
