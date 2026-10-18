@@ -176,8 +176,10 @@
   .cal-nav{background:var(--card2); border:1px solid var(--line); color:var(--text); width:30px; height:30px; border-radius:8px; cursor:pointer; font-size:16px}
   .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; width:100%}
   .cal-dow{text-align:center; font-size:11px; color:var(--muted); padding:2px 0}
-  .cal-cell{height:38px; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:12px; color:var(--muted); background:var(--card2)}
+  .cal-cell{position:relative; height:38px; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:12px; color:var(--muted); background:var(--card2)}
   .cal-cell.empty{background:transparent}
+  .cal-cell .cal-d{position:absolute; top:2px; left:4px; font-size:9px; line-height:1; opacity:.8}
+  .cal-cell .cal-ic{font-size:17px; line-height:1}
   .cal-cell.trained{color:#04241d; font-weight:700}
   .cal-cell.today{outline:2px solid var(--accent)}
   .cal-legend{display:flex; align-items:center; gap:6px; justify-content:flex-end; margin-top:8px; font-size:11px; color:var(--muted)}
@@ -282,11 +284,6 @@
     <div class="card">
       <h2>📅 本周各部位 <span id="weekPartsRange" style="font-size:12px;color:var(--muted);font-weight:400"></span></h2>
       <div id="weekStats"></div>
-    </div>
-    <div class="card">
-      <h2>📝 训练心得汇总</h2>
-      <select id="notesFilter" style="margin-bottom:10px"></select>
-      <div id="notesList"></div>
     </div>
     <div id="historyList"></div>
   </section>
@@ -451,6 +448,20 @@
       <div id="wuResult" style="margin-top:10px"></div>
       <div class="hint">深蹲/硬拉/卧推等大项用得上；小重量孤立动作一般 1–2 组轻的带开即可。</div>
     </div>
+
+    <div class="card">
+      <h2>🧘 训练前热身 / 练后拉伸</h2>
+      <div class="hint" style="margin-top:0">去健身房顺手做，改善体态比回家单独做更容易坚持。</div>
+      <div style="font-size:13px;font-weight:600;margin-top:10px">练前 · 激活/松动</div>
+      <div class="toprec"><span>收下巴 Chin Tuck</span><span class="prdetail">×10 · 探颈/双下巴</span></div>
+      <div class="toprec"><span>墙天使 Wall Angel</span><span class="prdetail">10–12 次 · 圆肩/胸椎</span></div>
+      <div class="toprec"><span>髋屈肌拉伸（弓步）</span><span class="prdetail">每侧 30 秒 · 骨盆前倾</span></div>
+      <div class="toprec"><span>死虫 Dead Bug</span><span class="prdetail">每侧 10 次 ×2 · 稳骨盆核心</span></div>
+      <div style="font-size:13px;font-weight:600;margin-top:12px">练后 · 拉伸</div>
+      <div class="toprec"><span>胸大肌拉伸</span><span class="prdetail">每侧 30–45 秒 · 圆肩</span></div>
+      <div class="toprec"><span>上斜方 / 颈侧拉伸</span><span class="prdetail">每侧 30 秒 · 松脖子/斜方</span></div>
+      <button class="btn ghost" type="button" onclick="switchView('home')" style="margin-top:12px">🧘 打开居家矫正库（拉伸/核心/颈部）</button>
+    </div>
   </section>
 
   <!-- ============ 设置 ============ -->
@@ -499,6 +510,7 @@
 
   <!-- ============ 居家(拉伸/核心/矫正) ============ -->
   <section id="view-home" class="view">
+    <div style="margin-bottom:10px"><span class="link" onclick="switchView('plan')">← 返回力训</span></div>
     <div class="card">
       <h2>🧘 居家训练</h2>
       <div class="hint">针对圆肩驼背、骨盆前倾、X腿、上斜方紧张的居家内容。拉伸每天做；核心/矫正每周 2–3 次。动作要慢、找发力。<br>⚠️ 胸椎侧弯属结构性问题，请找康复科/物理治疗师专业评估，这里的训练只作辅助。</div>
@@ -510,7 +522,6 @@
 
 <nav class="tabbar">
   <button data-view="plan" class="active"><span class="ico">🏋️</span>力训</button>
-  <button data-view="home"><span class="ico">🧘</span>居家</button>
   <button data-view="history"><span class="ico">📒</span>流水</button>
   <button data-view="progress"><span class="ico">📈</span>趋势</button>
   <button data-view="log"><span class="ico">✍️</span>补录</button>
@@ -849,22 +860,21 @@ function homeCountdown(gi,ii){
   const id=it.id;
   if(it.sides===2){
     if(homeSide[id]==='L'){ // 正在做右侧
-      startTimer(it.sec, ()=>{ delete homeSide[id]; homeMark(id,1); });
+      startTimer(it.sec, ()=>{ delete homeSide[id]; renderHome(); toast('✓ 两侧完成'); });
       toast(`右侧 ${restLabel(it.sec)} 倒计时`);
     }else{ // 做左侧
       startTimer(it.sec, ()=>{ homeSide[id]='L'; renderHome(); toast('左侧完成，点 ▶ 右侧 继续'); });
       toast(`左侧 ${restLabel(it.sec)} 倒计时`);
     }
   }else{
-    startTimer(it.sec, ()=>{ homeMark(id,1); });
+    startTimer(it.sec, ()=>{ toast('✓ 完成'); });
     toast(`${restLabel(it.sec)} 倒计时开始`);
   }
 }
 function renderHome(){
   const box=$('homeList'); if(!box) return;
   ensureHome();
-  box.innerHTML = homeStatsHtml() + DB.home.groups.map((g,gi)=>{
-    const groupDone=g.items.reduce((s,it)=>s+(homeDoneCount(it.id)>0?1:0),0);
+  box.innerHTML = DB.home.groups.map((g,gi)=>{
     return `
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
@@ -874,28 +884,23 @@ function renderHome(){
         </div>
         <span class="link" onclick="editHomeGroup(${gi})" style="white-space:nowrap">✎ 分组</span>
       </div>
-      ${groupDone?`<div class="hint" style="margin-top:4px;color:var(--accent2)">今日已完成 ${groupDone}/${g.items.length} 个动作</div>`:''}
       <div style="margin-top:10px">
-      ${g.items.map((it,ii)=>{
-        const cnt=homeDoneCount(it.id);
-        return `
+      ${g.items.map((it,ii)=>`
         <div class="log-item" style="padding:10px 12px">
           <div style="display:flex;align-items:center;gap:8px">
             <span class="mvwrap"><button class="mv" type="button" data-act="home" data-g="${gi}" data-i="${ii}" data-dir="-1" title="长按上移">▲</button><button class="mv" type="button" data-act="home" data-g="${gi}" data-i="${ii}" data-dir="1" title="长按下移">▼</button></span>
             <div style="flex:1;min-width:0">
-              <div class="name">${esc(it.name)}${cnt?` <span style="color:var(--accent2);font-size:12px">✓×${cnt}</span>`:''}</div>
+              <div class="name">${esc(it.name)}</div>
               ${it.detail?`<div class="prdetail">${esc(it.detail)}</div>`:''}
             </div>
             <span class="link" onclick="editHomeItem(${gi},${ii})">✎</span>
             <span class="link danger" onclick="delHomeItem(${gi},${ii})">删</span>
           </div>
-          <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding-left:36px">
-            ${it.sec?`<span class="link" style="color:var(--accent2)" onclick="homeCountdown(${gi},${ii})">▶ ${it.sides===2?(homeSide[it.id]==='L'?'右侧 ':'左侧 '):''}倒计时 ${restLabel(it.sec)}</span>`:''}
+          ${it.sec?`<div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding-left:36px">
+            <span class="link" style="color:var(--accent2)" onclick="homeCountdown(${gi},${ii})">▶ ${it.sides===2?(homeSide[it.id]==='L'?'右侧 ':'左侧 '):''}倒计时 ${restLabel(it.sec)}</span>
             ${it.sides===2?`<span style="font-size:11px;color:var(--muted)">左右各一次</span>`:''}
-            <span class="link" onclick="homeMark('${it.id}',1)">✓ 记一次</span>
-            ${cnt?`<span class="link danger" onclick="homeMark('${it.id}',-1)">撤销</span>`:''}
-          </div>
-        </div>`;}).join('')}
+          </div>`:''}
+        </div>`).join('')}
       </div>
       <div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
         <span class="link" onclick="addHomeItem(${gi})">＋ 添加动作</span>
@@ -1405,8 +1410,10 @@ function renderCalendar(){
   const [y,m]=calYM.split('-').map(Number);
   if($('calTitle')) $('calTitle').textContent=`${y}年${m}月 训练日历`;
   // 每天训练强度（按当天不同动作数）
-  const perDay={};
-  DB.logs.forEach(l=>{ if(l.date.slice(0,7)===calYM){ (perDay[l.date]=perDay[l.date]||new Set()).add(l.exercise); } });
+  const perDay={}, sessCnt={};
+  DB.logs.forEach(l=>{ if(l.date.slice(0,7)===calYM){ (perDay[l.date]=perDay[l.date]||new Set()).add(l.exercise);
+    if(l.sess){ const o=sessCnt[l.date]=sessCnt[l.date]||{}; o[l.sess]=(o[l.sess]||0)+1; } } });
+  const dominantSess=ds=>{ const o=sessCnt[ds]; if(!o)return ''; return Object.keys(o).sort((a,b)=>o[b]-o[a])[0]; };
   const first=new Date(y, m-1, 1);
   const startDow=(first.getDay()+6)%7; // 周一=0
   const daysInMonth=new Date(y, m, 0).getDate();
@@ -1417,20 +1424,23 @@ function renderCalendar(){
   for(let d=1;d<=daysInMonth;d++){
     const ds=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const n=perDay[ds]?perDay[ds].size:0;
+    const sess=dominantSess(ds); const ic=sess?Array.from(sess)[0]:'';
     let bg='';
     if(n>0){ const op = n>=5?1 : n>=3?0.75 : n>=2?0.55 : 0.4; bg=`background:rgba(0,211,167,${op})`; }
     const cls='cal-cell'+(n>0?' trained':'')+(ds===today?' today':'');
-    html+=`<div class="${cls}" style="${bg}" title="${ds}${n?'：'+n+'个动作':''}">${d}</div>`;
+    const title=`${ds}${sess?'：'+sess:''}${n?' · '+n+'个动作':''}`;
+    const inner = (n>0 && ic) ? `<span class="cal-d">${d}</span><span class="cal-ic">${ic}</span>` : `${d}`;
+    html+=`<div class="${cls}" style="${bg}" title="${title}">${inner}</div>`;
   }
   html+='</div>';
   // 本月小结
   const trainedDays=Object.keys(perDay).length;
-  html+=`<div class="hint" style="margin-top:8px">本月已训练 <b style="color:var(--accent2)">${trainedDays}</b> 天</div>`;
+  html+=`<div class="hint" style="margin-top:8px">本月已训练 <b style="color:var(--accent2)">${trainedDays}</b> 天 · 图标=当天主项（🦵腿 💪胸 🍑臀腿后链 🔙背 🏃有氧）</div>`;
   wrap.innerHTML=html;
 }
 if($('calPrev')){ $('calPrev').onclick=()=>calShift(-1); $('calNext').onclick=()=>calShift(1); }
 function renderHistory(){
-  renderWeekStats(); renderNotesFilter(); renderNotes(); renderCalendar();
+  renderWeekStats(); renderCalendar();
   const list=$('historyList');
   if(!DB.logs.length){list.innerHTML='<div class="empty"><div class="big">📭</div>还没有记录，去「力训」打勾写入、或「补录」手动添加第一条吧！</div>';return}
   const byDate={};
@@ -2086,7 +2096,10 @@ $('importFile').onchange=e=>{
         e.target.value=''; return;
       }
     }
-    DB=d; if(!('lastBackup' in DB))DB.lastBackup=null; if(!DB.plan)DB.plan={items:[]}; if(!DB.templates)DB.templates=[]; if(!DB.measures)DB.measures=[]; if(DB.weekStart==null)DB.weekStart=1; if(!DB.cycleStart)DB.cycleStart=weekStartStr(); ensureHome();
+    const _prev=DB; DB=d;
+    // 导入文件若不含这些字段，保留设备上现有的，避免被「部分导出」覆盖清空
+    ['lastRangeExport','home','period'].forEach(k=>{ if(DB[k]==null && _prev && _prev[k]!=null) DB[k]=_prev[k]; });
+    if(!('lastBackup' in DB))DB.lastBackup=null; if(!DB.plan)DB.plan={items:[]}; if(!DB.templates)DB.templates=[]; if(!DB.measures)DB.measures=[]; if(DB.weekStart==null)DB.weekStart=1; if(!DB.cycleStart)DB.cycleStart=weekStartStr(); ensureHome();
     save(DB); refreshAll(); renderTemplates(); renderPlan(); renderCycle(); renderHome(); toast('导入成功');
   }catch(err){toast('文件格式错误')}};
   r.readAsText(f); e.target.value='';
@@ -2498,6 +2511,7 @@ function switchView(name){
   window.scrollTo(0,0);
 }
 document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>switchView(b.dataset.view); });
+window.switchView=switchView;
 
 /* ================= 刷新 ================= */
 function refreshAll(){renderExerciseSelect();renderHistory();renderProgSelect();renderPRFilter();renderPRList();renderBackupInfo();
