@@ -604,6 +604,7 @@ const DEFAULT_PARTS={
   '肩':['站姿推举','哑铃推举','侧平举','前平举','器械推肩','蝴蝶机反向飞鸟','绳索面拉'],
   '手臂':['杠铃弯举','哑铃弯举','三头下压','窄距卧推','锤式弯举'],
   '核心':['卷腹','平板支撑','悬垂举腿','俄罗斯转体'],
+  '功能性':['鸟狗','熊爬','农夫行走','行李箱行走','单腿硬拉','半跪抗旋推拉','土耳其起立','登山者','壶铃摇摆','药球砸'],
   '有氧':['跑步机','户外跑','椭圆机','动感单车','划船机','爬楼机','跳绳']
 };
 const CARDIO='有氧';
@@ -776,6 +777,18 @@ function enableHoldButtons(root){
 /* ================= 居家(可编辑) ================= */
 let _hidc=0;
 function hid(){ return 'h'+Date.now().toString(36)+(_hidc++).toString(36); }
+function functionalGroup(){
+  return {title:'🤸 功能性 · 协调/核心稳定', freq:'每周 2–3 次 · 健身房或家里都行', items:[
+    {name:'鸟狗 Bird Dog', detail:'每侧 10 次 ×3 · 抗旋稳核心,别塌腰、骨盆别转', sides:2},
+    {name:'熊爬 Bear Crawl', detail:'前后各 10 步 ×3 · 全身协调,膝离地、背保持平'},
+    {name:'农夫行走（双手负重）', detail:'30–40 秒 ×3 · 核心抗侧屈+握力,挺胸沉肩 · 哑铃/壶铃/水桶', sec:40},
+    {name:'单侧负重行走（行李箱走）', detail:'每侧 30 秒 · 强抗侧屈,别往负重那侧倒', sec:30, sides:2},
+    {name:'单腿硬拉（平衡）', detail:'每侧 10 次 ×3 · 平衡+后链协调,慢控下放', sides:2},
+    {name:'半跪抗旋推拉（弹力带/绳索）', detail:'每侧 12 次 ×2 · 抗旋,核心锁住别转动', sides:2},
+    {name:'土耳其起立（徒手/轻壶铃）', detail:'每侧 2–3 次 ×2 · 全身协调经典,慢而稳', sides:2},
+    {name:'登山者 Mountain Climber', detail:'30 秒 ×3 · 核心+心肺,髋别塌', sec:30}
+  ]};
+}
 function defaultHome(){
   const groups=[
     {title:'🦢 颈部 · 探颈/双下巴', freq:'每天 2–3 次，动作要轻', items:[
@@ -804,7 +817,8 @@ function defaultHome(){
       {name:'蚌式 Clamshell（弹力带）', detail:'每侧 15 次 ×2 · 臀中肌,改善X腿'},
       {name:'怪兽走 / 螃蟹走（弹力带）', detail:'10 步 ×3 · 膝外展、臀中'},
       {name:'俯身 Y 字举（徒手/轻哑铃）', detail:'12–15 次 ×3 · 下斜方,改善圆肩+抑制上斜方'}
-    ]}
+    ]},
+    functionalGroup()
   ];
   groups.forEach(g=>g.items.forEach(it=>it.id=hid()));
   return {groups, done:{}};
@@ -812,6 +826,11 @@ function defaultHome(){
 function ensureHome(){
   if(!DB.home||!DB.home.groups||!DB.home.groups.length){ DB.home=defaultHome(); }
   DB.home.done=DB.home.done||{};
+  // 一次性追加「功能性」分组到既有数据（不覆盖自定义；删掉后也不会再加回）
+  if(!DB.home.seededFunctional){
+    if(!DB.home.groups.some(g=>g.title&&g.title.includes('功能性'))) DB.home.groups.push(functionalGroup());
+    DB.home.seededFunctional=true;
+  }
   DB.home.groups.forEach(g=>{ g.items=g.items||[]; g.items.forEach(it=>{ if(!it.id)it.id=hid(); }); });
   save(DB);
 }
