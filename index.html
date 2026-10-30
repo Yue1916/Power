@@ -2359,8 +2359,18 @@ $('swapSave').onclick=()=>{
   const it=DB.plan.items[swapIi]; if(!it){ $('exSwapModal').style.display='none'; return; }
   const name=($('swapInput').value.trim() || $('swapSelect').value || '').trim();
   if(!name){ toast('请选择或输入动作'); return; }
+  const changed = name!==it.exercise;
   it.exercise=name; const p=partOfExercise(name); if(p) it.part=p;
-  save(DB); $('exSwapModal').style.display='none'; renderPlan(); toast('已改动作');
+  let loaded=false;
+  if(changed && it.type==='strength'){
+    const last=lastLogOf(name);
+    if(last && last.type==='strength' && last.sets && last.sets.length){
+      it.sets=last.sets.map(s=>({w:s.w, r:s.r, done:false})); loaded=true;
+    }
+    if(last && last.note) it.note=last.note;
+  }
+  save(DB); $('exSwapModal').style.display='none'; renderPlan();
+  toast(loaded ? '已改动作 · 带出上次重量' : '已改动作');
 };
 window.planRenameItem=planRenameItem;
 function planAddSetToItem(ii){
