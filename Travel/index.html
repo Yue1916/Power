@@ -1,702 +1,159 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="普吉行程">
-<meta name="theme-color" content="#0ea5a4">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" type="image/png" href="apple-touch-icon.png">
-<title>普吉岛行程</title>
+<!DOCTYPE html><html lang='zh'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>普吉岛旅游英语速查</title>
 <style>
-  :root{
-    --bg:#0f1720; --card:#17222e; --card2:#1f2e3d; --line:#2c3f52;
-    --text:#eef6ff; --muted:#93a7bd; --accent:#0ea5a4; --accent2:#38bdf8;
-    --gold:#fbbf24; --danger:#fb7185; --radius:16px;
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-    background:var(--bg); color:var(--text); padding-bottom:84px; line-height:1.5}
-  header{position:sticky; top:0; z-index:20; background:rgba(15,23,32,.92); backdrop-filter:blur(10px);
-    padding:14px 16px 12px; border-bottom:1px solid var(--line)}
-  header h1{margin:0; font-size:19px}
-  header .sub{color:var(--muted); font-size:12px; margin-top:2px}
-  main{max-width:720px; margin:0 auto; padding:14px}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:15px; margin-bottom:14px}
-  .card h2{margin:0 0 12px; font-size:15px; display:flex; align-items:center; gap:8px}
-  label{display:block; font-size:13px; color:var(--muted); margin:10px 0 5px}
-  input,select,textarea{width:100%; padding:11px; border-radius:11px; border:1px solid var(--line);
-    background:var(--card2); color:var(--text); font-size:16px; outline:none; font-family:inherit}
-  textarea{min-height:96px; line-height:1.7}
-  input:focus,select:focus,textarea:focus{border-color:var(--accent)}
-  .row{display:flex; gap:10px}
-  .row>*{flex:1}
-  .btn{width:100%; padding:13px; border:none; border-radius:12px; font-size:15px; font-weight:600;
-    cursor:pointer; margin-top:12px; background:var(--accent); color:#04211f; transition:.12s}
-  .btn:active{transform:scale(.98)}
-  .btn.ghost{background:var(--card2); color:var(--text); border:1px solid var(--line)}
-  .btn.sm{width:auto; padding:8px 14px; margin:0; font-size:14px}
-  .btn.blue{background:var(--accent2); color:#042231}
-  .tabbar{position:fixed; bottom:0; left:0; right:0; z-index:30; display:flex;
-    background:rgba(23,34,46,.97); backdrop-filter:blur(10px); border-top:1px solid var(--line)}
-  .tabbar button{flex:1; background:none; border:none; color:var(--muted);
-    padding:9px 0 max(9px,env(safe-area-inset-bottom)); font-size:11px; cursor:pointer;
-    display:flex; flex-direction:column; align-items:center; gap:3px}
-  .tabbar button.active{color:var(--accent)}
-  .tabbar .ico{font-size:20px}
-  .view{display:none}
-  .view.active{display:block}
-  .day{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px; margin-bottom:14px}
-  .dtop{display:flex; justify-content:space-between; align-items:flex-start; gap:10px}
-  .dtitle{font-size:16px; font-weight:700}
-  .dtitle .dsub{display:block; font-size:13px; color:var(--accent2); font-weight:500; margin-top:2px}
-  .dedit{flex:0 0 auto; background:var(--card2); border:1px solid var(--line); color:var(--text);
-    border-radius:10px; padding:6px 10px; font-size:13px; cursor:pointer}
-  .plan{margin:12px 0 6px}
-  .routes{margin:6px 0}
-  .rline{font-size:14px; padding:5px 0; border-bottom:1px dashed var(--line)}
-  .rline:last-child{border-bottom:none}
-  .pl{display:flex; gap:8px; padding:5px 0; font-size:14px; border-bottom:1px dashed var(--line)}
-  .pl:last-child{border-bottom:none}
-  .pl .tm{flex:0 0 auto; color:var(--accent2); font-variant-numeric:tabular-nums; min-width:44px}
-  .meta{font-size:13px; color:var(--muted); margin-top:8px}
-  .meta b{color:var(--text); font-weight:600}
-  .daymoney{display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap;
-    border-top:1px solid var(--line); padding-top:10px}
-  .daymoney .mplan{font-size:13px; color:var(--muted)}
-  .daymoney .mact{font-size:14px; font-weight:700; color:var(--gold)}
-  .daymoney .sp{flex:1}
-  .editbox{display:none; margin-top:12px; border-top:1px solid var(--line); padding-top:10px}
-  .editbox.show{display:block}
-  .stat-grid{display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap}
-  .stat{flex:1 1 30%; background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center}
-  .stat .num{font-size:20px; font-weight:800}
-  .stat .num.g{color:var(--accent)} .stat .num.gold{color:var(--gold)} .stat .num.warn{color:var(--danger)}
-  .stat .sub{font-size:11px; color:var(--muted); margin-top:1px}
-  .stat .lbl{font-size:11px; color:var(--muted); margin-top:3px}
-  .litem{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid var(--line)}
-  .litem:last-child{border-bottom:none}
-  .litem .li-nm{font-size:14px} .litem .li-sub{font-size:12px; color:var(--muted); margin-top:2px; line-height:1.5}
-  .catin{padding:9px; text-align:right}
-  .daychips{display:flex; gap:8px; overflow-x:auto; padding:2px 0 14px; -webkit-overflow-scrolling:touch}
-  .dchip{flex:0 0 auto; padding:8px 13px; border-radius:999px; background:var(--card2); border:1px solid var(--line);
-    font-size:13px; cursor:pointer; white-space:nowrap; user-select:none}
-  .dchip.on{background:var(--accent); border-color:var(--accent); color:#04211f; font-weight:700}
-  .planhead{display:flex; justify-content:space-between; align-items:center; margin:12px 0 6px; font-size:14px; font-weight:600}
-  .frow{display:flex; align-items:flex-start; gap:8px; font-size:14px; margin-top:9px}
-  .frow .flabel{flex:0 0 auto; color:var(--muted)}
-  .frow .fval{flex:1; color:var(--text); word-break:break-word}
-  .frow .fval.empty{color:var(--muted)}
-  .fpen{flex:0 0 auto; background:transparent; border:none; color:var(--accent2); font-size:15px; cursor:pointer; padding:0 2px}
-  .fedit{margin-top:9px; background:var(--card2); border:1px solid var(--line); border-radius:11px; padding:11px}
-  .fedit label{margin-top:0}
-  .crow{display:flex; align-items:center; gap:6px; margin-top:8px; font-size:13px}
-  .crow .clabel{flex:0 0 66px; color:var(--muted)}
-  .crow .cplan{flex:0 0 auto; color:var(--muted); min-width:66px; font-size:12px}
-  .crow .cact{flex:1; padding:8px; text-align:right; min-width:0}
-  .crow .ccur{flex:0 0 auto; width:50px; padding:8px 4px}
-  .costtot{margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:baseline; border-top:1px solid var(--line); padding-top:9px; font-size:13px}
-  .costtot .mplan{color:var(--muted)} .costtot .mact{color:var(--gold); font-weight:700}
-  .costsum{margin-top:10px; border-top:1px solid var(--line); padding-top:9px; font-size:13px; display:flex; flex-direction:column; gap:5px}
-  .costsum span{color:var(--muted); display:inline-block; width:38px}
-  .costsum b.gold{color:var(--gold)} .costsum b.g{color:var(--accent)} .costsum b.warn{color:var(--danger)}
-  .bar{height:16px; border-radius:999px; overflow:hidden; background:var(--card2); border:1px solid var(--line); margin:2px 0 6px}
-  .bar > div{height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2))}
-  .bar > div.over{background:linear-gradient(90deg,#f97316,var(--danger))}
-  .tbl{width:100%; border-collapse:collapse; font-size:13px}
-  .tbl th,.tbl td{padding:8px 6px; border-bottom:1px solid var(--line); text-align:center}
-  .tbl th{color:var(--muted); font-weight:600; font-size:12px}
-  .tbl td.nm{text-align:left}
-  .tbl td .over{color:var(--danger)}
-  .mini{font-size:12px; color:var(--muted)}
-  .hint{font-size:12px; color:var(--muted); margin-top:6px; line-height:1.6}
-  .toast{position:fixed; left:50%; bottom:96px; transform:translateX(-50%) translateY(20px);
-    background:var(--accent); color:#04211f; padding:11px 20px; border-radius:999px; font-weight:600;
-    opacity:0; pointer-events:none; transition:.25s; z-index:60; font-size:14px}
-  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
-  .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:70; display:none; align-items:flex-end; justify-content:center}
-  .modal.show{display:flex}
-  .sheet{background:var(--card); border-top-left-radius:18px; border-top-right-radius:18px; width:100%; max-width:720px;
-    padding:18px 16px max(18px,env(safe-area-inset-bottom)); max-height:78vh; overflow:auto}
-  .sheet h3{margin:0 0 4px; font-size:16px}
-  .exp{display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--card2);
-    border:1px solid var(--line); border-radius:10px; margin-bottom:8px}
-  .exp .del{background:transparent; border:none; color:var(--danger); font-size:20px; cursor:pointer}
-  .addexp{display:flex; gap:6px; margin:10px 0}
-  .addexp input.amt{flex:0 0 26%} .addexp select.cur{flex:0 0 auto; width:56px; padding:11px 6px} .addexp input.note{flex:1}
-  .addexp button{flex:0 0 auto; padding:11px 16px; border:none; border-radius:11px; background:var(--accent); color:#04211f; font-weight:700; cursor:pointer}
-  .ntgroup{margin-top:16px}
-  .ntgh{font-size:13px; font-weight:700; color:var(--accent2); padding:6px 0 5px; border-bottom:1px solid var(--line)}
-  .ntitem{display:flex; align-items:flex-start; gap:11px; padding:11px 0; border-bottom:1px solid var(--line)}
-  .ntitem:last-child{border-bottom:none}
-  .ntitem .ck{flex:0 0 auto; width:24px; height:24px; border-radius:50%; border:2px solid var(--line);
-    background:var(--card2); cursor:pointer; display:flex; align-items:center; justify-content:center;
-    font-size:14px; color:transparent; margin-top:1px; padding:0}
-  .ntitem.done .ck{background:var(--accent); border-color:var(--accent); color:#04211f}
-  .ntitem .nt-tx{flex:1; font-size:14px; word-break:break-word; line-height:1.5}
-  .ntitem.done .nt-tx{color:var(--muted); text-decoration:line-through}
-  .ntitem .nt-ed{flex:0 0 auto; background:transparent; border:none; color:var(--accent2); font-size:15px; cursor:pointer; padding:0 2px}
-  .ntitem .nt-del{flex:0 0 auto; background:transparent; border:none; color:var(--danger); font-size:17px; cursor:pointer; padding:0 2px}
-  .ntedit{flex:1}
-  .ntedit textarea{min-height:64px}
-  code{background:var(--card2); padding:1px 6px; border-radius:6px; font-size:12px}
+*{box-sizing:border-box;}
+body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;margin:0;background:#eef7f7;color:#13303a;line-height:1.75;}
+header{position:sticky;top:0;z-index:10;background:#0e8a8a;color:#fff;padding:14px 20px;box-shadow:0 2px 6px rgba(0,0,0,.15);}
+header h1{margin:0 0 4px;font-size:18px;}
+header .sub{font-size:13px;opacity:.9;}
+.tabs{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.tabs button{border:none;background:rgba(255,255,255,.15);color:#fff;padding:8px 14px;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;}
+.tabs button.active{background:#eef7f7;color:#0e8a8a;font-weight:600;}
+.tabs button.fav{background:#f5c518;color:#3a2f00;}
+.tabs button.fav.active{background:#ffd94a;color:#3a2f00;}
+main{max-width:860px;margin:0 auto;padding:20px 16px 80px;}
+.panel{display:none;} .panel.show{display:block;}
+.util{background:#13a0a0;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;margin-right:6px;}
+.tipbox{background:#fff8e6;border:1px solid #f0d98a;border-radius:8px;padding:10px 14px;margin:10px 0 16px;font-size:14px;}
+.tipbox b{color:#8a6d00;}
+.grp-h{font-size:15px;font-weight:700;margin:16px 0 6px;padding-left:4px;border-left:4px solid #0e8a8a;}
+.grp-h.hear{border-left-color:#e08a00;color:#8a5a00;}
+.prow{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:#fff;border:1px solid #d7e8e8;border-radius:8px;margin:6px 0;}
+.prow .pc{flex:1;}
+.prow .pen{font-weight:600;font-size:15.5px;}
+.prow .pzh{color:#555;display:block;margin-top:2px;}
+.spk{border:1px solid #9cd0d0;background:#f0fafa;color:#0e8a8a;border-radius:14px;padding:3px 11px;cursor:pointer;font-size:13px;flex:none;}
+.spk:hover{background:#dcf2f2;}
+.fav{border:none;background:none;cursor:pointer;font-size:18px;color:#ccc;flex:none;line-height:1.2;padding:0 2px;}
+.fav.on{color:#f5a623;}
+.thai .prow .pen{font-size:17px;color:#0e8a8a;}
+.hint{color:#5a7470;font-size:13px;}
+/* 收藏夹 */
+.favadd{background:#fff8e6;border:1px solid #f0d98a;border-radius:8px;padding:12px 14px;margin-bottom:12px;}
+.favadd input{width:100%;padding:8px 10px;border:1px solid #9cd0d0;border-radius:6px;font-size:15px;margin:4px 0;}
+.favrow .fdel{border:none;background:#fde8e8;color:#d1242f;border-radius:6px;padding:3px 9px;cursor:pointer;font-size:13px;flex:none;}
+/* 分账记账 */
+.acct-box{background:#fff;border:1px solid #d7e8e8;border-radius:10px;padding:12px 14px;margin:12px 0;}
+.acct-h{font-weight:700;color:#0e8a8a;margin-bottom:8px;}
+.acct-cfg{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:14px;}
+.acct-cfg label{white-space:nowrap;}
+.acct-cfg input{width:90px;padding:5px 8px;border:1px solid #9cd0d0;border-radius:6px;font-size:14px;margin-left:4px;}
+.acct-form input,.acct-form select{padding:8px 10px;border:1px solid #9cd0d0;border-radius:6px;font-size:15px;}
+.acct-form>input{width:100%;margin:4px 0;}
+.acct-form-row{display:flex;gap:8px;margin:4px 0;}
+.acct-form-row input{flex:1;min-width:0;}
+.acct-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0;}
+.ac-card{background:#fff;border:1px solid #d7e8e8;border-radius:10px;padding:10px 12px;}
+.ac-c-t{font-size:13px;color:#5a7470;}
+.ac-c-big{font-size:20px;font-weight:800;color:#0e8a8a;margin:2px 0;}
+.ac-c-big.neg{color:#d1242f;}
+.ac-c-sub{font-size:12px;color:#5a7470;}
+.acct-list{margin-top:8px;}
+.ac-item{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #d7e8e8;border-left:4px solid #0e8a8a;border-radius:8px;padding:8px 12px;margin:6px 0;}
+.ac-item.ac-A{border-left-color:#e08a00;} .ac-item.ac-B{border-left-color:#8a5ad0;}
+.ac-it-main{flex:1;min-width:0;} .ac-it-desc{font-weight:600;} .ac-it-meta{display:block;font-size:12px;color:#5a7470;}
+.ac-it-amt{font-weight:700;color:#13303a;flex:none;}
+/* iPad 触屏大字（电脑端不受影响）*/
+@media (pointer:coarse) and (min-width:768px){
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+  body{font-size:32px;line-height:1.9;}
+  main{width:90%;max-width:none;margin:0 auto;padding:16px 0 72px;}
+  header{padding:12px 16px 0;}
+  header h1{font-size:32px;} header .sub{font-size:24px;}
+  .tabs button{font-size:30px;padding:14px 24px;}
+  .util{font-size:24px;padding:12px 20px;}
+  .tipbox{font-size:27px;}
+  .grp-h{font-size:30px;}
+  .prow .pen{font-size:31px;}
+  .prow .pzh{font-size:28px;}
+  .thai .prow .pen{font-size:34px;}
+  .spk{font-size:24px;padding:8px 18px;}
+  .fav{font-size:34px;}
+  .hint{font-size:24px;}
+  .favadd input,.favrow{font-size:29px;}
+  .acct-h{font-size:28px;} .acct-cfg{font-size:25px;} .acct-cfg input{width:150px;font-size:25px;}
+  .acct-form input,.acct-form select{font-size:27px;}
+  .ac-c-t{font-size:22px;} .ac-c-big{font-size:33px;} .ac-c-sub{font-size:21px;}
+  .ac-it-desc{font-size:27px;} .ac-it-meta{font-size:21px;} .ac-it-amt{font-size:27px;}
+}
+@media(max-width:640px){main{padding:16px 8px 60px;}}
 </style>
-</head>
-<body>
-
-<header>
-  <h1>🏝️ 普吉岛行程</h1>
-  <div class="sub" id="headSub">11/28–12/6 · 4人 · 皇帝岛/大象/丛林飞跃…</div>
-</header>
-
-<main>
-  <!-- ============ 行程 ============ -->
-  <section id="view-days" class="view"></section>
-
-  <!-- ============ 统计 ============ -->
-  <section id="view-stats" class="view">
-    <div class="card">
-      <div class="stat-grid">
-        <div class="stat"><div class="num gold" id="stSpent">¥0</div><div class="sub" id="stSpentB">≈฿0</div><div class="lbl">已花(4人合计)</div></div>
-        <div class="stat"><div class="num g" id="stBudget">¥0</div><div class="sub" id="stBudgetB">≈฿0</div><div class="lbl">总预算(4人)</div></div>
-        <div class="stat"><div class="num" id="stLeft">¥0</div><div class="sub" id="stLeftB">≈฿0</div><div class="lbl">剩余可支配(4人)</div></div>
-      </div>
-      <div class="bar"><div id="spendBar" style="width:0%"></div></div>
-      <div class="hint" id="spendHint"></div>
-      <div class="hint" id="perPersonHint" style="margin-top:4px; color:var(--accent2)"></div>
-    </div>
-    <div class="card">
-      <h2>📅 每日花费（计划 vs 实际）</h2>
-      <table class="tbl"><thead><tr><th class="nm">日期</th><th>计划(4人)</th><th>实际(4人)</th><th>结余</th></tr></thead><tbody id="dayTbody"></tbody></table>
-    </div>
-  </section>
-
-  <!-- ============ 计划 ============ -->
-  <section id="view-plan" class="view"></section>
-
-  <!-- ============ 备忘 ============ -->
-  <section id="view-notes" class="view active">
-    <div class="card">
-      <h2>📌 注意事项 / 待办 <span id="notesCount" class="mini" style="margin-left:auto"></span></h2>
-      <div class="hint" style="margin-top:0">按天分组的预订事项 + 出发前准备。点左侧圆圈打勾表示已完成，可自行增删。</div>
-      <label style="margin-top:12px">添加事项到</label>
-      <select id="noteGroup"></select>
-      <div class="addexp" style="margin-top:8px">
-        <input class="note" id="noteInput" placeholder="事项内容，如：某某酒店提前预约…">
-        <button id="noteAdd" type="button">添加</button>
-      </div>
-      <div id="notesList"></div>
-    </div>
-  </section>
-
-  <!-- ============ 设置 ============ -->
-  <section id="view-set" class="view">
-    <div class="card">
-      <h2>⚙️ 设置</h2>
-      <div class="row">
-        <div><label>人数</label><input type="number" inputmode="numeric" id="cfgPeople" placeholder="4"></div>
-        <div><label>人均可支配预算（不含机票）</label><input type="number" inputmode="decimal" id="cfgBudget" placeholder="4500"></div>
-      </div>
-      <div class="hint" id="totalBudgetHint" style="color:var(--accent2)"></div>
-      <div class="row">
-        <div><label>统计基准货币</label><select id="cfgCur"><option value="¥">¥ 人民币</option><option value="฿">฿ 泰铢</option></select></div>
-        <div><label>汇率（多少泰铢 = 1 元）</label><input type="number" inputmode="decimal" id="cfgRate" placeholder="5"></div>
-      </div>
-      <div class="hint">记账时可逐笔选 ¥ 或 ฿ 混合记录，App 按此汇率统一换算成基准货币做统计；4 人合计金额记账。</div>
-      <button class="btn" id="saveCfg" type="button">保存</button>
-    </div>
-    <div class="card">
-      <h2>💾 数据</h2>
-      <div class="hint" id="backupInfo" style="margin-top:0"></div>
-      <button class="btn ghost" id="exportBtn" type="button">⬇️ 导出备份 (JSON)</button>
-      <button class="btn ghost" id="importBtn" type="button">⬆️ 导入备份</button>
-      <input type="file" id="importFile" accept="application/json" style="display:none">
-      <button class="btn ghost" id="resetBtn" type="button" style="color:var(--danger)">↩️ 恢复默认行程（保留你的记账）</button>
-      <button class="btn ghost" id="clearBtn" type="button" style="color:var(--danger)">🗑️ 全部重置</button>
-    </div>
-  </section>
-</main>
-
-<nav class="tabbar">
-  <button data-view="notes" class="active"><span class="ico">📌</span>备忘</button>
-  <button data-view="plan"><span class="ico">📋</span>计划</button>
-  <button data-view="days"><span class="ico">🗺️</span>行程</button>
-  <button data-view="stats"><span class="ico">📊</span>统计</button>
-  <button data-view="set"><span class="ico">⚙️</span>设置</button>
-</nav>
-
-<div class="toast" id="toast"></div>
-
-
+</head><body><header><h1>🏝️ 普吉岛旅游英语速查手册</h1><div class='sub'>按场景查 · 点 🔊 听发音 · ☆ 收藏常用句 · 区分「你说 / 你听到」</div><div style='margin-top:8px'><button class='util' onclick="(function(){var o={};for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k.indexOf('TRIP::')===0)o[k]=localStorage.getItem(k);}var b=new Blob([JSON.stringify(o)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='普吉旅游收藏备份.json';a.click();})()">💾 导出收藏</button></div><div class='tabs'><button onclick='showTab(0)'>✈️ 机场 &amp; 入境</button><button onclick='showTab(1)'>🚕 交通 · 打车</button><button onclick='showTab(2)'>🏨 酒店</button><button onclick='showTab(3)'>🍽️ 餐厅 · 点餐</button><button onclick='showTab(4)'>🛍️ 购物 &amp; 砍价</button><button onclick='showTab(5)'>🏝️ 出海 &amp; 景点</button><button onclick='showTab(6)'>💆 按摩 &amp; 海滩</button><button onclick='showTab(7)'>🆘 应急 &amp; 求助</button><button onclick='showTab(8)'>🇹🇭 泰语必备</button><button class='fav' style="color:inherit" onclick='showTab(9)'>⭐ 收藏夹</button><button onclick='showTab(10)'>💰 旅行记账</button></div></header><main><section class='panel'><div class='tipbox'><b>💡 贴士：</b>入境可能被要求出示返程机票和酒店订单，提前截图备好。落地航站楼可买 AIS / True 流量卡。</div><div class='grp-h'>🗣️ 你可以说</div><div class="prow"><button class="fav" data-fid="t::I&#x27;m here on holiday." data-en="I&#x27;m here on holiday." data-zh="我是来度假的。" title="收藏">☆</button><button class="spk" data-t="I&#x27;m here on holiday.">🔊</button><div class="pc"><span class="pen">I&#x27;m here on holiday.</span><span class="pzh">我是来度假的。</span></div></div><div class="prow"><button class="fav" data-fid="t::I&#x27;ll be staying for seven days." data-en="I&#x27;ll be staying for seven days." data-zh="我会待七天。" title="收藏">☆</button><button class="spk" data-t="I&#x27;ll be staying for seven days.">🔊</button><div class="pc"><span class="pen">I&#x27;ll be staying for seven days.</span><span class="pzh">我会待七天。</span></div></div><div class="prow"><button class="fav" data-fid="t::I&#x27;m staying at a hotel in Patong." data-en="I&#x27;m staying at a hotel in Patong." data-zh="我住在芭东的一家酒店。" title="收藏">☆</button><button class="spk" data-t="I&#x27;m staying at a hotel in Patong.">🔊</button><div class="pc"><span class="pen">I&#x27;m staying at a hotel in Patong.</span><span class="pzh">我住在芭东的一家酒店。</span></div></div><div class="prow"><button class="fav" data-fid="t::Where is the baggage claim?" data-en="Where is the baggage claim?" data-zh="行李提取处在哪里？" title="收藏">☆</button><button class="spk" data-t="Where is the baggage claim?">🔊</button><div class="pc"><span class="pen">Where is the baggage claim?</span><span class="pzh">行李提取处在哪里？</span></div></div><div class="prow"><button class="fav" data-fid="t::Where can I get a taxi or Grab?" data-en="Where can I get a taxi or Grab?" data-zh="哪里可以打车或叫 Grab？" title="收藏">☆</button><button class="spk" data-t="Where can I get a taxi or Grab?">🔊</button><div class="pc"><span class="pen">Where can I get a taxi or Grab?</span><span class="pzh">哪里可以打车或叫 Grab？</span></div></div><div class="prow"><button class="fav" data-fid="t::I&#x27;d like a SIM card with data, please." data-en="I&#x27;d like a SIM card with data, please." data-zh="我想要一张有流量的电话卡。" title="收藏">☆</button><button class="spk" data-t="I&#x27;d like a SIM card with data, please.">🔊</button><div class="pc"><span class="pen">I&#x27;d like a SIM card with data, please.</span><span class="pzh">我想要一张有流量的电话卡。</span></div></div><div class="prow"><button class="fav" data-fid="t::Where is the ATM?" data-en="Where is the ATM?" data-zh="取款机在哪里？" title="收藏">☆</button><button class="spk" data-t="Where is the ATM?">🔊</button><div class="pc"><span class="pen">Where is the ATM?</span><span class="pzh">取款机在哪里？</span></div></div><div class='grp-h hear'>👂 你可能听到（练听力）</div><div class="prow"><button class="fav" data-fid="t::What&#x27;s the purpose of your visit?" data-en="What&#x27;s the purpose of your visit?" data-zh="你此行的目的是什么？" title="收藏">☆</button><button class="spk" data-t="What&#x27;s the purpose of your visit?">🔊</button><div class="pc"><span class="pen">What&#x27;s the purpose of your visit?</span><span class="pzh">你此行的目的是什么？</span></div></div><div class="prow"><button class="fav" data-fid="t::How long will you stay?" data-en="How long will you stay?" data-zh="你会待多久？" title="收藏">☆</button><button class="spk" data-t="How long will you stay?">🔊</button><div class="pc"><span class="pen">How long will you stay?</span><span class="pzh">你会待多久？</span></div></div><div class="prow"><button class="fav" data-fid="t::Where are you staying?" data-en="Where are you staying?" data-zh="你住在哪里？" title="收藏">☆</button><button class="spk" data-t="Where are you staying?">🔊</button><div class="pc"><span class="pen">Where are you staying?</span><span class="pzh">你住在哪里？</span></div></div><div class="prow"><button class="fav" data-fid="t::Please look at the camera." data-en="Please look at the camera." data-zh="请看镜头。" title="收藏">☆</button><button class="spk" data-t="Please look at the camera.">🔊</button><div class="pc"><span class="pen">Please look at the camera.</span><span class="pzh">请看镜头。</span></div></div><div class="prow"><button class="fav" data-fid="t::Do you have a return ticket?" data-en="Do you have a return ticket?" data-zh="你有返程机票吗？" title="收藏">☆</button><button class="spk" data-t="Do you have a return ticket?">🔊</button><div class="pc"><span class="pen">Do you have a return ticket?</span><span class="pzh">你有返程机票吗？</span></div></div></section><section class='panel'><div class='tipbox'><b>💡 贴士：</b>tuk-tuk 突突车基本不打表、要砍价；强烈建议装 Grab / Bolt 打车 App，价格透明。上车前先谈好价钱。</div><div class='grp-h'>🗣️ 你可以说</div><div class="prow"><button class="fav" data-fid="t::How much to Patong Beach?" data-en="How much to Patong Beach?" data-zh="到芭东海滩多少钱？" title="收藏">☆</button><button class="spk" data-t="How much to Patong Beach?">🔊</button><div class="pc"><span class="pen">How much to Patong Beach?</span><span class="pzh">到芭东海滩多少钱？</span></div></div><div class="prow"><button class="fav" data-fid="t::Can you use the meter?" data-en="Can you use the meter?" data-zh="能打表吗？" title="收藏">☆</button><button class="spk" data-t="Can you use the meter?">🔊</button><div class="pc"><span class="pen">Can you use the meter?</span><span class="pzh">能打表吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::That&#x27;s too expensive. Can you lower it?" data-en="That&#x27;s too expensive. Can you lower it?" data-zh="太贵了，能便宜点吗？" title="收藏">☆</button><button class="spk" data-t="That&#x27;s too expensive. Can you lower it?">🔊</button><div class="pc"><span class="pen">That&#x27;s too expensive. Can you lower it?</span><span class="pzh">太贵了，能便宜点吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::Can you do two hundred baht?" data-en="Can you do two hundred baht?" data-zh="200 铢行吗？" title="收藏">☆</button><button class="spk" data-t="Can you do two hundred baht?">🔊</button><div class="pc"><span class="pen">Can you do two hundred baht?</span><span class="pzh">200 铢行吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::Please take me to this address." data-en="Please take me to this address." data-zh="请送我到这个地址。（给他看手机）" title="收藏">☆</button><button class="spk" data-t="Please take me to this address.">🔊</button><div class="pc"><span class="pen">Please take me to this address.</span><span class="pzh">请送我到这个地址。（给他看手机）</span></div></div><div class="prow"><button class="fav" data-fid="t::Please stop here." data-en="Please stop here." data-zh="在这里停就行。" title="收藏">☆</button><button class="spk" data-t="Please stop here.">🔊</button><div class="pc"><span class="pen">Please stop here.</span><span class="pzh">在这里停就行。</span></div></div><div class="prow"><button class="fav" data-fid="t::Can you wait for ten minutes?" data-en="Can you wait for ten minutes?" data-zh="能等我十分钟吗？" title="收藏">☆</button><button class="spk" data-t="Can you wait for ten minutes?">🔊</button><div class="pc"><span class="pen">Can you wait for ten minutes?</span><span class="pzh">能等我十分钟吗？</span></div></div><div class='grp-h hear'>👂 你可能听到（练听力）</div><div class="prow"><button class="fav" data-fid="t::Where are you going?" data-en="Where are you going?" data-zh="你要去哪里？" title="收藏">☆</button><button class="spk" data-t="Where are you going?">🔊</button><div class="pc"><span class="pen">Where are you going?</span><span class="pzh">你要去哪里？</span></div></div><div class="prow"><button class="fav" data-fid="t::The meter is broken." data-en="The meter is broken." data-zh="表坏了。（常见说辞，可坚持或换一辆）" title="收藏">☆</button><button class="spk" data-t="The meter is broken.">🔊</button><div class="pc"><span class="pen">The meter is broken.</span><span class="pzh">表坏了。（常见说辞，可坚持或换一辆）</span></div></div><div class="prow"><button class="fav" data-fid="t::Fixed price, four hundred baht." data-en="Fixed price, four hundred baht." data-zh="固定价，400 铢。" title="收藏">☆</button><button class="spk" data-t="Fixed price, four hundred baht.">🔊</button><div class="pc"><span class="pen">Fixed price, four hundred baht.</span><span class="pzh">固定价，400 铢。</span></div></div><div class="prow"><button class="fav" data-fid="t::Get in, get in." data-en="Get in, get in." data-zh="上车上车。" title="收藏">☆</button><button class="spk" data-t="Get in, get in.">🔊</button><div class="pc"><span class="pen">Get in, get in.</span><span class="pzh">上车上车。</span></div></div></section><section class='panel'><div class='tipbox'><b>💡 贴士：</b>可能收现金押金或刷卡预授权。退房前查一下迷你吧有没有被计费。</div><div class='grp-h'>🗣️ 你可以说</div><div class="prow"><button class="fav" data-fid="t::I have a reservation under Yue." data-en="I have a reservation under Yue." data-zh="我用 Yue 这个名字订了房。" title="收藏">☆</button><button class="spk" data-t="I have a reservation under Yue.">🔊</button><div class="pc"><span class="pen">I have a reservation under Yue.</span><span class="pzh">我用 Yue 这个名字订了房。</span></div></div><div class="prow"><button class="fav" data-fid="t::Can I check in early?" data-en="Can I check in early?" data-zh="能提前入住吗？" title="收藏">☆</button><button class="spk" data-t="Can I check in early?">🔊</button><div class="pc"><span class="pen">Can I check in early?</span><span class="pzh">能提前入住吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::Can I leave my luggage here?" data-en="Can I leave my luggage here?" data-zh="能把行李寄存在这里吗？" title="收藏">☆</button><button class="spk" data-t="Can I leave my luggage here?">🔊</button><div class="pc"><span class="pen">Can I leave my luggage here?</span><span class="pzh">能把行李寄存在这里吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::The air conditioner isn&#x27;t working." data-en="The air conditioner isn&#x27;t working." data-zh="空调坏了。" title="收藏">☆</button><button class="spk" data-t="The air conditioner isn&#x27;t working.">🔊</button><div class="pc"><span class="pen">The air conditioner isn&#x27;t working.</span><span class="pzh">空调坏了。</span></div></div><div class="prow"><button class="fav" data-fid="t::Could I get some extra towels?" data-en="Could I get some extra towels?" data-zh="能多给我几条毛巾吗？" title="收藏">☆</button><button class="spk" data-t="Could I get some extra towels?">🔊</button><div class="pc"><span class="pen">Could I get some extra towels?</span><span class="pzh">能多给我几条毛巾吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::Is breakfast included?" data-en="Is breakfast included?" data-zh="含早餐吗？" title="收藏">☆</button><button class="spk" data-t="Is breakfast included?">🔊</button><div class="pc"><span class="pen">Is breakfast included?</span><span class="pzh">含早餐吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::Can I have a late checkout?" data-en="Can I have a late checkout?" data-zh="能晚一点退房吗？" title="收藏">☆</button><button class="spk" data-t="Can I have a late checkout?">🔊</button><div class="pc"><span class="pen">Can I have a late checkout?</span><span class="pzh">能晚一点退房吗？</span></div></div><div class='grp-h hear'>👂 你可能听到（练听力）</div><div class="prow"><button class="fav" data-fid="t::May I see your passport?" data-en="May I see your passport?" data-zh="可以看一下你的护照吗？" title="收藏">☆</button><button class="spk" data-t="May I see your passport?">🔊</button><div class="pc"><span class="pen">May I see your passport?</span><span class="pzh">可以看一下你的护照吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::Here&#x27;s your key card." data-en="Here&#x27;s your key card." data-zh="这是你的房卡。" title="收藏">☆</button><button class="spk" data-t="Here&#x27;s your key card.">🔊</button><div class="pc"><span class="pen">Here&#x27;s your key card.</span><span class="pzh">这是你的房卡。</span></div></div><div class="prow"><button class="fav" data-fid="t::Breakfast is from seven to ten." data-en="Breakfast is from seven to ten." data-zh="早餐时间是 7 点到 10 点。" title="收藏">☆</button><button class="spk" data-t="Breakfast is from seven to ten.">🔊</button><div class="pc"><span class="pen">Breakfast is from seven to ten.</span><span class="pzh">早餐时间是 7 点到 10 点。</span></div></div><div class="prow"><button class="fav" data-fid="t::Checkout is at eleven." data-en="Checkout is at eleven." data-zh="退房时间是 11 点。" title="收藏">☆</button><button class="spk" data-t="Checkout is at eleven.">🔊</button><div class="pc"><span class="pen">Checkout is at eleven.</span><span class="pzh">退房时间是 11 点。</span></div></div></section><section class='panel'><div class='tipbox'><b>💡 贴士：</b>泰餐默认偏辣，务必说清辣度！「Not spicy, please」或泰语「mai phet（不辣）」很好用。</div><div class='grp-h'>🗣️ 你可以说</div><div class="prow"><button class="fav" data-fid="t::A table for two, please." data-en="A table for two, please." data-zh="两位，谢谢。" title="收藏">☆</button><button class="spk" data-t="A table for two, please.">🔊</button><div class="pc"><span class="pen">A table for two, please.</span><span class="pzh">两位，谢谢。</span></div></div><div class="prow"><button class="fav" data-fid="t::Not spicy, please." data-en="Not spicy, please." data-zh="请不要辣。（最重要的一句）" title="收藏">☆</button><button class="spk" data-t="Not spicy, please.">🔊</button><div class="pc"><span class="pen">Not spicy, please.</span><span class="pzh">请不要辣。（最重要的一句）</span></div></div><div class="prow"><button class="fav" data-fid="t::A little spicy is okay." data-en="A little spicy is okay." data-zh="微辣可以。" title="收藏">☆</button><button class="spk" data-t="A little spicy is okay.">🔊</button><div class="pc"><span class="pen">A little spicy is okay.</span><span class="pzh">微辣可以。</span></div></div><div class="prow"><button class="fav" data-fid="t::I&#x27;m allergic to seafood." data-en="I&#x27;m allergic to seafood." data-zh="我对海鲜过敏。" title="收藏">☆</button><button class="spk" data-t="I&#x27;m allergic to seafood.">🔊</button><div class="pc"><span class="pen">I&#x27;m allergic to seafood.</span><span class="pzh">我对海鲜过敏。</span></div></div><div class="prow"><button class="fav" data-fid="t::What do you recommend?" data-en="What do you recommend?" data-zh="你有什么推荐？" title="收藏">☆</button><button class="spk" data-t="What do you recommend?">🔊</button><div class="pc"><span class="pen">What do you recommend?</span><span class="pzh">你有什么推荐？</span></div></div><div class="prow"><button class="fav" data-fid="t::Is this very spicy?" data-en="Is this very spicy?" data-zh="这个很辣吗？" title="收藏">☆</button><button class="spk" data-t="Is this very spicy?">🔊</button><div class="pc"><span class="pen">Is this very spicy?</span><span class="pzh">这个很辣吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::Water, please. No ice." data-en="Water, please. No ice." data-zh="请给我水，不要冰。" title="收藏">☆</button><button class="spk" data-t="Water, please. No ice.">🔊</button><div class="pc"><span class="pen">Water, please. No ice.</span><span class="pzh">请给我水，不要冰。</span></div></div><div class="prow"><button class="fav" data-fid="t::Can I get the bill, please?" data-en="Can I get the bill, please?" data-zh="可以买单吗？" title="收藏">☆</button><button class="spk" data-t="Can I get the bill, please?">🔊</button><div class="pc"><span class="pen">Can I get the bill, please?</span><span class="pzh">可以买单吗？</span></div></div><div class='grp-h hear'>👂 你可能听到（练听力）</div><div class="prow"><button class="fav" data-fid="t::How spicy would you like?" data-en="How spicy would you like?" data-zh="要多辣？" title="收藏">☆</button><button class="spk" data-t="How spicy would you like?">🔊</button><div class="pc"><span class="pen">How spicy would you like?</span><span class="pzh">要多辣？</span></div></div><div class="prow"><button class="fav" data-fid="t::For here or to go?" data-en="For here or to go?" data-zh="堂食还是打包？" title="收藏">☆</button><button class="spk" data-t="For here or to go?">🔊</button><div class="pc"><span class="pen">For here or to go?</span><span class="pzh">堂食还是打包？</span></div></div><div class="prow"><button class="fav" data-fid="t::Anything to drink?" data-en="Anything to drink?" data-zh="喝点什么吗？" title="收藏">☆</button><button class="spk" data-t="Anything to drink?">🔊</button><div class="pc"><span class="pen">Anything to drink?</span><span class="pzh">喝点什么吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::Enjoy your meal." data-en="Enjoy your meal." data-zh="请慢用。" title="收藏">☆</button><button class="spk" data-t="Enjoy your meal.">🔊</button><div class="pc"><span class="pen">Enjoy your meal.</span><span class="pzh">请慢用。</span></div></div></section><section class='panel'><div class='tipbox'><b>💡 贴士：</b>夜市、步行街砍价是常态，通常从对折开始谈；装作走开往往会被叫住降价。商场/超市是明码标价，不砍。</div><div class='grp-h'>🗣️ 你可以说</div><div class="prow"><button class="fav" data-fid="t::How much is this?" data-en="How much is this?" data-zh="这个多少钱？" title="收藏">☆</button><button class="spk" data-t="How much is this?">🔊</button><div class="pc"><span class="pen">How much is this?</span><span class="pzh">这个多少钱？</span></div></div><div class="prow"><button class="fav" data-fid="t::That&#x27;s too expensive." data-en="That&#x27;s too expensive." data-zh="太贵了。" title="收藏">☆</button><button class="spk" data-t="That&#x27;s too expensive.">🔊</button><div class="pc"><span class="pen">That&#x27;s too expensive.</span><span class="pzh">太贵了。</span></div></div><div class="prow"><button class="fav" data-fid="t::Can you give me a discount?" data-en="Can you give me a discount?" data-zh="能给我打个折吗？" title="收藏">☆</button><button class="spk" data-t="Can you give me a discount?">🔊</button><div class="pc"><span class="pen">Can you give me a discount?</span><span class="pzh">能给我打个折吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::If I buy two, can it be cheaper?" data-en="If I buy two, can it be cheaper?" data-zh="买两个能便宜点吗？" title="收藏">☆</button><button class="spk" data-t="If I buy two, can it be cheaper?">🔊</button><div class="pc"><span class="pen">If I buy two, can it be cheaper?</span><span class="pzh">买两个能便宜点吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::I&#x27;ll think about it." data-en="I&#x27;ll think about it." data-zh="我再想想。（常能逼出低价）" title="收藏">☆</button><button class="spk" data-t="I&#x27;ll think about it.">🔊</button><div class="pc"><span class="pen">I&#x27;ll think about it.</span><span class="pzh">我再想想。（常能逼出低价）</span></div></div><div class="prow"><button class="fav" data-fid="t::Okay, deal." data-en="Okay, deal." data-zh="好，成交。" title="收藏">☆</button><button class="spk" data-t="Okay, deal.">🔊</button><div class="pc"><span class="pen">Okay, deal.</span><span class="pzh">好，成交。</span></div></div><div class="prow"><button class="fav" data-fid="t::Do you take card?" data-en="Do you take card?" data-zh="可以刷卡吗？" title="收藏">☆</button><button class="spk" data-t="Do you take card?">🔊</button><div class="pc"><span class="pen">Do you take card?</span><span class="pzh">可以刷卡吗？</span></div></div><div class='grp-h hear'>👂 你可能听到（练听力）</div><div class="prow"><button class="fav" data-fid="t::Special price for you." data-en="Special price for you." data-zh="给你个特价。" title="收藏">☆</button><button class="spk" data-t="Special price for you.">🔊</button><div class="pc"><span class="pen">Special price for you.</span><span class="pzh">给你个特价。</span></div></div><div class="prow"><button class="fav" data-fid="t::How much do you want to pay?" data-en="How much do you want to pay?" data-zh="你想出多少钱？" title="收藏">☆</button><button class="spk" data-t="How much do you want to pay?">🔊</button><div class="pc"><span class="pen">How much do you want to pay?</span><span class="pzh">你想出多少钱？</span></div></div><div class="prow"><button class="fav" data-fid="t::This is my last price." data-en="This is my last price." data-zh="这是我的最低价了。" title="收藏">☆</button><button class="spk" data-t="This is my last price.">🔊</button><div class="pc"><span class="pen">This is my last price.</span><span class="pzh">这是我的最低价了。</span></div></div></section><section class='panel'><div class='tipbox'><b>💡 贴士：</b>皮皮岛、斯米兰群岛是热门，建议提前 1–2 天订。问清是否含国家公园门票、午餐和酒店接送。</div><div class='grp-h'>🗣️ 你可以说</div><div class="prow"><button class="fav" data-fid="t::I&#x27;d like to book an island tour." data-en="I&#x27;d like to book an island tour." data-zh="我想订一个海岛一日游。" title="收藏">☆</button><button class="spk" data-t="I&#x27;d like to book an island tour.">🔊</button><div class="pc"><span class="pen">I&#x27;d like to book an island tour.</span><span class="pzh">我想订一个海岛一日游。</span></div></div><div class="prow"><button class="fav" data-fid="t::Does it include lunch and hotel pickup?" data-en="Does it include lunch and hotel pickup?" data-zh="含午餐和酒店接送吗？" title="收藏">☆</button><button class="spk" data-t="Does it include lunch and hotel pickup?">🔊</button><div class="pc"><span class="pen">Does it include lunch and hotel pickup?</span><span class="pzh">含午餐和酒店接送吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::What time is the pickup?" data-en="What time is the pickup?" data-zh="几点来接我？" title="收藏">☆</button><button class="spk" data-t="What time is the pickup?">🔊</button><div class="pc"><span class="pen">What time is the pickup?</span><span class="pzh">几点来接我？</span></div></div><div class="prow"><button class="fav" data-fid="t::Is snorkeling gear included?" data-en="Is snorkeling gear included?" data-zh="含浮潜装备吗？" title="收藏">☆</button><button class="spk" data-t="Is snorkeling gear included?">🔊</button><div class="pc"><span class="pen">Is snorkeling gear included?</span><span class="pzh">含浮潜装备吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::I can&#x27;t swim very well." data-en="I can&#x27;t swim very well." data-zh="我不太会游泳。" title="收藏">☆</button><button class="spk" data-t="I can&#x27;t swim very well.">🔊</button><div class="pc"><span class="pen">I can&#x27;t swim very well.</span><span class="pzh">我不太会游泳。</span></div></div><div class="prow"><button class="fav" data-fid="t::Two adults, please." data-en="Two adults, please." data-zh="两个大人，谢谢。" title="收藏">☆</button><button class="spk" data-t="Two adults, please.">🔊</button><div class="pc"><span class="pen">Two adults, please.</span><span class="pzh">两个大人，谢谢。</span></div></div><div class="prow"><button class="fav" data-fid="t::How long is the boat ride?" data-en="How long is the boat ride?" data-zh="坐船要多久？" title="收藏">☆</button><button class="spk" data-t="How long is the boat ride?">🔊</button><div class="pc"><span class="pen">How long is the boat ride?</span><span class="pzh">坐船要多久？</span></div></div><div class='grp-h hear'>👂 你可能听到（练听力）</div><div class="prow"><button class="fav" data-fid="t::Pickup is at seven thirty in the morning." data-en="Pickup is at seven thirty in the morning." data-zh="早上 7:30 来接。" title="收藏">☆</button><button class="spk" data-t="Pickup is at seven thirty in the morning.">🔊</button><div class="pc"><span class="pen">Pickup is at seven thirty in the morning.</span><span class="pzh">早上 7:30 来接。</span></div></div><div class="prow"><button class="fav" data-fid="t::Please wait in the lobby." data-en="Please wait in the lobby." data-zh="请在大堂等候。" title="收藏">☆</button><button class="spk" data-t="Please wait in the lobby.">🔊</button><div class="pc"><span class="pen">Please wait in the lobby.</span><span class="pzh">请在大堂等候。</span></div></div><div class="prow"><button class="fav" data-fid="t::Don&#x27;t forget your sunscreen." data-en="Don&#x27;t forget your sunscreen." data-zh="别忘了防晒霜。" title="收藏">☆</button><button class="spk" data-t="Don&#x27;t forget your sunscreen.">🔊</button><div class="pc"><span class="pen">Don&#x27;t forget your sunscreen.</span><span class="pzh">别忘了防晒霜。</span></div></div><div class="prow"><button class="fav" data-fid="t::Please wear your life jacket." data-en="Please wear your life jacket." data-zh="请穿好救生衣。" title="收藏">☆</button><button class="spk" data-t="Please wear your life jacket.">🔊</button><div class="pc"><span class="pen">Please wear your life jacket.</span><span class="pzh">请穿好救生衣。</span></div></div></section><section class='panel'><div class='tipbox'><b>💡 贴士：</b>泰式按摩给 20–100 铢小费是惯例。海滩租伞租椅先谈好价钱和时长。</div><div class='grp-h'>🗣️ 你可以说</div><div class="prow"><button class="fav" data-fid="t::How much for a one-hour Thai massage?" data-en="How much for a one-hour Thai massage?" data-zh="泰式按摩一小时多少钱？" title="收藏">☆</button><button class="spk" data-t="How much for a one-hour Thai massage?">🔊</button><div class="pc"><span class="pen">How much for a one-hour Thai massage?</span><span class="pzh">泰式按摩一小时多少钱？</span></div></div><div class="prow"><button class="fav" data-fid="t::Gentle, please." data-en="Gentle, please." data-zh="请轻一点。" title="收藏">☆</button><button class="spk" data-t="Gentle, please.">🔊</button><div class="pc"><span class="pen">Gentle, please.</span><span class="pzh">请轻一点。</span></div></div><div class="prow"><button class="fav" data-fid="t::Stronger, please." data-en="Stronger, please." data-zh="请重一点。" title="收藏">☆</button><button class="spk" data-t="Stronger, please.">🔊</button><div class="pc"><span class="pen">Stronger, please.</span><span class="pzh">请重一点。</span></div></div><div class="prow"><button class="fav" data-fid="t::That hurts a little." data-en="That hurts a little." data-zh="有点疼。" title="收藏">☆</button><button class="spk" data-t="That hurts a little.">🔊</button><div class="pc"><span class="pen">That hurts a little.</span><span class="pzh">有点疼。</span></div></div><div class="prow"><button class="fav" data-fid="t::How much to rent an umbrella and a chair?" data-en="How much to rent an umbrella and a chair?" data-zh="租一把伞和一张椅子多少钱？" title="收藏">☆</button><button class="spk" data-t="How much to rent an umbrella and a chair?">🔊</button><div class="pc"><span class="pen">How much to rent an umbrella and a chair?</span><span class="pzh">租一把伞和一张椅子多少钱？</span></div></div><div class="prow"><button class="fav" data-fid="t::For the whole day?" data-en="For the whole day?" data-zh="是一整天吗？" title="收藏">☆</button><button class="spk" data-t="For the whole day?">🔊</button><div class="pc"><span class="pen">For the whole day?</span><span class="pzh">是一整天吗？</span></div></div><div class='grp-h hear'>👂 你可能听到（练听力）</div><div class="prow"><button class="fav" data-fid="t::Oil or Thai massage?" data-en="Oil or Thai massage?" data-zh="精油按摩还是泰式按摩？" title="收藏">☆</button><button class="spk" data-t="Oil or Thai massage?">🔊</button><div class="pc"><span class="pen">Oil or Thai massage?</span><span class="pzh">精油按摩还是泰式按摩？</span></div></div><div class="prow"><button class="fav" data-fid="t::Lie down, please." data-en="Lie down, please." data-zh="请躺下。" title="收藏">☆</button><button class="spk" data-t="Lie down, please.">🔊</button><div class="pc"><span class="pen">Lie down, please.</span><span class="pzh">请躺下。</span></div></div><div class="prow"><button class="fav" data-fid="t::Turn over, please." data-en="Turn over, please." data-zh="请翻个身。" title="收藏">☆</button><button class="spk" data-t="Turn over, please.">🔊</button><div class="pc"><span class="pen">Turn over, please.</span><span class="pzh">请翻个身。</span></div></div><div class="prow"><button class="fav" data-fid="t::Is the pressure okay?" data-en="Is the pressure okay?" data-zh="力度可以吗？" title="收藏">☆</button><button class="spk" data-t="Is the pressure okay?">🔊</button><div class="pc"><span class="pen">Is the pressure okay?</span><span class="pzh">力度可以吗？</span></div></div></section><section class='panel'><div class='tipbox'><b>💡 贴士：</b>泰国旅游警察热线 1155（讲英语）。普吉有国际医院（Bangkok Hospital Phuket）。记得备好旅游保险信息。</div><div class='grp-h'>🗣️ 你可以说</div><div class="prow"><button class="fav" data-fid="t::Can you help me?" data-en="Can you help me?" data-zh="你能帮我吗？" title="收藏">☆</button><button class="spk" data-t="Can you help me?">🔊</button><div class="pc"><span class="pen">Can you help me?</span><span class="pzh">你能帮我吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::Where is the nearest pharmacy?" data-en="Where is the nearest pharmacy?" data-zh="最近的药店在哪里？" title="收藏">☆</button><button class="spk" data-t="Where is the nearest pharmacy?">🔊</button><div class="pc"><span class="pen">Where is the nearest pharmacy?</span><span class="pzh">最近的药店在哪里？</span></div></div><div class="prow"><button class="fav" data-fid="t::I have a stomachache." data-en="I have a stomachache." data-zh="我肚子疼。" title="收藏">☆</button><button class="spk" data-t="I have a stomachache.">🔊</button><div class="pc"><span class="pen">I have a stomachache.</span><span class="pzh">我肚子疼。</span></div></div><div class="prow"><button class="fav" data-fid="t::I need medicine for diarrhea." data-en="I need medicine for diarrhea." data-zh="我需要治腹泻的药。" title="收藏">☆</button><button class="spk" data-t="I need medicine for diarrhea.">🔊</button><div class="pc"><span class="pen">I need medicine for diarrhea.</span><span class="pzh">我需要治腹泻的药。</span></div></div><div class="prow"><button class="fav" data-fid="t::I lost my phone." data-en="I lost my phone." data-zh="我把手机弄丢了。" title="收藏">☆</button><button class="spk" data-t="I lost my phone.">🔊</button><div class="pc"><span class="pen">I lost my phone.</span><span class="pzh">我把手机弄丢了。</span></div></div><div class="prow"><button class="fav" data-fid="t::Please call the police." data-en="Please call the police." data-zh="请帮我叫警察。" title="收藏">☆</button><button class="spk" data-t="Please call the police.">🔊</button><div class="pc"><span class="pen">Please call the police.</span><span class="pzh">请帮我叫警察。</span></div></div><div class="prow"><button class="fav" data-fid="t::I need to go to the hospital." data-en="I need to go to the hospital." data-zh="我需要去医院。" title="收藏">☆</button><button class="spk" data-t="I need to go to the hospital.">🔊</button><div class="pc"><span class="pen">I need to go to the hospital.</span><span class="pzh">我需要去医院。</span></div></div><div class="prow"><button class="fav" data-fid="t::Where is the restroom?" data-en="Where is the restroom?" data-zh="洗手间在哪里？" title="收藏">☆</button><button class="spk" data-t="Where is the restroom?">🔊</button><div class="pc"><span class="pen">Where is the restroom?</span><span class="pzh">洗手间在哪里？</span></div></div><div class='grp-h hear'>👂 你可能听到（练听力）</div><div class="prow"><button class="fav" data-fid="t::Are you okay?" data-en="Are you okay?" data-zh="你还好吗？" title="收藏">☆</button><button class="spk" data-t="Are you okay?">🔊</button><div class="pc"><span class="pen">Are you okay?</span><span class="pzh">你还好吗？</span></div></div><div class="prow"><button class="fav" data-fid="t::What happened?" data-en="What happened?" data-zh="发生什么事了？" title="收藏">☆</button><button class="spk" data-t="What happened?">🔊</button><div class="pc"><span class="pen">What happened?</span><span class="pzh">发生什么事了？</span></div></div><div class="prow"><button class="fav" data-fid="t::Do you have insurance?" data-en="Do you have insurance?" data-zh="你有保险吗？" title="收藏">☆</button><button class="spk" data-t="Do you have insurance?">🔊</button><div class="pc"><span class="pen">Do you have insurance?</span><span class="pzh">你有保险吗？</span></div></div></section><section class='panel thai'><div class='tipbox'><b>💡 贴士：</b>句尾加 kha（女）/ khap（男）更礼貌。全程用英语也完全没问题，这几句是加分项。泰语发音朗读按钮对泰语不准，故未提供。</div><div class="prow"><button class="fav" data-fid="th::Sawadee kha / khap" data-en="Sawadee kha / khap" data-zh="你好 / Hello" title="收藏">☆</button><div class="pc"><span class="pen">Sawadee kha / khap</span><span class="pzh">你好　（Hello）</span></div></div><div class="prow"><button class="fav" data-fid="th::Khop khun kha / khap" data-en="Khop khun kha / khap" data-zh="谢谢 / Thank you" title="收藏">☆</button><div class="pc"><span class="pen">Khop khun kha / khap</span><span class="pzh">谢谢　（Thank you）</span></div></div><div class="prow"><button class="fav" data-fid="th::Chai" data-en="Chai" data-zh="是 / 对 / Yes" title="收藏">☆</button><div class="pc"><span class="pen">Chai</span><span class="pzh">是 / 对　（Yes）</span></div></div><div class="prow"><button class="fav" data-fid="th::Mai" data-en="Mai" data-zh="不 / 不是 / No" title="收藏">☆</button><div class="pc"><span class="pen">Mai</span><span class="pzh">不 / 不是　（No）</span></div></div><div class="prow"><button class="fav" data-fid="th::Mai phet" data-en="Mai phet" data-zh="不辣 / Not spicy" title="收藏">☆</button><div class="pc"><span class="pen">Mai phet</span><span class="pzh">不辣　（Not spicy）</span></div></div><div class="prow"><button class="fav" data-fid="th::Tao rai?" data-en="Tao rai?" data-zh="多少钱？ / How much?" title="收藏">☆</button><div class="pc"><span class="pen">Tao rai?</span><span class="pzh">多少钱？　（How much?）</span></div></div><div class="prow"><button class="fav" data-fid="th::Phaeng pai" data-en="Phaeng pai" data-zh="太贵了 / Too expensive" title="收藏">☆</button><div class="pc"><span class="pen">Phaeng pai</span><span class="pzh">太贵了　（Too expensive）</span></div></div><div class="prow"><button class="fav" data-fid="th::Aroy" data-en="Aroy" data-zh="好吃 / Delicious" title="收藏">☆</button><div class="pc"><span class="pen">Aroy</span><span class="pzh">好吃　（Delicious）</span></div></div><div class="prow"><button class="fav" data-fid="th::Mai pen rai" data-en="Mai pen rai" data-zh="没关系 / 不客气 / No problem / You&#x27;re welcome" title="收藏">☆</button><div class="pc"><span class="pen">Mai pen rai</span><span class="pzh">没关系 / 不客气　（No problem / You&#x27;re welcome）</span></div></div><div class="prow"><button class="fav" data-fid="th::Khor thot" data-en="Khor thot" data-zh="对不起 / 借过 / Excuse me / Sorry" title="收藏">☆</button><div class="pc"><span class="pen">Khor thot</span><span class="pzh">对不起 / 借过　（Excuse me / Sorry）</span></div></div><div class="prow"><button class="fav" data-fid="th::Hong nam yu nai?" data-en="Hong nam yu nai?" data-zh="洗手间在哪？ / Where is the toilet?" title="收藏">☆</button><div class="pc"><span class="pen">Hong nam yu nai?</span><span class="pzh">洗手间在哪？　（Where is the toilet?）</span></div></div><div class="prow"><button class="fav" data-fid="th::Chuay duay!" data-en="Chuay duay!" data-zh="救命！/ 帮帮我！ / Help!" title="收藏">☆</button><div class="pc"><span class="pen">Chuay duay!</span><span class="pzh">救命！/ 帮帮我！　（Help!）</span></div></div></section><section class='panel'><p class='hint'>把你最可能用到的句子点 ☆ 收藏到这里，出行当天集中看、现场快速翻。也可以自定义添加。</p><div class='favadd'><b>➕ 自定义添加</b><input id='fav_en' placeholder='英文（你想记的句子）'><input id='fav_zh' placeholder='中文备注（可选）'><button class='util' onclick='addCustomFav()'>添加到收藏夹</button></div><div id='favlist'></div></section><section class='panel'><div class='tipbox'><b>💰 旅行记账说明：</b>只记这 <b>¥20000 公款</b>一本账。每笔花销可记<b>人民币或泰铢</b>，按固定汇率折算累计。两对各 ฿3000（共 ฿6000）零花已从预算扣除、明细不记。记录只存本机，可在顶部「导出」备份。</div><div class='acct-box'><div class='acct-h'>⚙️ 设置（可改）</div><div class='acct-cfg'><label>总预算 ¥<input id='ac_budget' type='number'></label><label>汇率 100฿=¥<input id='ac_rate' type='number' step='0.1'></label><label>换的泰铢现金 ฿<input id='ac_cash' type='number'></label><label>已发零花(不记账) ฿<input id='ac_allow' type='number'></label><button class='util' onclick='acctCfg()'>保存设置</button></div></div><div class='acct-sum' id='ac_sum'></div><div class='acct-box'><div class='acct-h'>➕ 记一笔公用开销</div><div class='acct-form'><input id='ac_date' type='date'><input id='ac_desc' placeholder='用途，如 午餐 / 打车 / 门票 / 酒店'><div class='acct-form-row'><input id='ac_amt' type='number' placeholder='金额'><select id='ac_cur'><option value='THB'>฿ 泰铢(现金)</option><option value='RMB'>¥ 人民币</option></select></div><button class='util' onclick='acctAdd()'>加入账单</button></div></div><div class='acct-list' id='ac_list'></div></section></main>
 <script>
-/* ================= 默认行程数据 ================= */
-const DEFAULT_DAYS=[
-  {date:'11/28',dow:'周六',title:'抵达 · 普吉镇',hotel:'普吉镇 贝萨瓦纳酒店 Besavana',budget:341,
-   routes:'机场 → 普吉镇贝萨瓦纳酒店：约32km，车40–50分钟\n酒店 → 老城/Lard Yai 夜市：约1.3km，步行18分钟 / 车5分钟（酒店在老城 Krabi 路）',
-   cb:{stay:181,food:100,fun:0,transport:40,other:20},
-   meals:{b:'（航班上/落地简餐）',l:'（航班上）',d:'巴拉巴拉（老街面店·火山排骨/脆皮猪肉）/ One Chun'},
-   plan:'14:40 成都天府 T1 起飞（3U3931）\n17:40 普吉国际机场落地，取行李、办电话卡/换钱\n19:00 Grab 前往普吉镇贝萨瓦纳酒店入住\n20:00 老城晚餐、随意夜逛'},
-  {date:'11/29',dow:'周日',title:'大象营 + 购物 + 老城夜市',hotel:'普吉镇 贝萨瓦纳酒店 Besavana',budget:861,
-   routes:'普吉镇 → 大象营(Paklok)：约20km，车35–40分钟(含接送)\n普吉镇 → Central 商场：约3km，车10分钟\n商场 → 老城夜市：约3km，车10分钟 / 步行30分钟',
-   cb:{stay:181,food:120,fun:500,transport:40,other:20},
-   meals:{b:'酒店早餐',l:'大象营含餐 / 回程简餐',d:'老城 Lard Yai 周日夜市小吃'},
-   plan:'08:30 大象营接送（不骑象观察型，Paklok，普吉镇出发约35分钟）\n喂象/观察/泥浴，约14:00送回\n下午 Central Phuket 商场逛街 + Big C/Lotus 超市囤手信\n傍晚 老城 walk + Lard Yai 周日夜市（Thalang 路 16:00–22:00）'},
-  {date:'11/30',dow:'周一',title:'皇帝岛跳岛一日游（浮潜）· 当天往返',hotel:'普吉镇 贝萨瓦纳酒店 Besavana',budget:791,
-   routes:'普吉镇 → 查龙码头：约12km，车20–25分钟\n查龙码头 → 皇帝岛：速度艇约40–50分钟（当天往返）',
-   cb:{stay:181,food:100,fun:450,transport:40,other:20},
-   meals:{b:'酒店早餐',l:'团餐 / 岛上简餐',d:'老城三选：Khai Waan（面店，位置待确认）/ 粥铺（64 music shop 旁·粥+排骨·17:00后）/ 老城小吃'},
-   plan:'上午 查龙码头 → 速度艇往皇帝岛(拉查岛)跳岛\n浮潜 / 白沙滩（可选深潜体验，4人）\n(可串珊瑚岛)\n下午 返回查龙 → 回普吉镇\n傍晚 普吉镇休息 / 老城随逛'},
-  {date:'12/1',dow:'周二',title:'搬入兰花温泉度假村 + 酒店休闲',hotel:'普吉岛兰花温泉度假酒店（卡伦 Karon）',budget:537,
-   routes:'普吉镇 → 兰花温泉度假村(卡伦 Luang Phor Chuan Rd)：约20km，车35–45分钟\n酒店 → 悬崖咖啡(卡伦观景台)：约3km，车10分钟',
-   cb:{stay:237,food:120,fun:60,transport:80,other:40},
-   meals:{b:'普吉镇酒店早餐（退房）',l:'Karon On the Hill（山景午餐/咖啡打卡）',d:'red chair（泰菜·炸排骨/芒果糯米饭）/ V Steaks Karon（冬阴功/辣蟹/炒面，434/14）'},
-   plan:'上午 普吉镇退房 → Grab 到 兰花温泉度假村(卡伦)入住\n下午 酒店泳池(3个) / SPA / 卡伦海滩 休闲\n傍晚（可选）悬崖咖啡 After Beach Bar 看日落\n晚上 就近晚餐'},
-  {date:'12/2',dow:'周三',title:'兰花温泉度假村 休闲（泳池 / SPA / 卡伦海滩）',hotel:'普吉岛兰花温泉度假酒店（卡伦 Karon）',budget:467,
-   routes:'主要在酒店 / 卡伦海滩（约200m），步行可达\n（丛林飞跃如安排：Kata → Kathu 约12–15km，车25–30分钟含接送）',
-   cb:{stay:237,food:120,fun:80,transport:10,other:20},
-   meals:{b:'酒店早餐',l:'卡伦海滩餐厅 / 酒店 · 小吃：Woraburi 旁 711 门口香蕉饼',d:'Baan Bang-La（Patak Rd·黄咖喱蟹/菠萝海鲜炒饭/胡椒虾/炒面/牛肉米粉/天妇罗炸虾，人均~¥40）'},
-   plan:'全天酒店度假：睡到自然醒\n酒店泳池 / SPA / 卡伦海滩 躺平、游泳\n下午茶 / 按摩\n傍晚 卡伦海滩看日落、就近晚餐\n（机动：丛林飞跃保留，想动一动可挑半天去 Hanuman / Flying Hanuman，含接送，你按实际情况自调）'},
-  {date:'12/3',dow:'周四',title:'换酒店 + 卡塔/卡伦海滩 冲浪 / SUP 体验',hotel:'卡伦生活客房酒店（卡伦 Karon）',budget:495,
-   routes:'兰花温泉 → 卡伦生活客房酒店(Patak Rd)：就近，约10–20分钟\n酒店 → 卡伦海滩：步行可达',
-   cb:{stay:135,food:120,fun:200,transport:20,other:20},
-   meals:{b:'兰花温泉早餐（退房）',l:'Yai Toi 古法牛肉面（539 Patak Rd·牛肉面）/ 海滩餐厅',d:'hallehallo（卡伦大排档）/ The pad thai shop（卡伦二街·鸡爪/混合汤面/噶包饭）'},
-   plan:'上午 兰花温泉退房 → 搬到 卡伦生活客房酒店(Patak Rd)入住\n下午 卡塔 / 卡伦海滩 冲浪体验（Kata Surf School 一对二 1h、两人 1600฿；⚠️ 12月旱季浪小，多半冲不了，可改 SUP 桨板 / 浮潜 / 玩水）\n傍晚 海滩看日落\n晚上 就近晚餐'},
-  {date:'12/4',dow:'周五',title:'皮皮岛 + 蛋岛 一日游',hotel:'卡伦生活客房酒店（卡伦 Karon）',budget:615,
-   routes:'Kata → 皮皮岛码头(酒店接送)：约40–50分钟到码头\n码头 → 皮皮岛：速度艇约45分钟',
-   cb:{stay:135,food:100,fun:350,transport:20,other:10},
-   meals:{b:'酒店早餐（早班 / 打包）',l:'团餐（多含）',d:'JOI BBQ at Karon Beach（烧烤/炒饭，建议错峰）'},
-   plan:'07:30 酒店接送前往码头\n速度艇往皮皮岛（约45分钟开阔海，晕船提前吃药、坐船中后）\n玛雅湾/浮潜 + 蛋岛浅水浮潜、喂鱼\n16:30 返回，Kata 海滩看日落'},
-  {date:'12/5',dow:'周六',title:'Phumontra SPA + 休闲',hotel:'卡伦生活客房酒店（卡伦 Karon）',budget:545,
-   routes:'Kata → Phumontra SPA：视预约门店，约10–20分钟\n酒店 / Kata 海滩，步行可达',
-   cb:{stay:135,food:120,fun:250,transport:20,other:20},
-   meals:{b:'酒店早餐',l:'Kata 自由午餐',d:'Kata on fire（Kata·咖喱蟹/菠萝饭，评价一般·可选）'},
-   plan:'上午 睡到自然醒\n下午 Phumontra SPA 按摩放松\n其余时间 Kata 海滩 / 泳池躺平，为明早返程养足精神\n晚上 Kata 晚餐'},
-  {date:'12/6',dow:'周日',title:'返程',hotel:'—',budget:60,
-   routes:'Kata/Karon → 普吉机场：约40km，车50–60分钟',
-   cb:{stay:0,food:20,fun:0,transport:40,other:0},
-   meals:{b:'打包早餐 / 机场',l:'（航班上）',d:'—'},
-   plan:'约05:30 退房 → 直奔普吉国际机场（约50–60分钟）\n08:35 普吉起飞（3U3930）\n13:25 抵达成都天府 T1'},
-];
-const DCATS=[['stay','🏨 住宿'],['food','🍽️ 吃喝'],['fun','🎡 娱乐'],['transport','🚕 交通'],['other','🛍️ 其他']];
-const REC_MEALS={}; DEFAULT_DAYS.forEach(d=>REC_MEALS[d.date]={...d.meals});
-const REC_TIPS={
- '11/28':'🏨 普吉镇贝萨瓦纳酒店 Besavana（已订 11/28–11/30，3晚2间，共 ¥2167.31）。地址：63/3 Krabi, Tambon Talat Nuea, 普吉直辖县（老城区，步行可达 Lard Yai 夜市）。机场→酒店 Grab/出租约 600–700฿；电话卡 AIS/True(7–15天) 约 200–350฿（机场柜台或 Klook 预订）。',
- '11/29':'大象营（不骑象观察型，如 Phuket Elephant Sanctuary）约 2500–3000฿/人（含接送+午餐），官网/Klook 早订，热门需提前。Central Phuket 商场就在普吉镇，逛街+吃饭+超市一站式；Big C/Lotus 超市适合囤零食干货手信；周日夜市免费逛。',
- '11/30':'皇帝岛(拉查岛)跳岛一日游约 1200–1800฿/人（含接送+浮潜+午餐），当天往返、宿普吉镇。想潜水可加深潜体验约 1500–2500฿/人（无需执照，含装备+教练，需签健康声明）。查龙码头出发，带够现金。',
- '12/1':'🏨 普吉岛兰花温泉度假酒店 Phuket Orchid Resort & Spa（已订 12/1–12/2，2间2晚，共 ¥1896）。地址：34 Luang Phor Chuan Rd（卡伦 Karon，距卡伦海滩约 200m，含 3 个泳池 + SPA）。普吉镇退房搬过来约 35–45 分钟；这两天主要在酒店度假，傍晚可就近去悬崖咖啡看日落。',
- '12/2':'全天在兰花温泉度假村休闲：3 个泳池、SPA、卡伦海滩（约 200m）、下午茶。丛林飞跃保留为机动项——想动一动可挑半天去 Hanuman / Flying Hanuman（约 1000–1800฿/人含接送），你按实际情况自行安排。',
- '12/3':'🏨 卡伦生活客房酒店（已订 12/3–12/5，2间3晚，共 ¥1625）。地址：481 Patak Rd, Karon 83100（卡伦中心，近卡伦海滩）。上午兰花温泉退房搬过来；下午卡塔/卡伦海滩玩水。⚠️ 冲浪季是 5–10 月雨季，12 月旱季海面平、基本没浪，冲浪多半冲不了——建议改 SUP 桨板 / 浮潜 / 游泳，海滩步行可达。想试冲浪可约 Kata Surf School（一对二 1h、两人 1600฿），但旱季多半没浪。',
- '12/4':'皮皮岛 + 蛋岛拼团一日游约 1200–1800฿/人（含接送+午餐+浮潜），Klook / KKday 提前订；约7:30出发，开阔海约45分钟较颠，晕船务必提前吃药、坐船中后。',
- '12/5':'Phumontra SPA 按项目 800–1500฿/人，官网或 LINE 提前预约；其余时间 Kata 海滩/泳池躺平，为明早返程养足精神。',
- '12/6':'注意：这晚住 Kata/Karon(没搬机场旁)，到机场约 40km、车 50–60 分钟。08:35 航班建议约 05:30 退房出发（提前2小时+留足路程），早车最好前一晚跟酒店/Grab 约好。',
-};
-const DEFAULT_CFG={budget:5000,people:4,currency:'¥',rate:5,title:'普吉岛 11/28–12/6',
-  catBudget:{stay:1050,food:1200,fun:1500,transport:400,other:300}};
-// 备忘/待办 预置项（首次打开时生成，之后随你增删，更新不会覆盖）
-// group: 具体日期(挂到对应 Day) 或 'prep'(出发前准备)
-const NOTE_SEED=[
- {k:'townhotel', g:'11/28', t:'✅ 普吉镇贝萨瓦纳酒店 Besavana 已订（11/28–11/30，3晚2间，¥2167.31）'},
- {k:'elephant',  g:'11/29', t:'🐘 大象营（观察型）官网 / Klook 提前订，热门日期要早订'},
- {k:'racha',     g:'11/30', t:'🚤 皇帝岛跳岛一日游提前订（当天往返，查龙码头出发）'},
- {k:'dive',      g:'11/30', t:'🤿 皇帝岛想潜水可加深潜体验，需签健康声明；无需执照'},
- {k:'bamgo',     g:'12/1',  t:'✅ 普吉岛兰花温泉度假酒店 已订（12/1–12/2，2间2晚，¥1896）'},
- {k:'kthotel',   g:'12/3',  t:'✅ 卡伦生活客房酒店 已订（12/3–12/5，2间3晚，¥1625）'},
- {k:'zip',       g:'12/2',  t:'🌿 丛林飞跃（Hanuman / Flying Hanuman）机动项，想去就提前订、含接送'},
- {k:'island',    g:'12/4',  t:'🚤 皮皮岛 + 蛋岛一日游提前订（Klook / KKday）、备晕船药'},
- {k:'spa',       g:'12/5',  t:'💆 Phumontra SPA 官网或 LINE 提前预约'},
- {k:'surf',      g:'12/3',  t:'🏄 卡塔/卡伦海滩 玩水 / SUP（12月旱季浪小，冲浪一般冲不了）'},
- {k:'back',      g:'12/6',  t:'✈️ 回程 08:35（住 Kata，到机场约1h），约05:30出发、提前2小时；确认行李额'},
- {k:'flights',   g:'prep',  t:'✈️ 航班：去 11/28 3U3931 成都天府T1 14:40→普吉 17:40；回 12/6 3U3930 普吉 08:35→成都天府T1 13:25'},
- {k:'passport',  g:'prep',  t:'🛂 护照有效期 ≥6 个月，确认签证 / 落地签材料'},
- {k:'sim',       g:'prep',  t:'📱 电话卡 AIS / True 机场柜台或 Klook 预订'},
- {k:'cash',      g:'prep',  t:'💵 备好现金 / 换钱，岛上 / 景点 ATM 少、物价偏高'},
- {k:'card',      g:'prep',  t:'💳 通知银行开通境外用卡，备一张境外可用的卡'},
- {k:'seasick',   g:'prep',  t:'💊 备晕船药（跳岛开阔海较颠）、常用药'},
- {k:'plug',      g:'prep',  t:'🔌 转换插头（泰式插座）、防晒、驱蚊'},
-];
-function seedNotes(){return NOTE_SEED.map(n=>({id:'seed_'+n.k,group:n.g,text:n.t,done:false}));}
-// 备忘与最新预置同步：刷新预置项(保留勾选)，保留你的自定义项，尊重你删掉的预置项
-function syncNotes(){
-  if(!Array.isArray(DB.notes)) DB.notes=[];
-  if(!Array.isArray(DB.deletedSeeds)) DB.deletedSeeds=[];
-  const doneById={}, doneByText={};
-  DB.notes.forEach(n=>{ if((n.id||'').indexOf('seed_')===0) doneById[n.id]=n.done; if(n.done) doneByText[n.group+'|'+n.text]=true; });
-  const fresh=seedNotes().filter(n=>DB.deletedSeeds.indexOf(n.id)<0)
-    .map(n=>({...n, done: !!(doneById[n.id] || doneByText[n.group+'|'+n.text]) }));
-  const freshKeys={}; fresh.forEach(n=>freshKeys[n.group+'|'+n.text]=1);
-  const custom=DB.notes.filter(n=>(n.id||'').indexOf('seed_')!==0 && !freshKeys[n.group+'|'+n.text]);
-  DB.notes=[...fresh,...custom];
-}
-
-/* ================= 工具 ================= */
-const $=id=>document.getElementById(id);
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
-function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1500)}
-function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function money(n){n=Math.round((+n||0)*100)/100; const s=Number.isInteger(n)?n:n.toFixed(2); return (DB.config.currency||'¥')+s}
-
-/* ================= 状态 ================= */
-const KEY='travel_phuket_v1';
-const PLAN_VER=27; // 行程结构版本，变动时自动刷新行程（保留已记的实际支出）
-let DB={config:{...DEFAULT_CFG},days:[]};
-function newAB(){return {stay:0,food:0,fun:0,transport:0,other:0}}
-function newAC(){return {stay:'¥',food:'¥',fun:'¥',transport:'¥',other:'¥'}}
-function seedDays(){ DB.days=DEFAULT_DAYS.map(d=>({...d, meals:d.meals?{...d.meals}:{b:'',l:'',d:''}, tips:REC_TIPS[d.date]||'', routes:d.routes||'',
-  cb:d.cb?{...d.cb}:{stay:0,food:0,fun:0,transport:0,other:0}, ab:newAB(), ac:newAC()})); }
-function load(){
-  try{const d=JSON.parse(localStorage.getItem(KEY)); if(d&&d.days){DB=d; DB.config={...DEFAULT_CFG,...(d.config||{})};
-    DB.days.forEach(x=>{ if(!x.meals) x.meals={b:'',l:'',d:x.food||''}; if(x.tips===undefined) x.tips=''; if(x.routes===undefined) x.routes='';
-      if(!x.cb) x.cb={stay:0,food:0,fun:0,transport:0,other:0}; if(!x.ab) x.ab=newAB(); if(!x.ac) x.ac=newAC(); });
-    if(!DB.config.catBudget) DB.config.catBudget={...DEFAULT_CFG.catBudget};
-    syncNotes();   // 备忘与最新预置同步（保留勾选、你的自定义项、你删掉的项）
-    // 行程版本升级：行程内容全部刷新为最新，只保留你记的实际支出（ab/ac）
-    if(DB.planVer!==PLAN_VER){
-      const kAb={},kAc={};
-      DB.days.forEach(x=>{
-        const abSum=x.ab?DCATS.reduce((s,[k])=>s+((x.ab[k])||0),0):0;
-        if(abSum>0){ kAb[x.date]=x.ab; kAc[x.date]=x.ac||{}; }
-        else if(x.expenses&&x.expenses.length){ kAb[x.date]={stay:0,food:0,fun:0,transport:0,other:x.expenses.reduce((a,e)=>a+toBase(e),0)}; kAc[x.date]={}; }
-      });
-      seedDays();
-      DB.days.forEach(x=>{ if(kAb[x.date]) x.ab={...x.ab,...kAb[x.date]}; if(kAc[x.date]) x.ac={...x.ac,...kAc[x.date]}; });
-      DB.planVer=PLAN_VER;
-    }
-    // 一次性：普吉镇贝萨瓦纳酒店已确认(3晚2间 ¥2167.31，三晚均摊)，写入实际住宿花费（之后你再改不会被覆盖）
-    if(!DB.besavanaStay){
-      const sv={'11/28':722.44,'11/29':722.44,'11/30':722.43};
-      DB.days.forEach(x=>{ if(sv[x.date]!=null){ if(!x.ab)x.ab=newAB(); if(!x.ac)x.ac=newAC(); x.ab.stay=sv[x.date]; x.ac.stay='¥'; } });
-      DB.besavanaStay=true;
-    }
-    // 一次性：12/1–12/2 住宿改为兰花温泉度假村(2间2晚共 ¥1896，两晚均摊)，写入实际住宿花费
-    if(!DB.orchidStay){
-      const sv={'12/1':948,'12/2':948};
-      DB.days.forEach(x=>{ if(sv[x.date]!=null){ if(!x.ab)x.ab=newAB(); if(!x.ac)x.ac=newAC(); x.ab.stay=sv[x.date]; x.ac.stay='¥'; } });
-      DB.orchidStay=true;
-    }
-    // 一次性：12/3–12/5 卡伦生活客房酒店(2间3晚共 ¥1625，三晚均摊)，写入实际住宿花费
-    if(!DB.karonLivingStay){
-      const sv={'12/3':541.67,'12/4':541.67,'12/5':541.66};
-      DB.days.forEach(x=>{ if(sv[x.date]!=null){ if(!x.ab)x.ab=newAB(); if(!x.ac)x.ac=newAC(); x.ab.stay=sv[x.date]; x.ac.stay='¥'; } });
-      DB.karonLivingStay=true;
-    }
-    persist();
-    return;}}catch(e){}
-  DB={config:{...DEFAULT_CFG},days:[]}; seedDays(); DB.notes=seedNotes(); DB.deletedSeeds=[]; DB.planVer=PLAN_VER; persist();
-}
-function people(){return +DB.config.people||4}
-function num(n){n=Math.round((+n||0)*100)/100;return Number.isInteger(n)?n:n.toFixed(2)}
-function otherCur(a){const base=DB.config.currency||'¥',rate=+DB.config.rate||5;
-  return base==='¥'?`≈฿${num(a*rate)}`:`≈¥${num(a/rate)}`}
-// 把一笔花销换算成基准货币（默认人民币）
-function toBase(e){
-  const base=DB.config.currency||'¥', cur=e.cur||base, amt=+e.amt||0, rate=+DB.config.rate||5;
-  if(cur===base) return amt;
-  if(base==='¥'&&cur==='฿') return amt/rate;   // 泰铢 → 元
-  if(base==='฿'&&cur==='¥') return amt*rate;   // 元 → 泰铢
-  return amt;
-}
-function persist(){localStorage.setItem(KEY,JSON.stringify(DB))}
-function dcatBase(d,k){return toBase({amt:(d.ab&&d.ab[k])||0, cur:(d.ac&&d.ac[k])||(DB.config.currency||'¥')})}
-function daySpent(d){return DCATS.reduce((s,[k])=>s+dcatBase(d,k),0)}
-function totalSpent(){return DB.days.reduce((s,d)=>s+daySpent(d),0)}
-function totalPlanned(){return DB.days.reduce((s,d)=>s+(+d.budget||0),0)}
-
-/* ================= 渲染：行程 ================= */
-let selectedDay='all';           // 'all' 或 天index
-let editState={di:-1,f:null};    // 正在编辑的 天index + 字段
-
-function planTimeline(plan){
-  return (plan||'').split('\n').filter(x=>x.trim()).map(line=>{
-    const mt=line.match(/^\s*([0-9]{1,2}[:：][0-9]{2}|上午|下午|中午|傍晚|晚上|全天|途中)\s*(.*)$/);
-    if(mt) return `<div class="pl"><span class="tm">${esc(mt[1])}</span><span>${esc(mt[2])}</span></div>`;
-    return `<div class="pl"><span class="tm">·</span><span>${esc(line)}</span></div>`;
-  }).join('');
-}
-function routeLines(s){
-  return (s||'').split('\n').filter(x=>x.trim()).map(l=>`<div class="rline">📍 ${esc(l)}</div>`).join('');
-}
-function fieldRow(i,f,icon,label,val,isTa){
-  if(editState.di===i && editState.f===f){
-    const ed = isTa ? `<textarea id="ed-${i}-${f}">${esc(val)}</textarea>`
-                    : `<input id="ed-${i}-${f}" value="${esc(val)}">`;
-    return `<div class="fedit"><label>${icon} ${label}</label>${ed}
-      <div class="row"><button class="btn sm" data-fsave="${i}:${f}" type="button">保存</button>
-      <button class="btn sm ghost" data-fcancel type="button" style="flex:0 0 76px">取消</button></div></div>`;
-  }
-  return `<div class="frow"><span class="flabel">${icon} ${label}：</span><span class="fval${val?'':' empty'}">${val?esc(val):'（未填，点 ✏️ 添加）'}</span><button class="fpen" data-fedit="${i}:${f}" type="button">✏️</button></div>`;
-}
-function renderDays(){
-  const wrap=$('view-days'); wrap.innerHTML='';
-  // 日期选择 chips
-  const chips=document.createElement('div'); chips.className='daychips';
-  const mk=(key,label)=>{const c=document.createElement('div'); c.className='dchip'+(selectedDay===key?' on':''); c.textContent=label; c.onclick=()=>{selectedDay=key; editState={di:-1,f:null}; renderDays();}; chips.appendChild(c);};
-  mk('all','全部');
-  DB.days.forEach((d,i)=>mk(i,'D'+(i+1)+' '+d.date));
-  wrap.appendChild(chips);
-
-  const pp=people();
-  DB.days.forEach((d,i)=>{
-    if(selectedDay!=='all' && selectedDay!==i) return;
-    if(!d.meals) d.meals={b:'',l:'',d:''};
-    const spent=daySpent(d);
-    const el=document.createElement('div'); el.className='day';
-    const titleBlock = (editState.di===i && editState.f==='title')
-      ? `<div class="fedit"><label>标题</label><input id="ed-${i}-title" value="${esc(d.title)}">
-         <div class="row"><button class="btn sm" data-fsave="${i}:title" type="button">保存</button>
-         <button class="btn sm ghost" data-fcancel type="button" style="flex:0 0 76px">取消</button></div></div>`
-      : `<span class="dsub">${esc(d.title)} <button class="fpen" data-fedit="${i}:title" type="button">✏️</button></span>`;
-    const planBlock = (editState.di===i && editState.f==='plan')
-      ? `<div class="fedit"><label>行程安排（每行一条，可写"14:00 打靶"这样的时间开头）</label>
-         <textarea id="ed-${i}-plan">${esc(d.plan)}</textarea>
-         <div class="row"><button class="btn sm" data-fsave="${i}:plan" type="button">保存</button>
-         <button class="btn sm ghost" data-fcancel type="button" style="flex:0 0 76px">取消</button></div></div>`
-      : `<div class="planhead"><span>🗓️ 行程安排</span><button class="fpen" data-fedit="${i}:plan" type="button">✏️</button></div>
-         <div class="plan">${planTimeline(d.plan)||'<div class="mini">（点 ✏️ 添加行程）</div>'}</div>`;
-    const routesBlock = (editState.di===i && editState.f==='routes')
-      ? `<div class="fedit"><label>🚗 路线/距离（每行一条，如：酒店 → 老城夜市：约3km，车10分钟 / 步行35分钟）</label>
-         <textarea id="ed-${i}-routes" placeholder="酒店 → 老城夜市：约?km，车?分钟 / 步行?分钟">${esc(d.routes||'')}</textarea>
-         <div class="row"><button class="btn sm" data-fsave="${i}:routes" type="button">保存</button>
-         <button class="btn sm ghost" data-fcancel type="button" style="flex:0 0 76px">取消</button></div></div>`
-      : `<div class="planhead" style="margin-top:12px"><span>🚗 路线/距离</span><button class="fpen" data-fedit="${i}:routes" type="button">✏️</button></div>
-         ${d.routes?`<div class="routes">${routeLines(d.routes)}</div>`:'<div class="mini">（点 ✏️ 添加路线/距离，方便决定打车还是步行）</div>'}`;
-    const base=DB.config.currency||'¥';
-    const costRows=DCATS.map(([k,label])=>{
-      const plan4=((d.cb&&d.cb[k])||0)*pp, av=(d.ab&&d.ab[k])||0, ac=(d.ac&&d.ac[k])||base;
-      return `<div class="crow"><span class="clabel">${label}</span>
-        <span class="cplan">计划 ${money(plan4)}</span>
-        <input class="cact" data-cost="${i}:${k}" type="number" inputmode="decimal" placeholder="实际(4人)" value="${av?av:''}">
-        <select class="ccur" data-ccur="${i}:${k}"><option value="¥"${ac==='¥'?' selected':''}>¥</option><option value="฿"${ac==='฿'?' selected':''}>฿</option></select></div>`;
-    }).join('');
-    const planPPtot=DCATS.reduce((s,[k])=>s+((d.cb&&d.cb[k])||0),0), plan4=planPPtot*pp, left=plan4-spent;
-    const costBlock=`<div class="planhead" style="margin-top:12px"><span>💰 预算明细（均按4人）</span></div>
-      ${costRows}
-      <div class="costsum">
-        <div><span>计划</span><b>人均 ${money(planPPtot)}</b> · <b>4人 ${money(plan4)}</b></div>
-        <div><span>实际</span><b class="gold">人均 ${money(spent/pp)}</b> · <b class="gold">4人 ${money(spent)}</b></div>
-        <div><span>结余</span><b class="${left>=0?'g':'warn'}">4人 ${money(left)}</b> · <b class="${left>=0?'g':'warn'}">人均 ${money(left/pp)}</b></div>
-      </div>`;
-    el.innerHTML=`
-      <div class="dtop"><div class="dtitle">Day ${i+1} · ${esc(d.date)} ${esc(d.dow)}${titleBlock}</div></div>
-      ${planBlock}
-      ${routesBlock}
-      ${fieldRow(i,'hotel','🏨','住宿',d.hotel,false)}
-      ${fieldRow(i,'b','🍳','早餐',d.meals.b,false)}
-      ${fieldRow(i,'l','🍜','午餐',d.meals.l,false)}
-      ${fieldRow(i,'d','🍽️','晚餐',d.meals.d,false)}
-      ${fieldRow(i,'tips','💡','提示/预订',d.tips||'',true)}
-      ${costBlock}`;
-    wrap.appendChild(el);
-  });
-
-  wrap.querySelectorAll('[data-fedit]').forEach(b=>b.onclick=()=>{const [di,f]=b.dataset.fedit.split(':'); editState={di:+di,f}; renderDays();});
-  wrap.querySelectorAll('[data-fcancel]').forEach(b=>b.onclick=()=>{editState={di:-1,f:null}; renderDays();});
-  wrap.querySelectorAll('[data-fsave]').forEach(b=>b.onclick=()=>{
-    const [di,f]=b.dataset.fsave.split(':'); const i=+di; const v=$('ed-'+i+'-'+f).value; const d=DB.days[i];
-    if(f==='title') d.title=v.trim()||d.title;
-    else if(f==='plan') d.plan=v;
-    else if(f==='hotel') d.hotel=v;
-    else if(f==='budget') d.budget=parseFloat(v)||0;
-    else if(f==='tips') d.tips=v;
-    else if(f==='routes') d.routes=v;
-    else if(f==='b'||f==='l'||f==='d'){ if(!d.meals)d.meals={b:'',l:'',d:''}; d.meals[f]=v; }
-    editState={di:-1,f:null}; persist(); renderAll(); toast('已保存');
-  });
-  wrap.querySelectorAll('[data-cost]').forEach(inp=>inp.addEventListener('change',()=>{
-    const [di,k]=inp.dataset.cost.split(':'); const d=DB.days[+di]; if(!d.ab)d.ab=newAB(); d.ab[k]=parseFloat(inp.value)||0; persist(); renderAll();
-  }));
-  wrap.querySelectorAll('[data-ccur]').forEach(sel=>sel.addEventListener('change',()=>{
-    const [di,k]=sel.dataset.ccur.split(':'); const d=DB.days[+di]; if(!d.ac)d.ac=newAC(); d.ac[k]=sel.value; persist(); renderAll();
-  }));
-}
-
-/* ================= 渲染：统计 ================= */
-function renderStats(){
-  const pp=people();
-  const spent=totalSpent();                    // 实际（4人合计）
-  const budgetPP=+DB.config.budget||0;         // 人均预算
-  const budgetTot=budgetPP*pp;                  // 4人总预算
-  const left=budgetTot-spent;
-  $('stSpent').textContent=money(spent); $('stSpentB').textContent=otherCur(spent);
-  $('stBudget').textContent=money(budgetTot); $('stBudgetB').textContent=otherCur(budgetTot);
-  const le=$('stLeft'); le.textContent=money(left); le.className='num '+(left>=0?'g':'warn'); $('stLeftB').textContent=otherCur(left);
-  const pct=budgetTot>0?Math.min(100,Math.round(spent/budgetTot*100)):0;
-  const bar=$('spendBar'); bar.style.width=pct+'%'; bar.className=spent>budgetTot?'over':'';
-  $('spendHint').textContent = budgetTot>0
-    ? `已花 ${money(spent)} / 总预算 ${money(budgetTot)}（${pct}%）· 计划合计 ${money(totalPlanned()*pp)}`+(left<0?' · ⚠️ 已超支':'')
-    : '在「设置」里填人数和人均预算，这里就会算剩余。';
-  $('perPersonHint').textContent = budgetTot>0
-    ? `人均：已花 ${money(spent/pp)} · 预算 ${money(budgetPP)} · 剩余 ${money(left/pp)}`
-    : '';
-  const tb=$('dayTbody'); tb.innerHTML=DB.days.map((d,i)=>{
-    const sp=daySpent(d), planTot=(+d.budget||0)*pp, left=planTot-sp;
-    const actTxt = sp===0?'—':(sp>planTot?`<span class="over">${money(sp)}</span>`:money(sp));
-    const leftTxt = sp===0?'—':(left>=0?money(left):`<span class="over">${money(left)}</span>`);
-    return `<tr><td class="nm">${esc(d.date)} ${esc(d.dow)}</td><td>${money(planTot)}</td><td>${actTxt}</td><td>${leftTxt}</td></tr>`;
-  }).join('');
-}
-
-/* ================= 渲染：设置 ================= */
-function renderSet(){
-  $('cfgBudget').value=DB.config.budget; $('cfgCur').value=DB.config.currency||'¥';
-  $('cfgRate').value=DB.config.rate||5;
-  $('cfgPeople').value=people();
-  $('totalBudgetHint').textContent=`四人总计预算：${money((+DB.config.budget||0)*people())}`;
-  const lb=localStorage.getItem('trip_lastbackup'), bi=$('backupInfo');
-  if(!lb){bi.textContent='⚠️ 还没备份过，建议出发前导出一次存好。'; bi.style.color='var(--danger)';}
-  else{const days=Math.floor((Date.now()-Number(lb))/86400000);
-    bi.textContent='上次备份：'+(days<=0?'今天':days+' 天前'); bi.style.color='var(--muted)';}
-}
-
-/* ================= 渲染：计划 ================= */
-function renderPlan(){
-  const pp=people();
-  // 按分类汇总：计划(人均，来自每天明细) vs 实际(4人，来自每天记录)
-  const planByCat={}, actByCat={};
-  DCATS.forEach(([k])=>{ planByCat[k]=0; actByCat[k]=0; });
-  DB.days.forEach(d=>{ DCATS.forEach(([k])=>{ planByCat[k]+=(d.cb&&d.cb[k])||0; actByCat[k]+=dcatBase(d,k); }); });
-  const planSum=DCATS.reduce((s,[k])=>s+planByCat[k],0), actSum=DCATS.reduce((s,[k])=>s+actByCat[k],0);
-  let html=`<div class="card"><h2>💰 分类预算 vs 实际（全程·4人）</h2><div class="hint" style="margin-top:0">各天明细汇总，随「行程」页实时更新。</div>
-    <table class="tbl" style="margin-top:8px"><thead><tr><th class="nm">类别</th><th>计划(4人)</th><th>实际(4人)</th></tr></thead><tbody>`;
-  DCATS.forEach(([k,label])=>{
-    const p4=planByCat[k]*pp, a=actByCat[k];
-    const aTxt=a>p4?`<span class="over">${money(a)}</span>`:money(a);
-    html+=`<tr><td class="nm">${label}</td><td>${money(p4)}</td><td>${aTxt}</td></tr>`;
-  });
-  html+=`</tbody></table>`;
-  const plan4=planSum*pp, left4=plan4-actSum;
-  html+=`<div class="costsum">
-    <div><span>计划</span><b>人均 ${money(planSum)}</b> · <b>4人 ${money(plan4)}</b></div>
-    <div><span>实际</span><b class="gold">人均 ${money(actSum/pp)}</b> · <b class="gold">4人 ${money(actSum)}</b></div>
-    <div><span>结余</span><b class="${left4>=0?'g':'warn'}">4人 ${money(left4)}（${otherCur(left4)}）</b> · <b class="${left4>=0?'g':'warn'}">人均 ${money(left4/pp)}</b></div>
-  </div></div>`;
-
-  // 住宿清单（按连续相同酒店分段）
-  const segs=[]; DB.days.forEach(d=>{const h=d.hotel||'—'; const last=segs[segs.length-1]; if(last&&last.hotel===h) last.dates.push(d.date); else segs.push({hotel:h,dates:[d.date]});});
-  html+=`<div class="card"><h2>🏨 住宿清单</h2>`+segs.map(s=>`<div class="litem"><div class="li-nm">${esc(s.hotel)}</div><div class="li-sub">${s.dates[0]}${s.dates.length>1?' – '+s.dates[s.dates.length-1]:''}（${s.dates.length}晚）</div></div>`).join('')+`</div>`;
-
-  // 行程清单（简洁：只列每天地点/亮点，详情看行程页）
-  html+=`<div class="card"><h2>🗺️ 行程清单</h2>`+DB.days.map((d,i)=>`<div class="litem"><div class="li-nm">D${i+1} · ${esc(d.date)} ${esc(d.dow)}</div><div class="li-sub" style="flex:1; text-align:right; margin-top:0">${esc(d.title)}</div></div>`).join('')+`</div>`;
-
-  // 餐厅清单
-  html+=`<div class="card"><h2>🍽️ 餐厅清单</h2>`+DB.days.map(d=>{
-    const m=d.meals||{}, parts=[]; if(m.b)parts.push('早·'+m.b); if(m.l)parts.push('午·'+m.l); if(m.d)parts.push('晚·'+m.d);
-    return `<div class="litem"><div><div class="li-nm">${esc(d.date)} ${esc(d.dow)}</div><div class="li-sub">${parts.length?esc(parts.join('　｜　')):'（未填）'}</div></div></div>`;
-  }).join('')+`</div>`;
-
-  $('view-plan').innerHTML=html;
-}
-
-/* ================= 渲染：备忘/待办 ================= */
-// 分组：出发前准备置顶，其后按 Day 顺序；未匹配到日期的并入「出发前准备」
-let noteEdit=null;   // 正在编辑的备忘 id
-function noteGroups(){
-  const dayGroups=DB.days.map((d,i)=>({key:d.date,label:`Day ${i+1} · ${d.date} ${d.dow}`,notes:[]}));
-  const prep={key:'prep',label:'🎒 出发前准备',notes:[]};
-  DB.notes.forEach(n=>{ const g=dayGroups.find(x=>x.key===n.group); (g||prep).notes.push(n); });
-  return [prep, ...dayGroups];
-}
-function fillNoteGroups(){
-  const sel=$('noteGroup'); if(!sel) return;
-  sel.innerHTML = `<option value="prep" selected>🎒 出发前准备</option>`
-    + DB.days.map((d,i)=>`<option value="${d.date}">Day ${i+1} · ${d.date}</option>`).join('');
-}
-function renderNotes(){
-  if(!Array.isArray(DB.notes)) DB.notes=[];
-  const done=DB.notes.filter(n=>n.done).length;
-  $('notesCount').textContent = DB.notes.length ? `已完成 ${done}/${DB.notes.length}` : '';
-  const groups=noteGroups().filter(g=>g.notes.length);
-  const wrap=$('notesList');
-  const itemHtml=n=> noteEdit===n.id
-    ? `<div class="ntitem"><div class="ntedit">
-         <textarea id="ned-${n.id}">${esc(n.text)}</textarea>
-         <div class="row"><button class="btn sm" data-nsave="${n.id}" type="button">保存</button>
-         <button class="btn sm ghost" data-ncancel type="button" style="flex:0 0 76px">取消</button></div>
-       </div></div>`
-    : `<div class="ntitem${n.done?' done':''}">
-         <button class="ck" data-nck="${n.id}" type="button">✓</button>
-         <span class="nt-tx">${esc(n.text)}</span>
-         <button class="nt-ed" data-ned="${n.id}" type="button">✏️</button>
-         <button class="nt-del" data-ndel="${n.id}" type="button">🗑️</button></div>`;
-  wrap.innerHTML = groups.length
-    ? groups.map(g=>`<div class="ntgroup"><div class="ntgh">${esc(g.label)}</div>`+g.notes.map(itemHtml).join('')+`</div>`).join('')
-    : '<div class="mini" style="padding:10px 0">还没有事项，在上面添加一条吧。</div>';
-  wrap.querySelectorAll('[data-nck]').forEach(b=>b.onclick=()=>{
-    const n=DB.notes.find(x=>x.id===b.dataset.nck); if(n){n.done=!n.done; persist(); renderNotes();}
-  });
-  wrap.querySelectorAll('[data-ned]').forEach(b=>b.onclick=()=>{ noteEdit=b.dataset.ned; renderNotes(); });
-  wrap.querySelectorAll('[data-ncancel]').forEach(b=>b.onclick=()=>{ noteEdit=null; renderNotes(); });
-  wrap.querySelectorAll('[data-nsave]').forEach(b=>b.onclick=()=>{
-    const id=b.dataset.nsave, n=DB.notes.find(x=>x.id===id), v=($('ned-'+id).value||'').trim();
-    if(n&&v){ n.text=v;
-      // 编辑过的预置项转为自定义，避免更新时被重置覆盖
-      if((n.id||'').indexOf('seed_')===0){ if(!Array.isArray(DB.deletedSeeds))DB.deletedSeeds=[]; if(DB.deletedSeeds.indexOf(n.id)<0)DB.deletedSeeds.push(n.id); n.id=uid(); }
-    }
-    noteEdit=null; persist(); renderNotes(); toast('已保存');
-  });
-  wrap.querySelectorAll('[data-ndel]').forEach(b=>b.onclick=()=>{
-    if(!confirm('删除这条备忘？'))return;
-    const did=b.dataset.ndel;
-    if(did.indexOf('seed_')===0){ if(!Array.isArray(DB.deletedSeeds))DB.deletedSeeds=[]; if(DB.deletedSeeds.indexOf(did)<0)DB.deletedSeeds.push(did); }
-    DB.notes=DB.notes.filter(x=>x.id!==did); if(noteEdit===did) noteEdit=null; persist(); renderNotes();
-  });
-}
-function addNote(){
-  const inp=$('noteInput'), v=(inp.value||'').trim(); if(!v)return;
-  if(!Array.isArray(DB.notes)) DB.notes=[];
-  const g=($('noteGroup')&&$('noteGroup').value)||'prep';
-  DB.notes.push({id:uid(),group:g,text:v,done:false}); inp.value=''; persist(); renderNotes(); toast('已添加');
-}
-
-function renderAll(){renderDays();renderPlan();renderStats();renderSet();renderNotes();}
-
-/* ================= 事件 ================= */
-document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('.tabbar button').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active'); $('view-'+b.dataset.view).classList.add('active'); window.scrollTo(0,0);
+function speak(t){try{window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=0.9;window.speechSynthesis.speak(u);}catch(e){}}
+document.addEventListener('click',function(e){var el=e.target;
+  if(el.classList&&el.classList.contains('spk')){speak(el.dataset.t);}
+  if(el.classList&&el.classList.contains('fav')){toggleFav(el);}
 });
-$('noteAdd').onclick=addNote;
-$('noteInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault(); addNote();} });
-$('saveCfg').onclick=()=>{
-  DB.config.budget=parseFloat($('cfgBudget').value)||0;
-  DB.config.people=parseInt($('cfgPeople').value)||4;
-  DB.config.currency=$('cfgCur').value||'¥';
-  DB.config.rate=parseFloat($('cfgRate').value)||5;
-  persist(); renderAll(); toast('已保存');
-};
-$('exportBtn').onclick=()=>{
-  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='普吉行程备份.json'; a.click();
-  localStorage.setItem('trip_lastbackup',String(Date.now())); renderSet();
-};
-$('importBtn').onclick=()=>$('importFile').click();
-$('importFile').onchange=e=>{
-  const f=e.target.files[0]; if(!f)return; const r=new FileReader();
-  r.onload=()=>{try{const d=JSON.parse(r.result); if(!d.days)throw 0;
-    DB={config:{...DEFAULT_CFG,...(d.config||{})},days:d.days,notes:Array.isArray(d.notes)?d.notes:seedNotes(),deletedSeeds:Array.isArray(d.deletedSeeds)?d.deletedSeeds:[],planVer:d.planVer};
-    DB.days.forEach(x=>{ if(!x.meals)x.meals={b:'',l:'',d:''}; if(x.tips===undefined)x.tips=''; if(x.routes===undefined)x.routes=''; if(!x.cb)x.cb={stay:0,food:0,fun:0,transport:0,other:0}; if(!x.ab)x.ab=newAB(); if(!x.ac)x.ac=newAC(); });
-    persist(); renderAll(); toast('导入成功');
-  }catch(err){toast('文件无法识别')}}; r.readAsText(f);
-};
-$('resetBtn').onclick=()=>{
-  if(!confirm('恢复默认行程？你记录的实际支出会保留、其它编辑会被覆盖。'))return;
-  const kAb={},kAc={}; DB.days.forEach(d=>{kAb[d.date]=d.ab; kAc[d.date]=d.ac;});
-  seedDays(); DB.days.forEach(d=>{ if(kAb[d.date]) d.ab={...d.ab,...kAb[d.date]}; if(kAc[d.date]) d.ac={...d.ac,...kAc[d.date]}; });
-  persist(); renderAll(); toast('已恢复默认行程');
-};
-$('clearBtn').onclick=()=>{
-  if(!confirm('全部重置（行程+记账都清空为默认）？此操作不可撤销。'))return;
-  DB={config:{...DEFAULT_CFG},days:[]}; seedDays(); persist(); renderAll(); toast('已重置');
-};
-
-/* ================= 启动 ================= */
-load(); fillNoteGroups(); renderAll();
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+function showTab(i){
+  document.querySelectorAll('.panel').forEach(function(p,x){p.classList.toggle('show',x===i);});
+  document.querySelectorAll('.tabs button').forEach(function(b,x){b.classList.toggle('active',x===i);});
+  localStorage.setItem('TRIP::tab',i);window.scrollTo(0,0);
+}
+function getFavs(){try{return JSON.parse(localStorage.getItem('TRIP::favs')||'{}');}catch(e){return {};}}
+function setFavs(o){localStorage.setItem('TRIP::favs',JSON.stringify(o));}
+function toggleFav(btn){var favs=getFavs();var id=btn.dataset.fid;
+  if(favs[id])delete favs[id];else favs[id]={en:btn.dataset.en,zh:btn.dataset.zh||''};
+  setFavs(favs);refreshStars();renderFavs();}
+function removeFav(id){var favs=getFavs();delete favs[id];setFavs(favs);refreshStars();renderFavs();}
+function addCustomFav(){var en=document.getElementById('fav_en').value.trim();if(!en){alert('请填写英文内容');return;}
+  var favs=getFavs();favs['c::'+Date.now()]={en:en,zh:document.getElementById('fav_zh').value.trim()};
+  setFavs(favs);document.getElementById('fav_en').value='';document.getElementById('fav_zh').value='';
+  renderFavs();alert('已添加到收藏夹 ⭐');}
+function refreshStars(){var favs=getFavs();document.querySelectorAll('.fav').forEach(function(b){
+  var on=!!favs[b.dataset.fid];b.classList.toggle('on',on);b.textContent=on?'★':'☆';});}
+function esc2(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function renderFavs(){var favs=getFavs();var box=document.getElementById('favlist');if(!box)return;
+  var ids=Object.keys(favs);
+  if(!ids.length){box.innerHTML='<p class="hint">还没有收藏。到各场景点 ☆ 收藏常用句，或在上面自定义添加，出行时集中看这一页。</p>';return;}
+  box.innerHTML=ids.map(function(id){var f=favs[id];
+    return '<div class="prow"><button class="spk" data-t="'+(f.en||'').replace(/"/g,'&quot;')+'">🔊</button>'+
+      '<div class="pc"><span class="pen">'+esc2(f.en)+'</span>'+(f.zh?'<span class="pzh">'+esc2(f.zh)+'</span>':'')+'</div>'+
+      '<button class="fdel" onclick="removeFav(\''+id.replace(/'/g,"\\'")+'\')">✕</button></div>';}).join('');}
+// ===== 旅行记账（一本 ¥20000 公款账）=====
+var ACCT=null;
+function acctDefault(){return {budget:20000,rate:20,cash:26000,allow:6000,items:[]};}
+function acctGet(){try{return JSON.parse(localStorage.getItem('TRIP::acct')||'null');}catch(e){return null;}}
+function acctSave(){localStorage.setItem('TRIP::acct',JSON.stringify(ACCT));}
+function acctToday(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function acToRmb(a,c){return c==='RMB'?a:a*ACCT.rate/100;}
+function acFmt(n){return (Math.round(n*100)/100).toLocaleString();}
+function acctBoot(){ACCT=acctGet()||acctDefault();
+  if(ACCT.people!==undefined||ACCT.cash===undefined){ACCT=acctDefault();}
+  var s=function(id,v){var el=document.getElementById(id);if(el)el.value=v;};
+  s('ac_budget',ACCT.budget);s('ac_rate',ACCT.rate);s('ac_cash',ACCT.cash);s('ac_allow',ACCT.allow);
+  var d=document.getElementById('ac_date');if(d&&!d.value)d.value=acctToday();
+  acctRender();}
+function acctCfg(){var g=function(id){return parseFloat(document.getElementById(id).value);};
+  ACCT.budget=g('ac_budget')||0;ACCT.rate=g('ac_rate')||20;ACCT.cash=g('ac_cash')||0;ACCT.allow=g('ac_allow')||0;
+  acctSave();acctRender();alert('设置已保存');}
+function acctAdd(){var amt=parseFloat(document.getElementById('ac_amt').value);
+  if(!amt||amt<=0){alert('请先填写金额');return;}
+  ACCT.items.push({id:'e'+Date.now(),date:document.getElementById('ac_date').value||acctToday(),
+    desc:(document.getElementById('ac_desc').value||'').trim()||'(未填用途)',amt:amt,
+    cur:document.getElementById('ac_cur').value});
+  acctSave();document.getElementById('ac_amt').value='';document.getElementById('ac_desc').value='';acctRender();}
+function acctDel(id){if(!confirm('删除这笔记录？'))return;ACCT.items=ACCT.items.filter(function(x){return x.id!==id;});acctSave();acctRender();}
+function acCard(t,big,sub,neg){return '<div class="ac-card"><div class="ac-c-t">'+t+'</div><div class="ac-c-big'+(neg?' neg':'')+'">'+big+'</div><div class="ac-c-sub">'+sub+'</div></div>';}
+function acctRender(){if(!ACCT)return;
+  var pubRmb=0,pubThb=0;
+  ACCT.items.forEach(function(it){pubRmb+=acToRmb(it.amt,it.cur);if(it.cur==='THB')pubThb+=it.amt;});
+  var allowRmb=acToRmb(ACCT.allow,'THB');
+  var spentRmb=pubRmb+allowRmb;
+  var leftRmb=ACCT.budget-spentRmb;
+  var pubCash=ACCT.cash-ACCT.allow;
+  var cashLeft=pubCash-pubThb;
+  var sum=document.getElementById('ac_sum');
+  if(sum)sum.innerHTML=
+    acCard('预算 ¥'+acFmt(ACCT.budget),'剩 ¥'+acFmt(leftRmb),'已花 ¥'+acFmt(spentRmb)+'（含零花 ¥'+acFmt(allowRmb)+'）',leftRmb<0)+
+    acCard('泰铢现金','剩 ฿'+acFmt(cashLeft),'公用现金 ฿'+acFmt(pubCash)+' · 已发零花 ฿'+acFmt(ACCT.allow),cashLeft<0)+
+    acCard('公用开销(不含零花)','¥'+acFmt(pubRmb),'共 '+ACCT.items.length+' 笔 · 其中泰铢付 ฿'+acFmt(pubThb));
+  var list=document.getElementById('ac_list');
+  if(list){if(!ACCT.items.length){list.innerHTML='<p class="hint">还没有记账。上面「记一笔公用开销」填金额、选币种，点「加入账单」即可。</p>';}
+    else{list.innerHTML=ACCT.items.slice().reverse().map(function(it){var cur=it.cur==='THB'?'฿':'¥';
+      return '<div class="ac-item"><div class="ac-it-main"><span class="ac-it-desc">'+esc2(it.desc)+'</span><span class="ac-it-meta">'+it.date+'</span></div><span class="ac-it-amt">'+cur+acFmt(it.amt)+'</span><button class="fdel" onclick="acctDel(\''+it.id+'\')">✕</button></div>';}).join('');}}}
+window.addEventListener('DOMContentLoaded',function(){
+  refreshStars();renderFavs();acctBoot();
+  showTab(parseInt(localStorage.getItem('TRIP::tab')||'0'));
+});
 </script>
-</body>
-</html>
+</body></html>
