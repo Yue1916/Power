@@ -174,6 +174,7 @@
       <h2>📅 每日花费（计划 vs 实际）</h2>
       <table class="tbl"><thead><tr><th class="nm">日期</th><th>计划(4人)</th><th>实际(4人)</th><th>结余</th></tr></thead><tbody id="dayTbody"></tbody></table>
     </div>
+    <div id="statCatBreak"></div>
   </section>
 
   <!-- ============ 计划 ============ -->
@@ -347,7 +348,7 @@ let DB={config:{...DEFAULT_CFG},days:[]};
 function newAB(){return {stay:0,food:0,fun:0,transport:0,other:0,pocket:0}}
 function newAC(){return {stay:'¥',food:'¥',fun:'¥',transport:'¥',other:'¥',pocket:'¥'}}
 function seedDays(){ DB.days=DEFAULT_DAYS.map(d=>({...d, meals:d.meals?{...d.meals}:{b:'',l:'',d:''}, tips:REC_TIPS[d.date]||'', routes:d.routes||'',
-  cb:d.cb?{...d.cb}:{stay:0,food:0,fun:0,transport:0,other:0}, ab:newAB(), ac:newAC()})); }
+  cb:d.cb?{...d.cb}:{stay:0,food:0,fun:0,transport:0,other:0}, ab:newAB(), ac:newAC(), expenses:[]})); }
 function load(){
   try{const d=JSON.parse(localStorage.getItem(KEY)); if(d&&d.days){DB=d; DB.config={...DEFAULT_CFG,...(d.config||{})};
     DB.days.forEach(x=>{ if(!x.meals) x.meals={b:'',l:'',d:x.food||''}; if(x.tips===undefined) x.tips=''; if(x.routes===undefined) x.routes='';
@@ -384,12 +385,28 @@ function load(){
       DB.days.forEach(x=>{ if(sv[x.date]!=null){ if(!x.ab)x.ab=newAB(); if(!x.ac)x.ac=newAC(); x.ab.stay=sv[x.date]; x.ac.stay='¥'; } });
       DB.karonLivingStay=true;
     }
-    // 一次性：11/28 换汇后 4 人零花 6000฿（不记明细，仅一笔"零花"，计入已花；20000฿ 公费不单独记，后续按分类花出去）
-    if(!DB.pocketSeed){
-      DB.days.forEach(x=>{ if(!x.ab)x.ab=newAB(); if(!x.ac)x.ac=newAC();
-        if(x.ab.pocket==null)x.ab.pocket=0; if(x.ac.pocket==null)x.ac.pocket='¥';
-        if(x.date==='11/28'){ x.ab.pocket=6000; x.ac.pocket='฿'; } });
-      DB.pocketSeed=true;
+    // 一次性：总预算设为 20000 RMB（人均 5000 × 4 人）
+    if(!DB.budget20k){ DB.config.budget=5000; DB.budget20k=true; }
+    // 一次性：4 人零花——实际 6000฿、计划 ¥1200(人均300)——平均分摊到行程每一天（公费不单独记，后续按分类花出去）
+    if(!DB.pocketSpread){
+      const n=DB.days.length||9; let aAcc=0,cAcc=0;
+      DB.days.forEach((x,i)=>{ if(!x.ab)x.ab=newAB(); if(!x.ac)x.ac=newAC(); if(!x.cb)x.cb={stay:0,food:0,fun:0,transport:0,other:0,pocket:0};
+        const last=(i===n-1);
+        const a=last?Math.round((6000-aAcc)*100)/100:Math.round(6000/n*100)/100;
+        const c=last?Math.round((300-cAcc)*100)/100:Math.round(300/n*100)/100;
+        aAcc+=a; cAcc+=c;
+        x.ab.pocket=a; x.ac.pocket='฿'; x.cb.pocket=c;
+        x.budget=Math.round(((+x.budget||0)+c)*100)/100; });
+      DB.pocketSpread=true;
+    }
+    // 一次性：把旧的"每类单笔"记录迁移成"明细多笔"（每类生成一笔，带默认备注），之后每类可记多笔
+    if(!DB.expMigrate){
+      DB.days.forEach(x=>{ if(!Array.isArray(x.expenses))x.expenses=[];
+        if(x.expenses.length===0 && x.ab){
+          DCATS.forEach(([k])=>{ const amt=+x.ab[k]||0; if(amt>0){ const cur=(x.ac&&x.ac[k])||'¥';
+            const note=k==='stay'?'住宿':(k==='pocket'?'零花':''); x.expenses.push({cat:k,amt:amt,cur:cur,note:note}); } });
+        } });
+      DB.expMigrate=true;
     }
     persist();
     return;}}catch(e){}
@@ -408,7 +425,10 @@ function toBase(e){
   return amt;
 }
 function persist(){localStorage.setItem(KEY,JSON.stringify(DB))}
-function dcatBase(d,k){return toBase({amt:(d.ab&&d.ab[k])||0, cur:(d.ac&&d.ac[k])||(DB.config.currency||'¥')})}
+function dcatBase(d,k){
+  if(Array.isArray(d.expenses)) return d.expenses.filter(e=>e.cat===k).reduce((s,e)=>s+toBase(e),0);
+  return toBase({amt:(d.ab&&d.ab[k])||0, cur:(d.ac&&d.ac[k])||(DB.config.currency||'¥')});
+}
 function daySpent(d){return DCATS.reduce((s,[k])=>s+dcatBase(d,k),0)}
 function totalSpent(){return DB.days.reduce((s,d)=>s+daySpent(d),0)}
 function totalPlanned(){return DB.days.reduce((s,d)=>s+(+d.budget||0),0)}
@@ -472,21 +492,34 @@ function renderDays(){
       : `<div class="planhead" style="margin-top:12px"><span>🚗 路线/距离</span><button class="fpen" data-fedit="${i}:routes" type="button">✏️</button></div>
          ${d.routes?`<div class="routes">${routeLines(d.routes)}</div>`:'<div class="mini">（点 ✏️ 添加路线/距离，方便决定打车还是步行）</div>'}`;
     const base=DB.config.currency||'¥';
-    const costRows=DCATS.map(([k,label])=>{
-      const plan4=((d.cb&&d.cb[k])||0)*pp, av=(d.ab&&d.ab[k])||0, ac=(d.ac&&d.ac[k])||base;
-      return `<div class="crow"><span class="clabel">${label}</span>
-        <span class="cplan">计划 ${money(plan4)}</span>
-        <input class="cact" data-cost="${i}:${k}" type="number" inputmode="decimal" placeholder="实际(4人)" value="${av?av:''}">
-        <select class="ccur" data-ccur="${i}:${k}"><option value="¥"${ac==='¥'?' selected':''}>¥</option><option value="฿"${ac==='฿'?' selected':''}>฿</option></select></div>`;
+    const catRows=DCATS.map(([k,label])=>{
+      const plan4=((d.cb&&d.cb[k])||0)*pp, act=dcatBase(d,k);
+      const aTxt=act>plan4?`<span style="color:var(--danger)">${money(act)}</span>`:money(act);
+      return `<div class="crow"><span class="clabel">${label}</span><span class="cplan">计划 ${money(plan4)}</span><span style="flex:1;text-align:right;font-weight:600">实际 ${aTxt}</span></div>`;
     }).join('');
+    const exps=Array.isArray(d.expenses)?d.expenses:[];
+    const expList = exps.length ? exps.map((e,ei)=>{
+      const lab=(DCATS.find(c=>c[0]===e.cat)||[,'其他'])[1];
+      return `<div class="exp"><div style="min-width:0"><b style="font-size:13px">${lab}</b>${e.note?` <span style="color:var(--muted);font-size:13px">${esc(e.note)}</span>`:''}</div><div style="display:flex;align-items:center;gap:8px;white-space:nowrap"><span>${e.cur==='฿'?'฿':'¥'}${num(e.amt)}</span><button class="del" data-expdel="${i}:${ei}" type="button">×</button></div></div>`;
+    }).join('') : '<div class="mini">（本日还没记账，下面加一笔）</div>';
+    const catOpts=DCATS.map(([k,l])=>`<option value="${k}"${k==='food'?' selected':''}>${l}</option>`).join('');
+    const addForm=`<div class="addexp" style="flex-wrap:wrap">
+      <input class="amt" id="ea-${i}" type="number" inputmode="decimal" placeholder="金额">
+      <select class="cur" id="ec-${i}"><option value="฿">฿</option><option value="¥">¥</option></select>
+      <select class="cur" id="ek-${i}" style="width:auto; min-width:92px">${catOpts}</select>
+      <input class="note" id="en-${i}" placeholder="备注，如：午餐海鲜">
+      <button data-expadd="${i}" type="button">记一笔</button></div>`;
     const planPPtot=DCATS.reduce((s,[k])=>s+((d.cb&&d.cb[k])||0),0), plan4=planPPtot*pp, left=plan4-spent;
     const costBlock=`<div class="planhead" style="margin-top:12px"><span>💰 预算明细（均按4人）</span></div>
-      ${costRows}
+      ${catRows}
       <div class="costsum">
         <div><span>计划</span><b>人均 ${money(planPPtot)}</b> · <b>4人 ${money(plan4)}</b></div>
         <div><span>实际</span><b class="gold">人均 ${money(spent/pp)}</b> · <b class="gold">4人 ${money(spent)}</b></div>
         <div><span>结余</span><b class="${left>=0?'g':'warn'}">4人 ${money(left)}</b> · <b class="${left>=0?'g':'warn'}">人均 ${money(left/pp)}</b></div>
-      </div>`;
+      </div>
+      <div class="planhead" style="margin-top:14px"><span>🧾 花费明细（每类可多笔）</span></div>
+      ${expList}
+      ${addForm}`;
     el.innerHTML=`
       <div class="dtop"><div class="dtitle">Day ${i+1} · ${esc(d.date)} ${esc(d.dow)}${titleBlock}</div></div>
       ${planBlock}
@@ -513,12 +546,19 @@ function renderDays(){
     else if(f==='b'||f==='l'||f==='d'){ if(!d.meals)d.meals={b:'',l:'',d:''}; d.meals[f]=v; }
     editState={di:-1,f:null}; persist(); renderAll(); toast('已保存');
   });
-  wrap.querySelectorAll('[data-cost]').forEach(inp=>inp.addEventListener('change',()=>{
-    const [di,k]=inp.dataset.cost.split(':'); const d=DB.days[+di]; if(!d.ab)d.ab=newAB(); d.ab[k]=parseFloat(inp.value)||0; persist(); renderAll();
-  }));
-  wrap.querySelectorAll('[data-ccur]').forEach(sel=>sel.addEventListener('change',()=>{
-    const [di,k]=sel.dataset.ccur.split(':'); const d=DB.days[+di]; if(!d.ac)d.ac=newAC(); d.ac[k]=sel.value; persist(); renderAll();
-  }));
+  wrap.querySelectorAll('[data-expadd]').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.expadd, d=DB.days[i];
+    const amt=parseFloat($('ea-'+i).value)||0; if(!amt){toast('请输入金额');return;}
+    const cur=$('ec-'+i).value, cat=$('ek-'+i).value, note=$('en-'+i).value.trim();
+    if(!Array.isArray(d.expenses))d.expenses=[];
+    d.expenses.push({cat:cat,amt:amt,cur:cur,note:note});
+    persist(); renderAll(); toast('已记一笔');
+  });
+  wrap.querySelectorAll('[data-expdel]').forEach(b=>b.onclick=()=>{
+    const [di,ei]=b.dataset.expdel.split(':'); const d=DB.days[+di];
+    if(Array.isArray(d.expenses)) d.expenses.splice(+ei,1);
+    persist(); renderAll(); toast('已删除');
+  });
 }
 
 /* ================= 渲染：统计 ================= */
@@ -545,6 +585,7 @@ function renderStats(){
     const leftTxt = sp===0?'—':(left>=0?money(left):`<span class="over">${money(left)}</span>`);
     return `<tr><td class="nm">${esc(d.date)} ${esc(d.dow)}</td><td>${money(planTot)}</td><td>${actTxt}</td><td>${leftTxt}</td></tr>`;
   }).join('');
+  const scb=$('statCatBreak'); if(scb) scb.innerHTML=catBreakdownCard();
 }
 
 /* ================= 渲染：设置 ================= */
@@ -559,10 +600,9 @@ function renderSet(){
     bi.textContent='上次备份：'+(days<=0?'今天':days+' 天前'); bi.style.color='var(--muted)';}
 }
 
-/* ================= 渲染：计划 ================= */
-function renderPlan(){
+/* ====== 分类预算 vs 实际（计划页 / 统计页 共用） ====== */
+function catBreakdownCard(){
   const pp=people();
-  // 按分类汇总：计划(人均，来自每天明细) vs 实际(4人，来自每天记录)
   const planByCat={}, actByCat={};
   DCATS.forEach(([k])=>{ planByCat[k]=0; actByCat[k]=0; });
   DB.days.forEach(d=>{ DCATS.forEach(([k])=>{ planByCat[k]+=(d.cb&&d.cb[k])||0; actByCat[k]+=dcatBase(d,k); }); });
@@ -581,9 +621,15 @@ function renderPlan(){
     <div><span>实际</span><b class="gold">人均 ${money(actSum/pp)}</b> · <b class="gold">4人 ${money(actSum)}</b></div>
     <div><span>结余</span><b class="${left4>=0?'g':'warn'}">4人 ${money(left4)}（${otherCur(left4)}）</b> · <b class="${left4>=0?'g':'warn'}">人均 ${money(left4/pp)}</b></div>
   </div></div>`;
+  return html;
+}
+
+/* ================= 渲染：计划 ================= */
+function renderPlan(){
+  let html=catBreakdownCard();
 
   // 住宿清单（按连续相同酒店分段）
-  const segs=[]; DB.days.forEach(d=>{const h=d.hotel||'—'; const last=segs[segs.length-1]; if(last&&last.hotel===h) last.dates.push(d.date); else segs.push({hotel:h,dates:[d.date]});});
+  const segs=[]; DB.days.forEach(d=>{const h=(d.hotel||'').trim(); if(!h||h==='—') return; const last=segs[segs.length-1]; if(last&&last.hotel===h) last.dates.push(d.date); else segs.push({hotel:h,dates:[d.date]});});
   html+=`<div class="card"><h2>🏨 住宿清单</h2>`+segs.map(s=>`<div class="litem"><div class="li-nm">${esc(s.hotel)}</div><div class="li-sub">${s.dates[0]}${s.dates.length>1?' – '+s.dates[s.dates.length-1]:''}（${s.dates.length}晚）</div></div>`).join('')+`</div>`;
 
   // 行程清单（简洁：只列每天地点/亮点，详情看行程页）
