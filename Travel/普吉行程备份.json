@@ -1,0 +1,420 @@
+{
+  "config": {
+    "budget": 4500,
+    "people": 4,
+    "currency": "¥",
+    "rate": 5,
+    "title": "普吉岛 11/28–12/6",
+    "catBudget": {
+      "stay": 1050,
+      "food": 1200,
+      "fun": 1500,
+      "transport": 400,
+      "other": 300
+    }
+  },
+  "days": [
+    {
+      "date": "11/28",
+      "dow": "周六",
+      "title": "抵达 · 普吉镇",
+      "hotel": "普吉镇 老腾精品酒店",
+      "budget": 280,
+      "cb": {
+        "stay": 120,
+        "food": 100,
+        "fun": 0,
+        "transport": 40,
+        "other": 20
+      },
+      "meals": {
+        "b": "无",
+        "l": "无",
+        "d": "老城 One Chun / Kopitiam by Wilai（地道老普吉菜）"
+      },
+      "plan": "17:40 普吉机场落地，取行李、办电话卡/换钱\n19:00 Grab 前往普吉镇 老腾精品酒店入住\n20:00 老城晚餐、随意夜逛",
+      "tips": "机场→普吉镇 Grab/出租约 600–700฿；电话卡 AIS/True(7–15天) 约 200–350฿（机场柜台或 Klook 预订）。价格为大致参考。",
+      "ab": {
+        "stay": 508.26,
+        "food": 0,
+        "fun": 0,
+        "transport": 0,
+        "other": 0
+      },
+      "ac": {
+        "stay": "¥",
+        "food": "¥",
+        "fun": "¥",
+        "transport": "¥",
+        "other": "¥"
+      }
+    },
+    {
+      "date": "11/29",
+      "dow": "周日",
+      "title": "大象营 + 购物 + 老城夜市",
+      "hotel": "普吉镇 老腾精品酒店",
+      "budget": 800,
+      "cb": {
+        "stay": 120,
+        "food": 120,
+        "fun": 500,
+        "transport": 40,
+        "other": 20
+      },
+      "meals": {
+        "b": "无",
+        "l": "大象营含餐 / 回程简餐",
+        "d": "老城 Lard Yai 周日夜市小吃"
+      },
+      "plan": "08:30 大象营接送（不骑象观察型，Paklok，普吉镇出发约35分钟）\n喂象/观察/泥浴，约14:00送回\n下午 Central Phuket 商场逛街 + Big C/Lotus 超市囤手信\n傍晚 老城 walk + Lard Yai 周日夜市（Thalang 路 16:00–22:00）",
+      "tips": "大象营（不骑象观察型，如 Phuket Elephant Sanctuary）约 2500–3000฿/人（含接送+午餐），官网/Klook 早订，热门需提前。Central Phuket 商场就在普吉镇，逛街+吃饭+超市一站式；Big C/Lotus 超市适合囤零食干货手信；周日夜市免费逛。",
+      "ab": {
+        "stay": 508.26,
+        "food": 0,
+        "fun": 0,
+        "transport": 0,
+        "other": 0
+      },
+      "ac": {
+        "stay": "¥",
+        "food": "¥",
+        "fun": "¥",
+        "transport": "¥",
+        "other": "¥"
+      }
+    },
+    {
+      "date": "11/30",
+      "dow": "周一",
+      "title": "皇帝岛（深潜/浮潜）· 宿岛上",
+      "hotel": "皇帝岛 拉查海滩度假酒店",
+      "budget": 920,
+      "cb": {
+        "stay": 250,
+        "food": 150,
+        "fun": 450,
+        "transport": 50,
+        "other": 20
+      },
+      "meals": {
+        "b": "无",
+        "l": "提前准备便利餐",
+        "d": "提前准备便利餐"
+      },
+      "plan": "上午 老腾退房 → 查龙码头 → 速度艇往皇帝岛（约40分钟）\n入住 拉查海滩度假酒店，寄存行李\n下午 皇帝岛浮潜/白沙滩 + 深潜体验（4人）\n傍晚 岛上看日落、住一晚",
+      "tips": "住皇帝岛「拉查海滩度假酒店」1晚（另订）。往返速度艇/酒店接驳约 40 分钟。深潜体验约 1500–2500฿/人（体验潜无需执照，含装备+教练，需签健康声明；Klook/岛上潜店可订）。岛上物价偏高、ATM 少，带够现金。",
+      "ab": {
+        "stay": 1348.8,
+        "food": 0,
+        "fun": 0,
+        "transport": 0,
+        "other": 0
+      },
+      "ac": {
+        "stay": "¥",
+        "food": "¥",
+        "fun": "¥",
+        "transport": "¥",
+        "other": "¥"
+      }
+    },
+    {
+      "date": "12/1",
+      "dow": "周二",
+      "title": "皇帝岛返程 + 休息 + 悬崖咖啡",
+      "hotel": "卡塔/卡伦 Kata/Karon（②段 4 晚）",
+      "budget": 430,
+      "cb": {
+        "stay": 130,
+        "food": 120,
+        "fun": 80,
+        "transport": 80,
+        "other": 20
+      },
+      "meals": {
+        "b": "拉查海滩度假酒店早餐",
+        "l": "Karon On the Hill（山景午餐/咖啡打卡）",
+        "d": "Kata：Red Duck / Kata Mama"
+      },
+      "plan": "上午 皇帝岛海滩 → 速度艇返回普吉（约40分钟）\n中午 Grab 到 Kata/Karon 入住，休息一会儿\n傍晚 悬崖咖啡 After Beach Bar（卡伦观景台旁）看日落\n晚上 Kata 晚餐",
+      "tips": "皇帝岛→普吉 速度艇约 40 分钟；到 Kata 先休息缓一缓；悬崖咖啡 After Beach Bar（卡伦观景台旁）有低消、饮品 150–300฿，日落前去占位；Karon On the Hill 午餐避开正午看海景。",
+      "ab": {
+        "stay": 0,
+        "food": 0,
+        "fun": 0,
+        "transport": 0,
+        "other": 0
+      },
+      "ac": {
+        "stay": "¥",
+        "food": "¥",
+        "fun": "¥",
+        "transport": "¥",
+        "other": "¥"
+      }
+    },
+    {
+      "date": "12/2",
+      "dow": "周三",
+      "title": "皮皮岛 + 蛋岛 一日游",
+      "hotel": "卡塔/卡伦 Kata/Karon",
+      "budget": 610,
+      "cb": {
+        "stay": 130,
+        "food": 100,
+        "fun": 350,
+        "transport": 20,
+        "other": 10
+      },
+      "meals": {
+        "b": "酒店早餐",
+        "l": "团餐（多含）",
+        "d": "Kata：Capannina（意餐）/ 海鲜"
+      },
+      "plan": "07:30 酒店接送前往码头\n速度艇往皮皮岛（约45分钟开阔海，晕船提前吃药、坐船中后）\n玛雅湾/浮潜 + 蛋岛浅水浮潜、喂鱼\n16:30 返回，Kata 海滩看日落",
+      "tips": "皮皮岛+蛋岛拼团一日游约 1200–1800฿/人（含接送+午餐+浮潜），Klook / KKday 提前订；皮皮走开阔海约 45 分钟较颠，晕船务必提前吃药。",
+      "ab": {
+        "stay": 0,
+        "food": 0,
+        "fun": 0,
+        "transport": 0,
+        "other": 0
+      },
+      "ac": {
+        "stay": "¥",
+        "food": "¥",
+        "fun": "¥",
+        "transport": "¥",
+        "other": "¥"
+      }
+    },
+    {
+      "date": "12/3",
+      "dow": "周四",
+      "title": "丛林飞跃 + Kata 休闲",
+      "hotel": "卡塔/卡伦 Kata/Karon",
+      "budget": 600,
+      "cb": {
+        "stay": 130,
+        "food": 120,
+        "fun": 300,
+        "transport": 30,
+        "other": 20
+      },
+      "meals": {
+        "b": "Kata 酒店早餐 / Bonus Coffee",
+        "l": "午餐（丛林飞跃附近 / Kata）",
+        "d": "Kata：Red Duck / Kata Mama"
+      },
+      "plan": "09:00 丛林飞跃（Hanuman World / Flying Hanuman，Kathu 一带）\n13:00 午餐\n下午 返回 Kata，海滩 / 泳池自由休闲\n晚上 Kata 晚餐",
+      "tips": "丛林飞跃 Hanuman World / Flying Hanuman 约 1000–1800฿/人（含接送），Klook/官网；下午返回 Kata 海滩/泳池躺平，轻松半天。",
+      "ab": {
+        "stay": 0,
+        "food": 0,
+        "fun": 0,
+        "transport": 0,
+        "other": 0
+      },
+      "ac": {
+        "stay": "¥",
+        "food": "¥",
+        "fun": "¥",
+        "transport": "¥",
+        "other": "¥"
+      }
+    },
+    {
+      "date": "12/4",
+      "dow": "周五",
+      "title": "SPA + 射击 + 神仙半岛日落",
+      "hotel": "卡塔/卡伦 Kata/Karon",
+      "budget": 820,
+      "cb": {
+        "stay": 130,
+        "food": 120,
+        "fun": 500,
+        "transport": 50,
+        "other": 20
+      },
+      "meals": {
+        "b": "Kata 酒店早餐 / Bonus Coffee",
+        "l": "Rawai / 神仙半岛一带午餐",
+        "d": "Rawai 海鲜市场 / Kata 晚餐"
+      },
+      "plan": "上午 睡到自然醒，Phumontra SPA 按摩放松\n下午 南下 Gold Shooter Club 打靶（神仙半岛附近）\n17:30 神仙半岛 Promthep Cape 看日落\n晚上 Rawai / Kata 晚餐",
+      "tips": "南部一日：SPA、射击、神仙半岛都在南边，Kata↔Rawai↔神仙半岛车程都很近。Phumontra SPA 按项目 800–1500฿/人，官网或 LINE 提前预约；Gold Shooter Club 按子弹 800–1500฿/人（别被推销加子弹）；神仙半岛免费，日落人多提前到占位。",
+      "ab": {
+        "stay": 0,
+        "food": 0,
+        "fun": 0,
+        "transport": 0,
+        "other": 0
+      },
+      "ac": {
+        "stay": "¥",
+        "food": "¥",
+        "fun": "¥",
+        "transport": "¥",
+        "other": "¥"
+      }
+    },
+    {
+      "date": "12/5",
+      "dow": "周六",
+      "title": "搬机场旁 + Bangtao日落 + 躺平",
+      "hotel": "奈扬/迈考 Nai Yang/Mai Khao（③段 1 晚）",
+      "budget": 510,
+      "cb": {
+        "stay": 150,
+        "food": 120,
+        "fun": 150,
+        "transport": 70,
+        "other": 20
+      },
+      "meals": {
+        "b": "Kata 酒店早餐",
+        "l": "Bangtao 海滩俱乐部（Cafe del Mar / Catch）",
+        "d": "奈扬沙滩海鲜排档"
+      },
+      "plan": "上午 Kata 退房，Grab 出发\n途中 Bangtao 海滩俱乐部午后 + 日落一杯（有最低消费）\n傍晚 机场旁酒店入住、收拾行李",
+      "tips": "Kata→机场旁 Grab 约 600–800฿；途中 Bangtao 海滩俱乐部（Cafe del Mar / Catch）有低消、人均约 500–1000฿；奈扬海鲜排档人均 300–600฿。",
+      "ab": {
+        "stay": 0,
+        "food": 0,
+        "fun": 0,
+        "transport": 0,
+        "other": 0
+      },
+      "ac": {
+        "stay": "¥",
+        "food": "¥",
+        "fun": "¥",
+        "transport": "¥",
+        "other": "¥"
+      }
+    },
+    {
+      "date": "12/6",
+      "dow": "周日",
+      "title": "返程",
+      "hotel": "—",
+      "budget": 60,
+      "cb": {
+        "stay": 0,
+        "food": 20,
+        "fun": 0,
+        "transport": 40,
+        "other": 0
+      },
+      "meals": {
+        "b": "机场早餐",
+        "l": "（航班上）",
+        "d": "—"
+      },
+      "plan": "06:30 退房去机场（5–15分钟）\n08:35 起飞回程",
+      "tips": "酒店→机场 Grab 约 150–250฿（很近）；国际航班建议提前 2 小时，约 06:30 出发。",
+      "ab": {
+        "stay": 0,
+        "food": 0,
+        "fun": 0,
+        "transport": 0,
+        "other": 0
+      },
+      "ac": {
+        "stay": "¥",
+        "food": "¥",
+        "fun": "¥",
+        "transport": "¥",
+        "other": "¥"
+      }
+    }
+  ],
+  "planVer": 7,
+  "notes": [
+    {
+      "id": "mu143f2q4u20t",
+      "group": "11/29",
+      "text": "🐘 大象营（观察型）官网 / Klook 提前订，热门日期要早订",
+      "done": false
+    },
+    {
+      "id": "mu143f2qrxtj8",
+      "group": "11/30",
+      "text": "🤿 皇帝岛深潜体验提前订，需签健康声明；体验潜无需执照",
+      "done": false
+    },
+    {
+      "id": "mu143f2qmvz1m",
+      "group": "12/2",
+      "text": "🚤 皮皮岛 + 蛋岛拼团一日游提前订（Klook / KKday）",
+      "done": false
+    },
+    {
+      "id": "mu143f2qvlye1",
+      "group": "12/3",
+      "text": "🌿 丛林飞跃（Hanuman World / Flying Hanuman）提前订、含接送",
+      "done": false
+    },
+    {
+      "id": "mu143f2qaqstv",
+      "group": "12/4",
+      "text": "💆 Phumontra SPA 官网或 LINE 提前预约",
+      "done": false
+    },
+    {
+      "id": "mu143f2ql039u",
+      "group": "12/4",
+      "text": "🔫 Gold Shooter Club 可提前问价 / 预约",
+      "done": false
+    },
+    {
+      "id": "mu143f2qwnexp",
+      "group": "12/6",
+      "text": "✈️ 回程 08:35，提前 2 小时到机场；确认行李额",
+      "done": false
+    },
+    {
+      "id": "mu143f2q5cbnf",
+      "group": "prep",
+      "text": "📱 电话卡 AIS / True 机场柜台或 Klook 预订",
+      "done": false
+    },
+    {
+      "id": "mu143f2qzf28y",
+      "group": "prep",
+      "text": "💵 备好现金 / 换钱，皇帝岛 ATM 少、物价偏高",
+      "done": false
+    },
+    {
+      "id": "mu143f2qvhxw3",
+      "group": "prep",
+      "text": "💳 通知银行开通境外用卡，备一张境外可用的卡",
+      "done": false
+    },
+    {
+      "id": "mu143f2quvo2o",
+      "group": "prep",
+      "text": "💊 备晕船药（皮皮岛开阔海较颠）、常用药",
+      "done": false
+    },
+    {
+      "id": "mu143f2qwdew0",
+      "group": "prep",
+      "text": "🔌 转换插头（泰式插座）、防晒、驱蚊",
+      "done": false
+    },
+    {
+      "id": "mu145gb4s83r6",
+      "group": "prep",
+      "text": "皇帝岛住宿预约：*请至少提前2天，发送预约Wechat至【Ban raya普吉旅游达人：Red931910-2】",
+      "done": false
+    },
+    {
+      "id": "mu146zbaufspj",
+      "group": "11/30",
+      "text": "皇帝岛登船：9点前到达查龙码头办理登船手续：船程约50分钟。（船号：白金号 yilong1/yilong2 ）",
+      "done": false
+    }
+  ]
+}
